@@ -92,7 +92,7 @@
         <div class="rules">
           <b>初期散開(基本配置)</b>：A(北)=MT+D3／B(東)=D2+H2／C(南)=ST+D4／D(西)=H1+D1<br>
           <b>隕石マーカー(メテオ)</b>：ランダム2名(同カテゴリ=DPS2人 or TH2人)に付与。対象は必ず南北(A/C)固定。東西(B/D)に付いた場合は固定対角で交代 ＝ <b>D⇔A(北西)・B⇔C(南東)</b>(移動先が相方メテオで埋まっている時のみ逆側へ)。<b>動くのはメテオ本人と、移動先の同カテゴリの人(DPS⇔DPS or TH⇔TH)だけ。元のペアの相方はついていかない</b>(例：D=H1+D1でD1がメテオならH1はDに残留、D1はA/Cへ移動しその同カテゴリの人と入れ替わる)。<br>
-          <b>塔(コンヴィクション)</b>：塔1回目・塔2回目とも8本(1人1本)。塔1回目は方角ブロックごとに「外周2＋内周0」または「外周1＋内周1」で、全体では外周6:内周2 or 外周5:内周3。<br>
+          <b>塔(コンヴィクション)</b>：塔1回目・塔2回目とも8本(1人1本)。塔1回目は方角ブロックごとに「外周2＋内周0」または「外周1＋内周1」で、全体では外周6:内周2 or 外周5:内周3。<b>各ブロック必ず1本はマーカーにかぶる形で外周に出る</b>(外周2本のブロックは「マーカー上＋左右どちらか」の構成)。内周2本のブロックは存在しない。<br>
           <b>塔1回目の踏み分け</b>：<br>
           ・メテオ対象ロール：外周1本→外側の塔／外周2本→外周を踏み、向かって<b>真ん中＞右</b>優先。<br>
           ・無職ロール：外周1本→内側の塔／外周2本→外周を踏み、向かって<b>左＞右</b>優先。<br>
@@ -502,30 +502,31 @@ async function startRun(){
 
   // Phase 3: 塔1回目
   document.getElementById('phaseLabel').textContent='フェーズ3: 塔1回目 (コンヴィクション)';
-  const outerCount = generateTowerPattern();
-  towerAssign = assignTowerSlots(finalBlock, cometRoles, outerCount);
+  const towerPattern = generateTowerPattern();
+  towerAssign = assignTowerSlots(finalBlock, cometRoles, towerPattern);
   const mySlot = towerAssign[selectedRole]; // {ring, off}
   const ringJP = mySlot.ring==='outer'?'外周':'内周';
-  const lrJP = mySlot.off<0?'向かって左':'向かって右';
+  const lrJP = mySlot.off<0?'向かって左': mySlot.off>0?'向かって右':'真ん中(マーカー上)';
   const ruleNote = iAmComet
     ? (mySlot.ring==='outer'? '(メテオ: 外周1本→外側／外周2本→真ん中>右)' : '(メテオ)')
-    : (mySlot.ring==='outer'? '(無職: 外周2本→左>右)' : '(無職: 外周1本→内側)');
+    : (mySlot.ring==='outer'? '(無職: 外周2本→左>右=反時計側優先)' : '(無職: 外周1本→内側)');
   setMsg(`塔1回目。あなたは【${ringJP}${mySlot.ring==='outer'?'・'+lrJP:''}】 ${ruleNote}`);
   // 全ブロックの塔スロットを描画
   const choices=[];
-  Object.keys(outerCount).forEach(b=>{
-    const oc=outerCount[b];
-    const slots = oc===2? [{ring:'outer',off:-1},{ring:'outer',off:+1}]
-                : oc===1? [{ring:'outer',off:-1},{ring:'inner',off:+1}]
-                : [{ring:'inner',off:-1},{ring:'inner',off:+1}];
-    slots.forEach(s=>{
-      const ar=slotAngleRad(b,s);
-      choices.push({id:b+'_'+s.ring+'_'+s.off, angle:ar.angle, r:ar.rad, label:null, block:b, ring:s.ring, off:s.off});
+  Object.keys(towerPattern).forEach(b=>{
+    const pat=towerPattern[b];
+    pat.outer.forEach(off=>{
+      const ar=slotAngleRad(b,{ring:'outer',off});
+      choices.push({id:b+'_outer_'+off, angle:ar.angle, r:ar.rad, label:null, block:b, ring:'outer', off});
+    });
+    pat.inner.forEach(off=>{
+      const ar=slotAngleRad(b,{ring:'inner',off});
+      choices.push({id:b+'_inner_'+off, angle:ar.angle, r:ar.rad, label:null, block:b, ring:'inner', off});
     });
   });
   const myBlock=finalBlock[selectedRole];
   const correctId = myBlock+'_'+mySlot.ring+'_'+mySlot.off;
-  const t1explain = `${myBlock}ブロックは外周${outerCount[myBlock]}本。${iAmComet?'メテオ':'無職'}のあなたは【${ringJP}${mySlot.ring==='outer'?'・'+lrJP:''}】${ruleNote}`;
+  const t1explain = `${myBlock}ブロックは外周${towerPattern[myBlock].outer.length}本。${iAmComet?'メテオ':'無職'}のあなたは【${ringJP}${mySlot.ring==='outer'?'・'+lrJP:''}】${ruleNote}`;
   await new Promise(resolve=>{
     askChoice('塔1回目：自分の塔をタップ', choices, correctId, timeLimitMs, ()=>resolve(), t1explain);
   });
@@ -653,56 +654,51 @@ function resolveComets(cometArr){
   return finalB;
 }
 function generateTowerPattern(){
-  // A/C always hold a comet-marker holder, who must always have an outer tower available,
-  // so a block with 0 outer towers may only ever land on B or D.
-  const templates=[[2,2,1,1],[2,1,1,1],[2,2,1,0]];
-  const counts=pick(templates);
-  const outerCount={};
-  if(counts.includes(0)){
-    const rest=shuffle(counts.filter(c=>c!==0));
-    const zeroBlock=pick(['B','D']);
-    const otherBD=zeroBlock==='B'?'D':'B';
-    const acBlocks=shuffle(['A','C']);
-    outerCount[zeroBlock]=0;
-    outerCount[acBlocks[0]]=rest[0];
-    outerCount[acBlocks[1]]=rest[1];
-    outerCount[otherBD]=rest[2];
-  } else {
-    const blocks=shuffle(['A','B','C','D']);
-    const sc=shuffle(counts);
-    blocks.forEach((b,i)=>outerCount[b]=sc[i]);
-  }
-  return outerCount;
+  // 各ブロック必ず外周1本はマーカー(十字)にかぶる位置(off=0)に出る。内周2本のブロックは存在しない。
+  // 全体パターン: 外6:内2([2,2,1,1]) または 外5:内3([2,1,1,1])。
+  // 外周2本ブロックは「マーカー上(真ん中)＋左右どちらか」の構成。
+  const counts=shuffle(pick([[2,2,1,1],[2,1,1,1]]));
+  const blocks=['A','B','C','D'];
+  const pattern={};
+  blocks.forEach((b,i)=>{
+    if(counts[i]===2){
+      pattern[b]={outer:[0, pick([-1,1])], inner:[]};
+    } else {
+      pattern[b]={outer:[0], inner:[0]};
+    }
+  });
+  return pattern;
 }
-// 塔1回目：ロールごとに具体的な塔(ring=outer/inner, off=-1(向かって左/反時計)・+1(右/時計))を決める。
-// マクロ: 外周2本→ メテオ=真ん中>右(=右/+1), 無職=左>右(=左/-1)。外周1本→ メテオ等優先が外周,残りが内周。
-function assignTowerSlots(finalB, cometArr, outerCount){
+// 塔1回目：ロールごとに具体的な塔(ring=outer/inner, off=-1(向かって左)・0(真ん中=マーカー上)・+1(右))を決める。
+// マクロ: 外周2本→ メテオ=真ん中>右, 無職=それ以外(左>右=反時計側優先)。外周1本→ メテオ等優先が外周,残りが内周。
+function assignTowerSlots(finalB, cometArr, pattern){
   const blocks={A:[],B:[],C:[],D:[]};
   Object.keys(finalB).forEach(r=>blocks[finalB[r]].push(r));
   const assign={};
   Object.keys(blocks).forEach(b=>{
-    const oc=outerCount[b];
+    const pat=pattern[b];
     // 優先度: メテオ3 > DPS2 > TH1
     const scored=blocks[b].map(r=>({r, score: cometArr.includes(r)?3:(ROLES[r].cls==='dps'?2:1), comet:cometArr.includes(r)}))
                           .sort((a,c)=>c.score-a.score);
-    if(oc===2){
+    if(pat.outer.length===2){
       const comet=scored.find(s=>s.comet);
       if(comet){
-        // メテオ=右(+1), 無職=左(-1)
+        // メテオ: 真ん中(マーカー上)>右 の優先で選ぶ
+        const cometOff = pat.outer.includes(0)? 0 : Math.max(...pat.outer);
+        const otherOff = pat.outer.find(o=>o!==cometOff);
+        assign[comet.r]={ring:'outer',off:cometOff};
         const other=scored.find(s=>!s.comet);
-        assign[comet.r]={ring:'outer',off:+1};
-        if(other) assign[other.r]={ring:'outer',off:-1};
+        if(other) assign[other.r]={ring:'outer',off:otherOff};
       } else {
-        // 無職2人: 左>右 の順(優先度高い方が左)
-        assign[scored[0].r]={ring:'outer',off:-1};
-        if(scored[1]) assign[scored[1].r]={ring:'outer',off:+1};
+        // 無職2人: 向かって左(反時計側)から優先度順
+        const sorted=pat.outer.slice().sort((a,c)=>a-c);
+        assign[scored[0].r]={ring:'outer',off:sorted[0]};
+        if(scored[1]) assign[scored[1].r]={ring:'outer',off:sorted[1]};
       }
-    } else if(oc===1){
-      assign[scored[0].r]={ring:'outer',off:-1};           // 優先度高=外周
-      if(scored[1]) assign[scored[1].r]={ring:'inner',off:+1}; // 残り=内周
-    } else { // oc===0
-      assign[scored[0].r]={ring:'inner',off:-1};
-      if(scored[1]) assign[scored[1].r]={ring:'inner',off:+1};
+    } else {
+      // 外1(マーカー上)+内1: 優先度高(メテオ>DPS>TH)が外周、残りが内周
+      assign[scored[0].r]={ring:'outer',off:pat.outer[0]};
+      if(scored[1]) assign[scored[1].r]={ring:'inner',off:pat.inner[0]};
     }
   });
   return assign;
