@@ -316,6 +316,32 @@ function moveTokenAnimated(role, angle, r, ms){
   tok.g.setAttribute('transform', `translate(${p.x},${p.y})`);
   tok.angle=angle; tok.r=r;
 }
+// 重なり防止: ほぼ同座標のトークン同士を小さな円状に散らして全員見えるようにする(見た目のみ、内部座標は変えない)
+function applySeparation(ms){
+  const rs=Object.keys(tokens);
+  const pts=rs.map(role=>{const t=tokens[role];const p=polar(t.angle,t.r);return {role,x:p.x,y:p.y};});
+  const parent=pts.map((_,i)=>i);
+  const find=i=>parent[i]===i?i:(parent[i]=find(parent[i]));
+  for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){
+    if(Math.hypot(pts[i].x-pts[j].x,pts[i].y-pts[j].y)<24) parent[find(i)]=find(j);
+  }
+  const groups={};
+  pts.forEach((p,i)=>{const g=find(i);(groups[g]=groups[g]||[]).push(p);});
+  Object.values(groups).forEach(g=>{
+    const cx=g.reduce((s,p)=>s+p.x,0)/g.length, cy=g.reduce((s,p)=>s+p.y,0)/g.length;
+    g.forEach((p,k)=>{
+      const tok=tokens[p.role];
+      let x=p.x, y=p.y;
+      if(g.length>1){
+        const R=12+4*g.length;
+        const a=(k/g.length)*2*Math.PI - Math.PI/2;
+        x=cx+R*Math.cos(a); y=cy+R*Math.sin(a);
+      }
+      tok.g.style.transition=`transform ${ms||300}ms ease-in-out`;
+      tok.g.setAttribute('transform',`translate(${x},${y})`);
+    });
+  });
+}
 function drawTower(angle, r, label){
   const p=polar(angle,r);
   const g=svgEl('g',{class:'towerMark'});
@@ -577,6 +603,7 @@ async function startRun(){
       moveTokenAnimated(r, offset, R_MID, MOVE_MS);
     }
   });
+  applySeparation(MOVE_MS);
   await wait(MOVE_MS + BEAT_MS);
 
   // ---- Phase 2: 1番着弾(自動) + 塔3本(西/南/東) + 連旋1回目 ----
@@ -637,6 +664,7 @@ async function startRun(){
   Object.keys(spread2).forEach(r=> moveTokenAnimated(r, NWNE_ANGLE[spread2[r]], R_MID*0.85, MOVE_MS));
   // 1番の残り(安置)は中央付近へ
   group1.forEach(r=>{ if(!stomp1[r]) moveTokenAnimated(r, 180, 55, MOVE_MS); });
+  applySeparation(MOVE_MS);
   await wait(MOVE_MS+400);
 
   // ---- Phase 4: 2番着弾(自動) + 塔2本(北西/北東) + 連旋2回目 ----
@@ -696,6 +724,7 @@ async function startRun(){
   Object.keys(spread3).forEach(r=> moveTokenAnimated(r, WSE_ANGLE[spread3[r]], R_MID, MOVE_MS));
   if(g1South) moveTokenAnimated(g1South, 180, 55, MOVE_MS);
   group2.forEach(r=> moveTokenAnimated(r, NWNE_ANGLE[spread2[r]], R_MID*0.85, MOVE_MS));
+  applySeparation(MOVE_MS);
   await wait(MOVE_MS+400);
 
   // ---- Phase 6: 3番着弾(自動) + 塔3本(西/南/東) ----
@@ -732,6 +761,7 @@ async function startRun(){
   }
   clearTimer();
   Object.keys(stomp3).forEach(r=> moveTokenAnimated(r, WSE_ANGLE[stomp3[r]], R_MID, MOVE_MS));
+  applySeparation(MOVE_MS);
   await wait(MOVE_MS+400);
   clearTowers();
 
