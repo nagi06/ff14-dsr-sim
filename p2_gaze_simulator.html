@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<!--
+  絶竜詩篇 P2 聖杖(前半) 視線ギミック(邪竜の眼光/竜の邪眼) 練習シミュレーター
+  - 目的: トールダン(A固定)と竜の邪眼(ランダム位置)の2つの視線が来た瞬間、
+    自分がどの向きを向くべきかを反復練習する。自分1人分の判断のみ。
+  - 操作: 盤面をタップ = その方向を向く。
+  - 判定モデル(簡易・仮): 「自分の正面±90°未満に目があるとアウト」。真横(90°ちょうど)はセーフ。
+    (根拠: ARUTORA arutora.com/24197「自分のキャラ正面方向に視線がなければ当たらない」、
+     攻略者ブログ実測「外周向き0°として90°向きは大丈夫だった」)
+  - 仮モデルの注記:
+    * トールダン位置はA(北外周)固定(ユーザーPT準拠。ARUTORAは「中央に再出現」とも記載あり、要実戦確認)
+    * 邪眼はA以外の7方向(マーカー上・外周)から一様抽選。実際は「角度的には3パターン」との情報(ARUTORA)
+      だが詳細不明のため、練習網羅のため全方向から出題。
+    * プレイヤー位置はフィールド内ランダム(実戦の突進処理中の立ち位置は再現しない)。
+    * 突進(ゼフィラン)・剣マーカー・頭割りは対象外(視線の向き判断のみ)。
+-->
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>絶竜詩篇 P2 聖杖(前半) 視線(邪竜の眼光) 練習シミュレーター</title>
+<style>
+  :root{
+    --bg:#12141c; --panel:#1c2030; --panel2:#252a40; --text:#e8eaf2; --sub:#9aa2bd;
+    --accent:#5b8cff; --ok:#3ecf7a; --ng:#ff5b6b; --warn:#ffc44d;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  body{margin:0; background:var(--bg); color:var(--text);
+    font-family:"Hiragino Kaku Gothic ProN","Yu Gothic UI",Meiryo,sans-serif;
+    display:flex; flex-direction:column; align-items:center; min-height:100vh;}
+  h1{font-size:16px; margin:14px 12px 4px; text-align:center;}
+  .sub{font-size:12px; color:var(--sub); margin:0 12px 10px; text-align:center;}
+  .card{background:var(--panel); border-radius:14px; padding:14px; margin:8px;
+    width:min(420px, calc(100vw - 16px));}
+  .card h2{font-size:14px; margin:0 0 8px;}
+  .modeBtns{display:flex; gap:8px;}
+  .modeBtn{flex:1; background:var(--panel2); border:2px solid transparent; border-radius:10px;
+    padding:10px 6px; text-align:center; cursor:pointer; font-size:13px;}
+  .modeBtn small{display:block; color:var(--sub); font-size:11px; margin-top:3px;}
+  .modeBtn.sel{border-color:var(--accent); background:#2a3355;}
+  .row{display:flex; align-items:center; gap:8px; margin-top:8px;}
+  input[type=range]{flex:1;}
+  input[type=number]{width:64px; background:var(--panel2); color:var(--text);
+    border:1px solid #3a4160; border-radius:8px; padding:6px; font-size:14px; text-align:center;}
+  .hint{font-size:11px; color:var(--sub); margin-top:6px; line-height:1.5;}
+  .startBtn{display:block; width:100%; margin-top:12px; background:var(--accent); color:#fff;
+    border:none; border-radius:12px; padding:13px; font-size:15px; font-weight:bold; cursor:pointer;}
+  details{margin-top:4px;}
+  summary{cursor:pointer; font-size:13px; color:var(--accent);}
+  .kanpe{font-size:12px; line-height:1.7; color:var(--text);}
+  .kanpe b{color:var(--warn);}
+  #gameWrap{display:none; flex-direction:column; align-items:center; width:100%;}
+  #statusBar{display:flex; justify-content:space-between; width:min(420px, calc(100vw - 16px));
+    padding:6px 10px; font-size:13px; color:var(--sub);}
+  #msg{min-height:44px; width:min(420px, calc(100vw - 16px)); text-align:center; font-size:14px;
+    line-height:1.5; padding:4px 8px;}
+  #msg .ok{color:var(--ok); font-weight:bold;}
+  #msg .ng{color:var(--ng); font-weight:bold;}
+  svg{touch-action:manipulation; display:block;}
+  #timerBar{width:min(420px, calc(100vw - 16px)); height:6px; background:var(--panel2);
+    border-radius:3px; overflow:hidden; margin-top:4px;}
+  #timerFill{height:100%; background:var(--accent); width:100%;}
+  #resultCard{display:none;}
+  .bigScore{font-size:34px; font-weight:bold; text-align:center; margin:10px 0;}
+  .exp{font-size:12px; color:var(--sub); line-height:1.7; margin-top:8px;}
+</style>
+</head>
+<body>
+<h1>絶竜詩篇 P2 聖杖(前半) 視線(邪竜の眼光) 練習</h1>
+<p class="sub">盤面をタップ＝その方向を向く。正面±90°未満に「目」があるとアウト(真横はセーフ)。</p>
+
+<div class="card" id="setupCard">
+  <h2>モード</h2>
+  <div class="modeBtns">
+    <div class="modeBtn sel" id="btnKakunin">確認モード<small>セーフの向き(緑の扇)を見て覚える</small></div>
+    <div class="modeBtn" id="btnRenshu">練習モード<small>制限時間内に自分で向きを決める</small></div>
+  </div>
+  <div class="row">
+    <span style="font-size:13px;">制限時間</span>
+    <input type="range" id="secRange" min="2" max="30" value="6">
+    <input type="number" id="secNum" min="2" max="30" value="6">
+    <span style="font-size:13px;">秒</span>
+  </div>
+  <div class="row">
+    <span style="font-size:13px;">ラウンド数</span>
+    <input type="range" id="roundRange" min="3" max="30" value="10">
+    <input type="number" id="roundNum" min="3" max="30" value="10">
+    <span style="font-size:13px;">回</span>
+  </div>
+  <p class="hint">確認モードは制限時間経過で自動的に次へ(タップでも進む)。練習モードは時間切れ=アウト扱い。</p>
+  <details>
+    <summary>カンペ(処理のコツ)</summary>
+    <p class="kanpe">
+      ・視線判定は<b>自分の正面±90°未満</b>に目があるとアウト。背を向ける必要はなく、<b>視界(正面半円)から外す</b>だけでよい。真横(90°)はセーフだが実戦では少し余裕を。<br>
+      ・コツ: <b>王(A)と邪眼の「間」ではなく「外側」を向く</b>。2つの目を結んだ線より反対側へ体を向けるイメージ。<br>
+      ・王と邪眼が自分を挟んで正反対にいる時(例: 王=A、邪眼=C、自分がその線上)は<b>真横(東西)を向く</b>しかない。一番事故りやすい形。<br>
+      ・このシミュの仮モデル: トールダン=A固定/邪眼=他7方向からランダム/判定=正面90°未満アウト。実戦と違う点があれば要調整。
+    </p>
+  </details>
+  <button class="startBtn" id="startBtn">スタート</button>
+</div>
+
+<div id="gameWrap">
+  <div id="statusBar"><span id="roundLabel"></span><span id="scoreLabel"></span></div>
+  <svg id="field" width="360" height="360" viewBox="-180 -180 360 360"></svg>
+  <div id="timerBar"><div id="timerFill"></div></div>
+  <div id="msg"></div>
+</div>
+
+<div class="card" id="resultCard">
+  <h2>リザルト</h2>
+  <div class="bigScore" id="finalScore"></div>
+  <div id="missList" class="exp"></div>
+  <button class="startBtn" id="retryBtn">もう一度</button>
+</div>
+
+<script>
+'use strict';
+// ---------- 定数 ----------
+const R_FIELD = 150;      // フィールド半径
+const R_EYE   = 150;      // 目の出現半径(外周)
+const ARC_R   = 60;       // セーフ扇の描画半径
+// マーカー: 角度は SVG系(0°=東, 90°=南, -90°=北)
+const MARKERS = [
+  {id:'A', ang:-90}, {id:'1', ang:-45}, {id:'B', ang:0}, {id:'2', ang:45},
+  {id:'C', ang:90},  {id:'3', ang:135}, {id:'D', ang:180}, {id:'4', ang:-135},
+];
+const THORDAN_ANG = -90; // トールダン=A固定(仮モデル)
+
+// ---------- ユーティリティ ----------
+const rand = n => Math.floor(Math.random()*n);
+const deg2rad = d => d*Math.PI/180;
+const pos = (ang,r) => ({x: Math.cos(deg2rad(ang))*r, y: Math.sin(deg2rad(ang))*r});
+// 2方位の角度差(0〜180)
+function angDiff(a,b){ let d = Math.abs(a-b)%360; return d>180 ? 360-d : d; }
+// aからbへの符号付き最短差(-180〜180)
+function signedDiff(a,b){ let d=(b-a)%360; if(d>180)d-=360; if(d<-180)d+=360; return d; }
+// p1(プレイヤー)からp2(目)への方位角
+function bearing(p1,p2){ return Math.atan2(p2.y-p1.y, p2.x-p1.x)*180/Math.PI; }
+
+// ---------- ラウンド抽選 ----------
+function drawRound(){
+  const eyeMk = MARKERS.filter(m=>m.id!=='A')[rand(7)];        // 邪眼: A以外の7方向
+  const player = { ang: Math.random()*360, r: 40 + Math.random()*95 }; // フィールド内ランダム
+  const pP = pos(player.ang, player.r);
+  const pT = pos(THORDAN_ANG, R_EYE);
+  const pE = pos(eyeMk.ang, R_EYE);
+  const bT = bearing(pP, pT);   // 王への方位
+  const bE = bearing(pP, pE);   // 邪眼への方位
+  // セーフ扇: 両方の方位から90°以上離れた向きの集合。
+  // 幅 = 180 - (bTとbEの角度差)、中心 = bT/bE の中間の正反対。
+  const delta = angDiff(bT, bE);
+  const mid = bT + signedDiff(bT, bE)/2;      // 2方位の中間(最短側)
+  const safeCenter = mid + 180;               // その正反対
+  const safeHalf = (180 - delta)/2;           // 片側幅(deltaが180に近いほど狭い)
+  return { eyeMk, pP, pT, pE, bT, bE, safeCenter, safeHalf };
+}
+// 判定: 向きfacingがセーフか(真横=90°ちょうどはセーフ。浮動小数の揺れだけ許容)
+function isSafe(facing, R){
+  return angDiff(facing, R.bT) >= 90 - 1e-9 && angDiff(facing, R.bE) >= 90 - 1e-9;
+}
+
+// ---------- 状態 ----------
+let mode='kakunin', secs=6, totalRounds=10;
+let roundIdx=0, score=0, misses=[], cur=null, answered=false, timerId=null, timerStart=0;
+
+// ---------- DOM ----------
+const $ = id => document.getElementById(id);
+const svg = $('field');
+const SVGNS = 'http://www.w3.org/2000/svg';
+function el(name, attrs, text){
+  const e = document.createElementNS(SVGNS, name);
+  for(const k in attrs) e.setAttribute(k, attrs[k]);
+  if(text!==undefined) e.textContent = text;
+  return e;
+}
+
+// ---------- セットアップUI ----------
+function bindPair(rangeId, numId, set){
+  const r=$(rangeId), n=$(numId);
+  const sync=v=>{ v=Math.max(+r.min, Math.min(+r.max, +v||+r.min)); r.value=v; n.value=v; set(v); };
+  r.addEventListener('input', ()=>sync(r.value));
+  n.addEventListener('change', ()=>sync(n.value));
+}
+bindPair('secRange','secNum', v=>secs=v);
+bindPair('roundRange','roundNum', v=>totalRounds=v);
+$('btnKakunin').onclick = ()=>{ mode='kakunin'; $('btnKakunin').classList.add('sel'); $('btnRenshu').classList.remove('sel'); };
+$('btnRenshu').onclick  = ()=>{ mode='renshu';  $('btnRenshu').classList.add('sel');  $('btnKakunin').classList.remove('sel'); };
+$('startBtn').onclick = startGame;
+$('retryBtn').onclick = ()=>{ $('resultCard').style.display='none'; $('setupCard').style.display='block'; };
+
+function startGame(){
+  $('setupCard').style.display='none';
+  $('resultCard').style.display='none';
+  $('gameWrap').style.display='flex';
+  roundIdx=0; score=0; misses=[];
+  nextRound();
+}
+
+// ---------- 描画 ----------
+function drawField(R){
+  svg.innerHTML='';
+  svg.appendChild(el('circle',{cx:0,cy:0,r:R_FIELD,fill:'#1a2233',stroke:'#3a4160','stroke-width':2}));
+  MARKERS.forEach(m=>{
+    const p=pos(m.ang, R_FIELD-14);
+    const isNum = '1234'.includes(m.id);
+    svg.appendChild(el('text',{x:p.x,y:p.y+4,'text-anchor':'middle','font-size':12,
+      fill:isNum?'#7a84a8':'#aab4d8'}, m.id));
+  });
+  // トールダン(王)
+  const gT = el('g',{});
+  gT.appendChild(el('circle',{cx:R.pT.x,cy:R.pT.y,r:16,fill:'#7a2030',stroke:'#ff8899','stroke-width':2}));
+  gT.appendChild(el('text',{x:R.pT.x,y:R.pT.y+5,'text-anchor':'middle','font-size':13,fill:'#fff'},'王'));
+  svg.appendChild(gT);
+  // 邪眼
+  const gE = el('g',{});
+  gE.appendChild(el('circle',{cx:R.pE.x,cy:R.pE.y,r:16,fill:'#6a5a10',stroke:'#ffd84d','stroke-width':2}));
+  gE.appendChild(el('text',{x:R.pE.x,y:R.pE.y+5,'text-anchor':'middle','font-size':13,fill:'#fff'},'目'));
+  svg.appendChild(gE);
+  // プレイヤー
+  svg.appendChild(el('circle',{cx:R.pP.x,cy:R.pP.y,r:11,fill:'#2a67d8',stroke:'#9cc0ff','stroke-width':2}));
+  svg.appendChild(el('text',{x:R.pP.x,y:R.pP.y+4,'text-anchor':'middle','font-size':10,fill:'#fff'},'自'));
+}
+// 扇形パス(中心=プレイヤー)
+function wedgePath(R, centerDeg, halfDeg, r){
+  const a0=deg2rad(centerDeg-halfDeg), a1=deg2rad(centerDeg+halfDeg);
+  const x0=R.pP.x+Math.cos(a0)*r, y0=R.pP.y+Math.sin(a0)*r;
+  const x1=R.pP.x+Math.cos(a1)*r, y1=R.pP.y+Math.sin(a1)*r;
+  const large = halfDeg*2>180?1:0;
+  return `M ${R.pP.x} ${R.pP.y} L ${x0} ${y0} A ${r} ${r} 0 ${large} 1 ${x1} ${y1} Z`;
+}
+function drawSafeArc(R){
+  const halfVis = Math.max(R.safeHalf, 3); // 極細でも見えるように最低幅(判定は実値のまま)
+  svg.appendChild(el('path',{d:wedgePath(R,R.safeCenter,halfVis,ARC_R),
+    fill:'rgba(62,207,122,0.30)',stroke:'#3ecf7a','stroke-width':1.5,'pointer-events':'none'}));
+  drawFacingArrow(R, R.safeCenter, '#3ecf7a'); // 中心向き矢印
+}
+function drawFacingArrow(R, facingDeg, color){
+  const a=deg2rad(facingDeg);
+  const x1=R.pP.x+Math.cos(a)*14, y1=R.pP.y+Math.sin(a)*14;
+  const x2=R.pP.x+Math.cos(a)*44, y2=R.pP.y+Math.sin(a)*44;
+  const g=el('g',{'pointer-events':'none'});
+  g.appendChild(el('line',{x1,y1,x2,y2,stroke:color,'stroke-width':4,'stroke-linecap':'round'}));
+  const l=deg2rad(facingDeg+150), r=deg2rad(facingDeg-150);
+  g.appendChild(el('line',{x1:x2,y1:y2,x2:x2+Math.cos(l)*10,y2:y2+Math.sin(l)*10,stroke:color,'stroke-width':4,'stroke-linecap':'round'}));
+  g.appendChild(el('line',{x1:x2,y1:y2,x2:x2+Math.cos(r)*10,y2:y2+Math.sin(r)*10,stroke:color,'stroke-width':4,'stroke-linecap':'round'}));
+  svg.appendChild(g);
+}
+
+// ---------- 進行 ----------
+function nextRound(){
+  if(roundIdx>=totalRounds){ return showResult(); }
+  roundIdx++;
+  answered=false;
+  cur=drawRound();
+  drawField(cur);
+  $('roundLabel').textContent = `ラウンド ${roundIdx}/${totalRounds}`;
+  $('scoreLabel').textContent = mode==='renshu' ? `スコア ${score}` : '確認モード';
+  if(mode==='kakunin'){
+    drawSafeArc(cur);
+    $('msg').innerHTML = '緑の扇の向きがセーフ。<span class="ok">扇の中心(緑矢印)を向くのが安全</span>。タップで次へ。';
+  }else{
+    $('msg').textContent = '視線が来る！向くべき方向をタップ！';
+  }
+  startTimer();
+}
+function startTimer(){
+  stopTimer();
+  timerStart=Date.now();
+  const total=secs*1000;
+  timerId=setInterval(()=>{
+    const rest=Math.max(0, total-(Date.now()-timerStart));
+    $('timerFill').style.width=(rest/total*100)+'%';
+    if(rest<=0){
+      stopTimer();
+      if(mode==='kakunin'){ nextRound(); }
+      else if(!answered){ judge(null); } // 時間切れ
+    }
+  },50);
+}
+function stopTimer(){ if(timerId){clearInterval(timerId); timerId=null;} }
+
+svg.addEventListener('pointerdown', ev=>{
+  if(!cur) return;
+  if(mode==='kakunin'){ stopTimer(); nextRound(); return; }
+  if(answered) return;
+  const pt=svg.createSVGPoint(); pt.x=ev.clientX; pt.y=ev.clientY;
+  const p=pt.matrixTransform(svg.getScreenCTM().inverse());
+  const dx=p.x-cur.pP.x, dy=p.y-cur.pP.y;
+  if(Math.hypot(dx,dy)<6) return; // 自分の真上タップは向き不定なので無視
+  judge(Math.atan2(dy,dx)*180/Math.PI);
+});
+
+function judge(facing){
+  answered=true; stopTimer();
+  let ok=false, detail='';
+  if(facing===null){
+    detail='時間切れ！';
+  }else{
+    drawFacingArrow(cur, facing, isSafe(facing,cur) ? '#3ecf7a' : '#ff5b6b');
+    ok=isSafe(facing,cur);
+    if(!ok){
+      const sawT=angDiff(facing,cur.bT)<90, sawE=angDiff(facing,cur.bE)<90;
+      detail='正面に ' + [sawT?'王(トールダン)':null, sawE?'邪眼':null].filter(Boolean).join(' と ') + ' が入った';
+    }
+  }
+  drawSafeArc(cur); // 答え合わせとしてセーフ扇を表示
+  if(ok){ score++; $('msg').innerHTML='<span class="ok">セーフ！</span> 視線を回避。'; }
+  else{
+    misses.push(`R${roundIdx}: 邪眼=${cur.eyeMk.id} / ${detail}`);
+    $('msg').innerHTML=`<span class="ng">アウト！</span> ${detail}。緑の扇がセーフだった。`;
+  }
+  $('scoreLabel').textContent=`スコア ${score}`;
+  setTimeout(nextRound, 1800);
+}
+
+function showResult(){
+  stopTimer();
+  $('gameWrap').style.display='none';
+  const rc=$('resultCard'); rc.style.display='block';
+  $('finalScore').textContent = mode==='renshu' ? `${score} / ${totalRounds}` : '確認おつかれさま！';
+  $('missList').innerHTML = (mode==='renshu' && misses.length)
+    ? 'ミスしたラウンド:<br>'+misses.join('<br>')
+    : (mode==='renshu' ? '全問正解！視線マスター！' : '練習モードで腕試ししてみよう。');
+}
+
+// ---------- 自己検証(コンソール用): セーフ扇と判定関数の整合を確認 ----------
+function selfTest(n=2000){
+  let bad=0;
+  for(let i=0;i<n;i++){
+    const R=drawRound();
+    // 扇の中心は必ずセーフ
+    if(!isSafe(R.safeCenter,R)) bad++;
+    // 扇の外側(境界+2°)は必ずアウト
+    if(R.safeHalf>0 && isSafe(R.safeCenter+R.safeHalf+2,R)) bad++;
+    if(R.safeHalf>0 && isSafe(R.safeCenter-R.safeHalf-2,R)) bad++;
+    // 王・邪眼の方向を直視したら必ずアウト
+    if(isSafe(R.bT,R)||isSafe(R.bE,R)) bad++;
+  }
+  return `selfTest: ${n}回 / 不整合${bad}件`;
+}
+</script>
+</body>
+</html>
