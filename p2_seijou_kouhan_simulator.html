@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>絶竜詩篇 P2 聖杖(後半) 練習シミュレーター</title>
+<style>
+  :root{
+    --bg:#0f1420; --panel:#182036; --panel2:#1f2a45; --line:#3a4a70;
+    --accent:#5fb3ff; --good:#3ddc84; --bad:#ff5c6c; --warn:#ffcc4d; --text:#e8edf7; --dim:#8ea0c4;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:"Hiragino Sans","Yu Gothic",system-ui,sans-serif;}
+  #app{max-width:520px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;padding:10px 10px 30px;}
+  h1{font-size:16px;text-align:center;margin:8px 0 4px;color:var(--accent);}
+  .sub{text-align:center;color:var(--dim);font-size:11px;margin-bottom:10px;}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px;}
+  .panel h2{font-size:13px;margin:0 0 8px;color:var(--accent);}
+  .role-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
+  .role-btn{padding:10px 0;border-radius:8px;border:2px solid var(--line);background:var(--panel2);color:var(--text);font-size:13px;font-weight:bold;text-align:center;cursor:pointer;}
+  .role-btn.tank{border-color:#3a6bd6;} .role-btn.healer{border-color:#2fae66;} .role-btn.dps{border-color:#d67a3a;}
+  .role-btn.selected{outline:3px solid var(--accent);background:#243156;}
+  .speed-grid{display:flex;gap:6px;}
+  .speed-btn{flex:1;padding:8px 0;border-radius:8px;border:2px solid var(--line);background:var(--panel2);color:var(--text);font-size:12px;text-align:center;cursor:pointer;}
+  .speed-btn.selected{outline:3px solid var(--accent);background:#243156;}
+  #startBtn{width:100%;padding:14px;font-size:15px;font-weight:bold;border:none;border-radius:10px;background:var(--accent);color:#08111f;cursor:pointer;margin-top:4px;}
+  #startBtn:disabled{opacity:0.4;}
+  details{margin-top:2px;}
+  summary{cursor:pointer;color:var(--dim);font-size:12px;}
+  .rules{font-size:12px;line-height:1.7;color:var(--text);margin-top:8px;}
+  .rules b{color:var(--accent);}
+  .src{font-size:10px;color:var(--dim);margin-top:6px;}
+
+  #hud{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:12px;color:var(--dim);}
+  #roleTag{font-weight:bold;color:var(--accent);}
+  #phaseLabel{font-size:14px;font-weight:bold;text-align:center;margin:2px 0 6px;min-height:20px;}
+  #timerWrap{height:8px;background:#0a0e18;border-radius:4px;overflow:hidden;margin-bottom:8px;border:1px solid var(--line);}
+  #timerBar{height:100%;background:var(--accent);width:100%;}
+  #arenaWrap{position:relative;width:100%;aspect-ratio:1/1;max-width:460px;margin:0 auto;}
+  svg#arena{width:100%;height:100%;display:block;touch-action:manipulation;}
+  .slot{cursor:pointer;}
+  .slot:active circle{filter:brightness(1.3);}
+  #msg{min-height:34px;text-align:center;font-size:13px;font-weight:bold;margin-top:6px;}
+  #log{font-size:11px;color:var(--dim);max-height:70px;overflow-y:auto;margin-top:6px;padding:6px;background:#0a0e18;border-radius:6px;border:1px solid var(--line);}
+  #resultScreen .score{font-size:32px;text-align:center;font-weight:bold;color:var(--accent);margin:6px 0;}
+  #resultScreen .verdict{text-align:center;font-size:14px;margin-bottom:10px;}
+  button.secondary{width:100%;padding:12px;border-radius:10px;border:2px solid var(--line);background:var(--panel2);color:var(--text);font-size:14px;cursor:pointer;margin-top:6px;}
+  hr.div{border:none;border-top:1px solid var(--line);margin:10px 0;}
+  [hidden]{display:none!important;}
+</style>
+</head>
+<body>
+<div id="app">
+  <h1>絶竜詩篇 P2 聖杖(後半) 練習シミュレーター</h1>
+  <div class="sub">ARUTORA「隕石GGパターン」ベース／役割選択式・練習用の簡易モデルです</div>
+
+  <!-- SETUP -->
+  <div id="setupScreen">
+    <div class="panel">
+      <h2>役割を選択</h2>
+      <div class="role-grid" id="roleGrid"></div>
+    </div>
+    <div class="panel">
+      <h2>練習速度(判定の制限時間)</h2>
+      <div class="speed-grid" id="speedGrid">
+        <div class="speed-btn" data-ms="6000">じっくり(6秒)</div>
+        <div class="speed-btn selected" data-ms="3500">標準(3.5秒)</div>
+        <div class="speed-btn" data-ms="2000">本番相当(2秒)</div>
+      </div>
+    </div>
+    <button id="startBtn" disabled>練習スタート</button>
+
+    <div class="panel" style="margin-top:10px;">
+      <details>
+        <summary>カンペ(ルール概要)を見る</summary>
+        <div class="rules">
+          <b>初期散開(基本配置)</b>：A(北)=MT+D3／B(東)=H1+D1／C(南)=ST+D4／D(西)=H2+D2<br>
+          <b>隕石マーカー</b>：ランダム2名(DPSまたはTH)に付与。対象者は必ず南北(A/C)に立つ必要があり、東西(B/D)にいた場合はペアごと南北組と立ち位置を交換する。<br>
+          <b>塔(コンヴィクション)の出現</b>：8本(1人1本)。方角ブロックごとに「外周2＋内周0」または「外周1＋内周1」のいずれかで、全体では外周6:内周2 or 外周5:内周3 のパターンになる。<br>
+          <b>塔の割り当て優先度</b>：外周は「隕石マーカー持ち ＞ DPS ＞ タンク/ヒーラー」の順で優先。ブロック内の外周本数が1本なら優先度の高い方が外周、もう片方が内周。<br>
+          <b>隕石マラソン(GGパターン)</b>：マーカー持ちの2人は北・南から同じ回転方向に半周分、外周の塔を1本ずつ踏みながら移動し、7回連続で落ちる隕石を安全な場所へ順々に着弾させる。マクロ「/automove on &lt;wait.1&gt;」+「/automove off」を連打しながらカメラを進行方向へ振ることで一定歩幅の移動が可能。<br>
+          <div class="src">出典：ARUTORA「雷槍・聖杖」解説／たまごもち氏Lodestone(理屈編・実践編)／neko14攻略めも 等。実際の座標・タイミングはランダム要素があるため、本ツールは練習用に簡略化したモデルです。必ず自分のPTの取り決め・マクロと照らし合わせてください。</div>
+        </div>
+      </details>
+    </div>
+  </div>
+
+  <!-- BATTLE -->
+  <div id="battleScreen" hidden>
+    <div id="hud"><span>役割: <span id="roleTag"></span></span><span id="scoreTag">0/0</span></div>
+    <div id="phaseLabel"></div>
+    <div id="timerWrap"><div id="timerBar"></div></div>
+    <div id="arenaWrap">
+      <svg id="arena" viewBox="-220 -220 440 440"></svg>
+    </div>
+    <div id="msg"></div>
+    <div id="log"></div>
+  </div>
+
+  <!-- RESULT -->
+  <div id="resultScreen" hidden>
+    <div class="panel">
+      <h2 style="text-align:center;">練習結果</h2>
+      <div class="score" id="finalScore">0/0</div>
+      <div class="verdict" id="finalVerdict"></div>
+      <button class="secondary" id="retryBtn">もう一度(パターン再抽選)</button>
+      <button class="secondary" id="backBtn">役割選択に戻る</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const ROLES = {
+  MT:{label:'MT',block:'A',cls:'tank',color:'#4da6ff'},
+  D3:{label:'D3',block:'A',cls:'dps',color:'#ff6b6b'},
+  H1:{label:'H1',block:'B',cls:'healer',color:'#3ddc84'},
+  D1:{label:'D1',block:'B',cls:'dps',color:'#ff9d4d'},
+  ST:{label:'ST',block:'C',cls:'tank',color:'#1f6fd6'},
+  D4:{label:'D4',block:'C',cls:'dps',color:'#c96bff'},
+  H2:{label:'H2',block:'D',cls:'healer',color:'#1fa25c'},
+  D2:{label:'D2',block:'D',cls:'dps',color:'#ffcc4d'},
+};
+const BLOCK_ANGLE = {A:0,B:90,C:180,D:270};
+const BLOCK_NAME = {A:'A(北)',B:'B(東)',C:'C(南)',D:'D(西)'};
+const R_OUT=170, R_IN=95, R_MID=132, R_LABEL=200;
+const SLOT_OFFSET=25;
+
+function polar(angleDeg,r){
+  const rad = angleDeg*Math.PI/180;
+  return {x: r*Math.sin(rad), y: -r*Math.cos(rad)};
+}
+function shuffle(arr){
+  const a=arr.slice();
+  for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+// ---------- setup screen ----------
+let selectedRole=null, timeLimitMs=3500;
+const roleGrid=document.getElementById('roleGrid');
+Object.keys(ROLES).forEach(id=>{
+  const r=ROLES[id];
+  const btn=document.createElement('div');
+  btn.className='role-btn '+r.cls;
+  btn.textContent=id;
+  btn.onclick=()=>{
+    document.querySelectorAll('.role-btn').forEach(b=>b.classList.remove('selected'));
+    btn.classList.add('selected');
+    selectedRole=id;
+    document.getElementById('startBtn').disabled=false;
+  };
+  roleGrid.appendChild(btn);
+});
+document.querySelectorAll('.speed-btn').forEach(btn=>{
+  btn.onclick=()=>{
+    document.querySelectorAll('.speed-btn').forEach(b=>b.classList.remove('selected'));
+    btn.classList.add('selected');
+    timeLimitMs=parseInt(btn.dataset.ms,10);
+  };
+});
+document.getElementById('startBtn').onclick=()=>{
+  document.getElementById('setupScreen').hidden=true;
+  document.getElementById('battleScreen').hidden=false;
+  document.getElementById('resultScreen').hidden=true;
+  startRun();
+};
+document.getElementById('retryBtn').onclick=()=>{
+  document.getElementById('resultScreen').hidden=true;
+  document.getElementById('battleScreen').hidden=false;
+  startRun();
+};
+document.getElementById('backBtn').onclick=()=>{
+  document.getElementById('resultScreen').hidden=true;
+  document.getElementById('setupScreen').hidden=false;
+};
+
+// ---------- game state ----------
+let svg, score=0, total=0, logEl, timerTimeout, timerRAF;
+let tokens={}; // role -> {angle,r,el(group)}
+let finalBlock={}, cometRoles=[], towerAssign={}; // role->'outer'/'inner'
+
+function log(text, ok){
+  const div=document.createElement('div');
+  div.style.color = ok===true? '#3ddc84' : ok===false? '#ff5c6c' : '#8ea0c4';
+  div.textContent=text;
+  logEl.prepend(div);
+}
+function setMsg(text, kind){
+  const el=document.getElementById('msg');
+  el.textContent=text;
+  el.style.color = kind==='good'? 'var(--good)' : kind==='bad' ? 'var(--bad)' : 'var(--text)';
+}
+function setScore(){ document.getElementById('scoreTag').textContent = score+'/'+total; }
+
+function initSVG(){
+  svg = document.getElementById('arena');
+  svg.innerHTML='';
+  const ns='http://www.w3.org/2000/svg';
+  const bg=document.createElementNS(ns,'circle');
+  bg.setAttribute('cx',0); bg.setAttribute('cy',0); bg.setAttribute('r',195);
+  bg.setAttribute('fill','#141b2c'); bg.setAttribute('stroke','#3a4a70'); bg.setAttribute('stroke-width',2);
+  svg.appendChild(bg);
+  // quadrant boundary lines at 45,135,225,315
+  [45,135,225,315].forEach(a=>{
+    const p=polar(a,195);
+    const line=document.createElementNS(ns,'line');
+    line.setAttribute('x1',0); line.setAttribute('y1',0); line.setAttribute('x2',p.x); line.setAttribute('y2',p.y);
+    line.setAttribute('stroke','#2a3556'); line.setAttribute('stroke-width',1);
+    svg.appendChild(line);
+  });
+  // ring guides
+  [R_OUT,R_IN].forEach(r=>{
+    const c=document.createElementNS(ns,'circle');
+    c.setAttribute('cx',0); c.setAttribute('cy',0); c.setAttribute('r',r);
+    c.setAttribute('fill','none'); c.setAttribute('stroke','#26314f'); c.setAttribute('stroke-width',1); c.setAttribute('stroke-dasharray','3,4');
+    svg.appendChild(c);
+  });
+  // labels
+  Object.keys(BLOCK_ANGLE).forEach(b=>{
+    const p=polar(BLOCK_ANGLE[b],R_LABEL);
+    const t=document.createElementNS(ns,'text');
+    t.setAttribute('x',p.x); t.setAttribute('y',p.y);
+    t.setAttribute('fill','#8ea0c4'); t.setAttribute('font-size','13'); t.setAttribute('text-anchor','middle');
+    t.textContent=BLOCK_NAME[b];
+    svg.appendChild(t);
+  });
+}
+function ns(){return 'http://www.w3.org/2000/svg';}
+function svgEl(tag,attrs){
+  const el=document.createElementNS(ns(),tag);
+  for(const k in attrs) el.setAttribute(k,attrs[k]);
+  return el;
+}
+
+function drawToken(role, angle, r){
+  const info=ROLES[role];
+  const p=polar(angle,r);
+  const g=svgEl('g',{transform:`translate(${p.x},${p.y})`});
+  const isUser = role===selectedRole;
+  const c=svgEl('circle',{r:16, fill:info.color, stroke: isUser?'#ffffff':'#0a0e18', 'stroke-width': isUser?3:1.5});
+  const t=svgEl('text',{x:0,y:4,fill:'#08111f','font-size':11,'font-weight':'bold','text-anchor':'middle'});
+  t.textContent=role;
+  g.appendChild(c); g.appendChild(t);
+  svg.appendChild(g);
+  tokens[role]={angle,r,g};
+  return g;
+}
+function moveTokenAnimated(role, angle, r, ms){
+  const tok=tokens[role];
+  if(!tok) return;
+  const p=polar(angle,r);
+  tok.g.style.transition = `transform ${ms}ms ease-in-out`;
+  tok.g.setAttribute('transform', `translate(${p.x},${p.y})`);
+  tok.angle=angle; tok.r=r;
+}
+
+function clearTimer(){
+  clearTimeout(timerTimeout);
+  if(timerRAF) cancelAnimationFrame(timerRAF);
+}
+function runTimer(ms, onExpire){
+  const bar=document.getElementById('timerBar');
+  bar.style.transition='none';
+  bar.style.width='100%';
+  requestAnimationFrame(()=>{
+    bar.style.transition=`width ${ms}ms linear`;
+    bar.style.width='0%';
+  });
+  timerTimeout=setTimeout(onExpire, ms);
+}
+
+// generic tap-choice phase. correctId may be a single id or an array of equally-valid ids.
+function askChoice(promptText, choices, correctId, timeMs, cb){
+  // choices: [{id, angle, r, label}]
+  const correctIds = Array.isArray(correctId) ? correctId : [correctId];
+  svg.querySelectorAll('.slot').forEach(el=>el.remove());
+  setMsg(promptText);
+  document.getElementById('phaseLabel').textContent=promptText;
+  total++; setScore();
+  const els=[];
+  let answered=false;
+  choices.forEach(ch=>{
+    const p=polar(ch.angle, ch.r);
+    const g=svgEl('g',{class:'slot', transform:`translate(${p.x},${p.y})`});
+    const c=svgEl('circle',{r:20, fill:'#22304f', stroke:'#5fb3ff', 'stroke-width':2, 'stroke-dasharray':'4,3'});
+    g.appendChild(c);
+    if(ch.label){
+      const t=svgEl('text',{x:0,y:4,fill:'#8ea0c4','font-size':10,'text-anchor':'middle'});
+      t.textContent=ch.label;
+      g.appendChild(t);
+    }
+    g.addEventListener('click',()=>{
+      if(answered) return; answered=true;
+      clearTimer();
+      const ok = correctIds.includes(ch.id);
+      finishChoice(els, ch.id, correctIds, ok);
+      cb(ok);
+    });
+    svg.appendChild(g);
+    els.push({id:ch.id, g, c});
+  });
+  runTimer(timeMs, ()=>{
+    if(answered) return; answered=true;
+    finishChoice(els, null, correctIds, false);
+    setMsg('時間切れ…', 'bad');
+    log('時間切れ (正解: '+correctIds.join('/')+')', false);
+    cb(false);
+  });
+}
+function finishChoice(els, chosenId, correctIds, ok){
+  els.forEach(e=>{
+    if(correctIds.includes(e.id)){ e.c.setAttribute('fill', '#215c3a'); e.c.setAttribute('stroke', '#3ddc84'); }
+    else if(e.id===chosenId){ e.c.setAttribute('fill', '#5c2130'); e.c.setAttribute('stroke', '#ff5c6c'); }
+  });
+  if(ok){ score++; setScore(); setMsg('正解！', 'good'); log('正解: '+correctIds.join('/'), true); }
+}
+
+function wait(ms){ return new Promise(res=>setTimeout(res, ms)); }
+
+// ---------- main sequence ----------
+async function startRun(){
+  score=0; total=0; setScore();
+  logEl=document.getElementById('log'); logEl.innerHTML='';
+  document.getElementById('roleTag').textContent=selectedRole;
+  initSVG();
+  tokens={};
+
+  // Phase 1: initial spread
+  document.getElementById('phaseLabel').textContent='フェーズ1: 開幕散開（十字散開）';
+  setMsg('初期配置を確認 (A北=MT/D3, B東=H1/D1, C南=ST/D4, D西=H2/D2)');
+  // assign slot index per block by order of appearance
+  const blockCount={A:0,B:0,C:0,D:0};
+  Object.keys(ROLES).forEach(r=>{
+    const b=ROLES[r].block;
+    const slotIdx=blockCount[b]++;
+    const angle=BLOCK_ANGLE[b] + (slotIdx===0?-15:15);
+    drawToken(r, angle, R_MID);
+  });
+  runTimer(1800, ()=>{});
+  await wait(1900);
+
+  // Phase 2: comet assignment
+  clearTimer();
+  document.getElementById('phaseLabel').textContent='フェーズ2: 隕石マーカー付与';
+  const allRoles=Object.keys(ROLES);
+  const r1=pick(allRoles);
+  let r2=pick(allRoles.filter(r=>r!==r1 && ROLES[r].block!==ROLES[r1].block));
+  cometRoles=[r1,r2];
+  finalBlock = resolveComets(cometRoles);
+
+  const iAmComet = cometRoles.includes(selectedRole);
+  setMsg(iAmComet? 'あなたに隕石マーカーが付与された！南北(A/C)へ移動せよ' : `隕石マーカー: ${r1} / ${r2}`);
+  log(`隕石マーカー付与: ${r1}, ${r2}`, null);
+
+  const myOldBlock = ROLES[selectedRole].block;
+  const myNewBlock = finalBlock[selectedRole];
+  if(myNewBlock!==myOldBlock){
+    await new Promise(resolve=>{
+      askChoice(
+        iAmComet? 'マーカー持ち → 南北(A/C)のどちらへ移動？' : '自分のペアが交代対象。移動先ブロックは？',
+        ['A','C'].map(b=>({id:b, angle:BLOCK_ANGLE[b], r:R_MID, label:BLOCK_NAME[b]})),
+        myNewBlock, timeLimitMs, (ok)=>resolve()
+      );
+    });
+  } else {
+    total++; score++; setScore();
+    setMsg('あなたの位置は変わらず、待機', 'good');
+    log(selectedRole+': 位置変更なし', true);
+    await wait(900);
+  }
+  clearTimer();
+  // animate all tokens to final blocks
+  const finalBlockCount={A:0,B:0,C:0,D:0};
+  Object.keys(ROLES).forEach(r=>{
+    const b=finalBlock[r];
+    const slotIdx=finalBlockCount[b]++;
+    const angle=BLOCK_ANGLE[b] + (slotIdx===0?-15:15);
+    moveTokenAnimated(r, angle, R_MID, 700);
+  });
+  await wait(900);
+
+  // Phase 3: tower assignment
+  document.getElementById('phaseLabel').textContent='フェーズ3: 塔(コンヴィクション)割り当て';
+  const outerCount = generateTowerPattern();
+  towerAssign = assignTowers(finalBlock, cometRoles, outerCount);
+  const myAssign = towerAssign[selectedRole]; // 'outer' or 'inner'
+  const priorityNote = iAmComet? '(隕石持ちは外周優先)' : (ROLES[selectedRole].cls==='dps'? '(DPSは外周優先)':'(TH=内周優先)');
+  setMsg(`塔が出現。あなたの担当は ${myAssign==='outer'?'外周':'内周'} ${priorityNote}`);
+  // build choices: for every block, render its outer/inner slots that exist
+  const choices=[];
+  Object.keys(outerCount).forEach(b=>{
+    const oc=outerCount[b];
+    for(let i=0;i<2;i++){
+      const ring = i<oc? 'outer':'inner';
+      const rad = ring==='outer'? R_OUT : R_IN;
+      const angle = BLOCK_ANGLE[b] + (i===0? -SLOT_OFFSET: SLOT_OFFSET);
+      choices.push({id:b+'_'+ring+'_'+i, angle, r:rad, label:null, block:b, ring});
+    }
+  });
+  // any slot in my block matching my assigned ring is a valid (interchangeable) answer
+  const myBlock=finalBlock[selectedRole];
+  const correctIds = choices.filter(c=>c.block===myBlock && c.ring===myAssign).map(c=>c.id);
+  await new Promise(resolve=>{
+    askChoice('自分の塔はどれ？(外周/内周のブロック配置を見て判断)', choices, correctIds, timeLimitMs, ()=>resolve());
+  });
+  clearTimer();
+  // snap all players to towers
+  const finalBlockCount2={A:0,B:0,C:0,D:0};
+  const blockOrder={A:[],B:[],C:[],D:[]};
+  Object.keys(finalBlock).forEach(r=>blockOrder[finalBlock[r]].push(r));
+  Object.keys(blockOrder).forEach(b=>{
+    blockOrder[b].forEach((r,idx)=>{
+      const ring = towerAssign[r];
+      const rad = ring==='outer'? R_OUT: R_IN;
+      const angle = BLOCK_ANGLE[b] + (idx===0? -SLOT_OFFSET: SLOT_OFFSET);
+      moveTokenAnimated(r, angle, rad, 700);
+    });
+  });
+  await wait(900);
+
+  // Phase 4: comet marathon (GG pattern)
+  document.getElementById('phaseLabel').textContent='フェーズ4: 隕石マラソン (GGパターン)';
+  const PULSES=4, STEP=45;
+  const h1=cometRoles[0], h2=cometRoles[1];
+  let baseAngle1=tokens[h1].angle, baseAngle2=tokens[h2].angle;
+  if(iAmComet){
+    const myBase = selectedRole===h1? baseAngle1: baseAngle2;
+    const otherRole = selectedRole===h1? h2: h1;
+    const otherBase = selectedRole===h1? baseAngle2: baseAngle1;
+    setMsg('あなたはマーカー持ち：1歩ずつ半周分、外周の次の塔へタップで移動');
+    for(let i=1;i<=PULSES;i++){
+      const targetAngle = myBase + STEP*i*Math.sign(1);
+      const correctId='step';
+      const decoy1 = myBase + STEP*(i-1); // previous spot (wrong: already resolved)
+      const decoy2 = myBase - STEP*i; // wrong direction
+      const choices=[
+        {id:'step', angle:targetAngle, r:R_OUT, label:(i)+''},
+        {id:'back', angle:decoy1, r:R_OUT, label:'✕'},
+        {id:'rev', angle:decoy2, r:R_OUT, label:'✕'},
+      ];
+      await new Promise(resolve=>{
+        askChoice(`隕石${i}/${PULSES}: 次の外周へ移動！`, choices, 'step', timeLimitMs, (ok)=>{
+          if(ok) moveTokenAnimated(selectedRole, targetAngle, R_OUT, 500);
+          resolve();
+        });
+      });
+      clearTimer();
+      // auto move the other comet holder mirrored
+      const otherTarget = otherBase + STEP*i;
+      moveTokenAnimated(otherRole, otherTarget, R_OUT, 500);
+      await wait(650);
+    }
+  } else {
+    setMsg('あなたは塔をキープ。マーカー持ちが半周ずつ移動するのを見ながら位置を維持');
+    for(let i=1;i<=PULSES;i++){
+      moveTokenAnimated(h1, baseAngle1 + STEP*i, R_OUT, 500);
+      moveTokenAnimated(h2, baseAngle2 + STEP*i, R_OUT, 500);
+      await new Promise(resolve=>{
+        askChoice(`隕石${i}/${PULSES}: 自分の塔をキープ！(タップで確認)`, [
+          {id:'hold', angle:tokens[selectedRole].angle, r:tokens[selectedRole].r, label:'keep'}
+        ], 'hold', timeLimitMs, ()=>resolve());
+      });
+      clearTimer();
+      await wait(650);
+    }
+  }
+
+  // result
+  document.getElementById('battleScreen').hidden=true;
+  document.getElementById('resultScreen').hidden=false;
+  document.getElementById('finalScore').textContent=score+'/'+total;
+  const pct = total? Math.round(score/total*100):0;
+  const verdictEl=document.getElementById('finalVerdict');
+  if(pct>=90){ verdictEl.textContent='お見事！本番でも問題なさそうです。'; verdictEl.style.color='var(--good)'; }
+  else if(pct>=60){ verdictEl.textContent='惜しい！もう数回繰り返して精度を上げましょう。'; verdictEl.style.color='var(--warn)'; }
+  else{ verdictEl.textContent='カンペを見直してから再挑戦してみましょう。'; verdictEl.style.color='var(--bad)'; }
+}
+
+function resolveComets(cometArr){
+  const finalB={};
+  Object.keys(ROLES).forEach(r=>finalB[r]=ROLES[r].block);
+  const swapBlocks=(b1,b2)=>{
+    Object.keys(finalB).forEach(r=>{
+      if(finalB[r]===b1) finalB[r]=b2;
+      else if(finalB[r]===b2) finalB[r]=b1;
+    });
+  };
+  const claimed={A:false,C:false};
+  cometArr.forEach(role=>{
+    const cur=finalB[role];
+    if(cur==='A'){ claimed.A=true; return; }
+    if(cur==='C'){ claimed.C=true; return; }
+    if(cur==='B'){
+      const target = !claimed.A? 'A' : 'C';
+      swapBlocks('B', target); claimed[target]=true;
+    } else if(cur==='D'){
+      const target = !claimed.C? 'C' : 'A';
+      swapBlocks('D', target); claimed[target]=true;
+    }
+  });
+  return finalB;
+}
+function generateTowerPattern(){
+  // A/C always hold a comet-marker holder, who must always have an outer tower available,
+  // so a block with 0 outer towers may only ever land on B or D.
+  const templates=[[2,2,1,1],[2,1,1,1],[2,2,1,0]];
+  const counts=pick(templates);
+  const outerCount={};
+  if(counts.includes(0)){
+    const rest=shuffle(counts.filter(c=>c!==0));
+    const zeroBlock=pick(['B','D']);
+    const otherBD=zeroBlock==='B'?'D':'B';
+    const acBlocks=shuffle(['A','C']);
+    outerCount[zeroBlock]=0;
+    outerCount[acBlocks[0]]=rest[0];
+    outerCount[acBlocks[1]]=rest[1];
+    outerCount[otherBD]=rest[2];
+  } else {
+    const blocks=shuffle(['A','B','C','D']);
+    const sc=shuffle(counts);
+    blocks.forEach((b,i)=>outerCount[b]=sc[i]);
+  }
+  return outerCount;
+}
+function assignTowers(finalB, cometArr, outerCount){
+  const blocks={A:[],B:[],C:[],D:[]};
+  Object.keys(finalB).forEach(r=>blocks[finalB[r]].push(r));
+  const assignment={};
+  Object.keys(blocks).forEach(b=>{
+    const members=blocks[b];
+    const scored=members.map(r=>({r, score: cometArr.includes(r)?3:(ROLES[r].cls==='dps'?2:1)}));
+    scored.sort((a,c)=>c.score-a.score);
+    const oc=outerCount[b];
+    scored.forEach((item,idx)=>{ assignment[item.r]= idx<oc? 'outer':'inner'; });
+  });
+  return assignment;
+}
+</script>
+</body>
+</html>
