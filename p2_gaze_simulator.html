@@ -11,7 +11,11 @@
     * トールダン位置はA(北外周)固定(ユーザーPT準拠。ARUTORAは「中央に再出現」とも記載あり、要実戦確認)
     * 邪眼はA以外の7方向(マーカー上・外周)から一様抽選。実際は「角度的には3パターン」との情報(ARUTORA)
       だが詳細不明のため、練習網羅のため全方向から出題。
-    * プレイヤー位置はフィールド内ランダム(実戦の突進処理中の立ち位置は再現しない)。
+    * プレイヤー位置は「外周に到達済み」を前提とし、マーカーの淵の時計回り側か
+      反時計回り側に立つ(攻略ブログ準拠: 安置=マーカーから外周の白い目盛り3目盛り分ズレた位置。
+      王(A)と邪眼のマーカーは除外)。
+    * 実戦手順(攻略ブログ準拠): まず自分の目の前の外周を確認→何もなければ外周向き→
+      王か邪眼がいたら真横→その真横側にもう片方がいたら反対の真横。
     * 突進(ゼフィラン)・剣マーカー・頭割りは対象外(視線の向き判断のみ)。
 -->
 <html lang="ja">
@@ -67,7 +71,7 @@
 </head>
 <body>
 <h1>絶竜詩篇 P2 聖杖(前半) 視線(邪竜の眼光) 練習</h1>
-<p class="sub">盤面をタップ＝その方向を向く。正面±90°未満に「目」があるとアウト(真横はセーフ)。</p>
+<p class="sub">自分は外周のマーカー淵(時計回り側/反時計回り側)に到達済み。盤面をタップ＝その方向を向く。正面±90°未満に「目」があるとアウト(真横はセーフ)。</p>
 
 <div class="card" id="setupCard">
   <h2>モード</h2>
@@ -92,9 +96,10 @@
     <summary>カンペ(処理のコツ)</summary>
     <p class="kanpe">
       ・視線判定は<b>自分の正面±90°未満</b>に目があるとアウト。背を向ける必要はなく、<b>視界(正面半円)から外す</b>だけでよい。真横(90°)はセーフだが実戦では少し余裕を。<br>
-      ・コツ: <b>王(A)と邪眼の「間」ではなく「外側」を向く</b>。2つの目を結んだ線より反対側へ体を向けるイメージ。<br>
-      ・王と邪眼が自分を挟んで正反対にいる時(例: 王=A、邪眼=C、自分がその線上)は<b>真横(東西)を向く</b>しかない。一番事故りやすい形。<br>
-      ・このシミュの仮モデル: トールダン=A固定/邪眼=他7方向からランダム/判定=正面90°未満アウト。実戦と違う点があれば要調整。
+      ・実戦手順(攻略ブログ準拠): 王と邪眼を一度に探すのではなく、<b>まず自分の目の前の外周を確認</b>。何もいなければ<b>そのまま外周を向く</b>。どちらかがいたら<b>真横を向く</b>。さらにその真横側にもう片方がいたら<b>反対側の真横</b>を向く。<br>
+      ・判定は視線の出元との<b>距離で時間差</b>が出る。「竜の邪眼 DODGE」「邪竜の眼光 DODGE」の<b>両方のログを確認してから</b>動くこと(1発目を避けて振り向いて2発目に当たる事故防止)。<br>
+      ・立ち位置は安置(マーカーの淵の<b>時計回り側/反時計回り側</b>)。カメラで向きを調整し、WとSキーのみで自機の向きを確定させると安定。<br>
+      ・このシミュの仮モデル: トールダン=A固定/邪眼=他7方向からランダム/自分=外周マーカー淵(時計・反時計側ランダム)/判定=正面90°未満アウト。実戦と違う点があれば要調整。
     </p>
   </details>
   <button class="startBtn" id="startBtn">スタート</button>
@@ -119,6 +124,9 @@
 // ---------- 定数 ----------
 const R_FIELD = 150;      // フィールド半径
 const R_EYE   = 150;      // 目の出現半径(外周)
+const R_MK    = 132;      // マーカーの中心半径(外周沿い)
+const MK_R    = 12;       // マーカー円の描画半径
+const EDGE_OFF= 10;       // マーカー淵オフセット(度): 淵の時計/反時計側に立つ
 const ARC_R   = 60;       // セーフ扇の描画半径
 // マーカー: 角度は SVG系(0°=東, 90°=南, -90°=北)
 const MARKERS = [
@@ -141,8 +149,12 @@ function bearing(p1,p2){ return Math.atan2(p2.y-p1.y, p2.x-p1.x)*180/Math.PI; }
 // ---------- ラウンド抽選 ----------
 function drawRound(){
   const eyeMk = MARKERS.filter(m=>m.id!=='A')[rand(7)];        // 邪眼: A以外の7方向
-  const player = { ang: Math.random()*360, r: 40 + Math.random()*95 }; // フィールド内ランダム
-  const pP = pos(player.ang, player.r);
+  // 自分: 外周に到達済み。王(A)と邪眼のマーカーを除いたマーカーの淵、
+  // 時計回り側か反時計回り側に立つ(攻略ブログの安置=マーカーから外周3目盛りズレ)。
+  const cand = MARKERS.filter(m=>m.id!=='A' && m.id!==eyeMk.id);
+  const pMk = cand[rand(cand.length)];
+  const side = rand(2)===0 ? 1 : -1;   // +1=時計回り側, -1=反時計回り側(SVG系: 角度増加=時計回り)
+  const pP = pos(pMk.ang + side*EDGE_OFF, R_MK);
   const pT = pos(THORDAN_ANG, R_EYE);
   const pE = pos(eyeMk.ang, R_EYE);
   const bT = bearing(pP, pT);   // 王への方位
@@ -153,7 +165,7 @@ function drawRound(){
   const mid = bT + signedDiff(bT, bE)/2;      // 2方位の中間(最短側)
   const safeCenter = mid + 180;               // その正反対
   const safeHalf = (180 - delta)/2;           // 片側幅(deltaが180に近いほど狭い)
-  return { eyeMk, pP, pT, pE, bT, bE, safeCenter, safeHalf };
+  return { eyeMk, pMk, side, pP, pT, pE, bT, bE, safeCenter, safeHalf };
 }
 // 判定: 向きfacingがセーフか(真横=90°ちょうどはセーフ。浮動小数の揺れだけ許容)
 function isSafe(facing, R){
@@ -202,8 +214,11 @@ function drawField(R){
   svg.innerHTML='';
   svg.appendChild(el('circle',{cx:0,cy:0,r:R_FIELD,fill:'#1a2233',stroke:'#3a4160','stroke-width':2}));
   MARKERS.forEach(m=>{
-    const p=pos(m.ang, R_FIELD-14);
+    const p=pos(m.ang, R_MK);
     const isNum = '1234'.includes(m.id);
+    const isMine = m.id===R.pMk.id;
+    svg.appendChild(el('circle',{cx:p.x,cy:p.y,r:MK_R,fill:'none',
+      stroke:isMine?'#5b8cff':'#3a4160','stroke-width':isMine?2:1.5}));
     svg.appendChild(el('text',{x:p.x,y:p.y+4,'text-anchor':'middle','font-size':12,
       fill:isNum?'#7a84a8':'#aab4d8'}, m.id));
   });
@@ -234,6 +249,13 @@ function drawSafeArc(R){
   svg.appendChild(el('path',{d:wedgePath(R,R.safeCenter,halfVis,ARC_R),
     fill:'rgba(62,207,122,0.30)',stroke:'#3ecf7a','stroke-width':1.5,'pointer-events':'none'}));
   drawFacingArrow(R, R.safeCenter, '#3ecf7a'); // 中心向き矢印
+}
+// アウト扇: 王/邪眼それぞれの方位±90°(その向きを向くと視線を見てしまう範囲)
+function drawDangerArcs(R){
+  svg.appendChild(el('path',{d:wedgePath(R,R.bT,90,ARC_R),
+    fill:'rgba(255,91,107,0.20)',stroke:'#ff5b6b','stroke-width':1,'stroke-dasharray':'4 3','pointer-events':'none'}));
+  svg.appendChild(el('path',{d:wedgePath(R,R.bE,90,ARC_R),
+    fill:'rgba(255,216,77,0.18)',stroke:'#ffd84d','stroke-width':1,'stroke-dasharray':'4 3','pointer-events':'none'}));
 }
 function drawFacingArrow(R, facingDeg, color){
   const a=deg2rad(facingDeg);
@@ -297,21 +319,23 @@ function judge(facing){
   if(facing===null){
     detail='時間切れ！';
   }else{
-    drawFacingArrow(cur, facing, isSafe(facing,cur) ? '#3ecf7a' : '#ff5b6b');
     ok=isSafe(facing,cur);
     if(!ok){
       const sawT=angDiff(facing,cur.bT)<90, sawE=angDiff(facing,cur.bE)<90;
       detail='正面に ' + [sawT?'王(トールダン)':null, sawE?'邪眼':null].filter(Boolean).join(' と ') + ' が入った';
     }
   }
+  if(!ok) drawDangerArcs(cur);  // ミス時は王(赤)/邪眼(黄)のアウト範囲もオーバーレイ
   drawSafeArc(cur); // 答え合わせとしてセーフ扇を表示
+  if(facing!==null) drawFacingArrow(cur, facing, ok ? '#3ecf7a' : '#ff5b6b');
   if(ok){ score++; $('msg').innerHTML='<span class="ok">セーフ！</span> 視線を回避。'; }
   else{
-    misses.push(`R${roundIdx}: 邪眼=${cur.eyeMk.id} / ${detail}`);
-    $('msg').innerHTML=`<span class="ng">アウト！</span> ${detail}。緑の扇がセーフだった。`;
+    misses.push(`R${roundIdx}: 自分=${cur.pMk.id}の${cur.side>0?'時計回り':'反時計回り'}側 / 邪眼=${cur.eyeMk.id} / ${detail}`);
+    $('msg').innerHTML=`<span class="ng">アウト！</span> ${detail}。`
+      +'<span style="color:#ff5b6b">赤=王を見る向き</span> / <span style="color:#ffd84d">黄=邪眼を見る向き</span> / <span class="ok">緑=セーフ</span>。';
   }
   $('scoreLabel').textContent=`スコア ${score}`;
-  setTimeout(nextRound, 1800);
+  setTimeout(nextRound, ok ? 1800 : 3000); // ミス時はオーバーレイを確認する時間を長めに
 }
 
 function showResult(){
