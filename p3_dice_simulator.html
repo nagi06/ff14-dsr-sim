@@ -19,7 +19,8 @@
   ・塔を出したらその場を離れる(残ると自分の塔=踏めない塔を踏む)。1番は塔①設置後すぐA側で待機、
     2番は塔②出現と同時に頭割りへ、3番は塔③出現後すぐA側へ。
   ・塔は数字順(1→2→3)に時間差で出現。自分の塔は踏めない(耐性低下)ので別の数字が踏む。
-  ・塔を出したらその場を離れる(残ると踏めない塔を踏む)。1番は塔①後A側待機→2番塔担当or頭割り、
+  ・塔を出したらその場を離れる(残ると踏めない塔を踏む)。ただし頭割り1は1番がまだ塔にいるタイムライン
+    (頭割りは常に5人)。1番は連旋1を避けてからA側待機→2番塔担当or頭割り2、
     2番は塔②出現と同時に頭割りへ、3番は塔③出現後すぐA側へ。
   ・塔踏み担当(モデル化した取り決め):
     - 1番の塔(西/南/東) → 3番が「自分が後で塔を出すのと同じスロット」を踏む。
@@ -147,7 +148,7 @@
           ・ミックス → 1番/3番の各3人に イルーシブ×1・スパイン×1・HJ×1、2番の2人に イルーシブ×1・スパイン×1。<br>
           <b>ダイブの意味＝塔が出る位置</b>：スパイン=前方(→<b>ボスを向く</b>)／イルーシブ=後方(→<b>ボスに背を向ける</b>)／ハイジャンプ=真上(向き自由)。<br>
           <b>位置(ミックス)</b>：イルーシブ=<b>マーカーD側(西)</b>固定、スパイン=<b>マーカーB側(東)</b>固定、ハイジャンプ=その中間(南)。<br>
-          <b>塔を出したら離れる</b>：塔の位置にとどまると自分の塔(踏めない塔)を踏んでしまう。塔を出したら仕事は終わり、<b>すぐその場を離れてボス正面(A側)へ</b>(1番=A側で2番の塔を待つ/2番=頭割りへ/3番=A側へ)。<br>
+          <b>塔を出したら離れる</b>：塔の位置にとどまると自分の塔(踏めない塔)を踏んでしまう。ただし頭割り1の時点では<b>1番はまだ塔の位置</b>(頭割りは常に5人)。1番は<b>連旋1を避けてからA側へ</b>離れて2番の塔を待つ。2番=塔②が出たら頭割りへ/3番=塔③が出たらA側へ。<br>
           <b>竜騎士の分身</b>：塔着弾後に出現し、最も近い1名へ直線攻撃を詠唱。<b>塔を踏んだ本人が「塔の外周側」に立って直線を外に誘導</b>する(味方に当てない)。<br>
           <b>牙尾/尾牙の連旋(2回・各回独立抽選)</b>：ボス正面の1名に頭割り→<br>
           ・牙尾=足元範囲→円範囲(避け:<b>外→内</b>) ・尾牙=円範囲→足元範囲(避け:<b>内→外</b>)。<br>
@@ -902,23 +903,7 @@ async function startRun(){
   ['W','S','E'].forEach(s=> drawTower(WSE_ANGLE[s], R_MID, '塔①'));
   Object.keys(tokens).forEach(r=> drawFacingArrow(r, null)); // 着弾したので矢印は消す
   await wait(BEAT_MS*0.6);
-  // 塔を出したらその場を離れる(残ると自分の塔=踏めない塔を踏んでしまう)
-  if(myNum===1){
-    const mySlot1 = slot1[selectedRole];
-    const choices=[
-      {id:'stay', angle:WSE_ANGLE[mySlot1], r:R_MID, label:'その場で待つ'},
-      {id:'north', angle:0, r:R_WAIT, label:'ボス正面(A側)へ'},
-    ];
-    await ask('塔を出したあなたは？', choices, 'north',
-      '塔の位置にとどまると自分の塔(踏めない塔)を踏んでしまう。塔を出す仕事は終わりなので、ボス正面(A側)へ離れて2番の塔を待つ');
-  } else {
-    setMsg('1番は塔を出す仕事が終わったので、その場を離れてボス正面(A側)へ…');
-    await wait(BEAT_MS);
-  }
-  group1.forEach((r,i)=> moveTokenAnimated(r, (i-(group1.length-1)/2)*10, R_WAIT, MOVE_MS));
-  applySeparation(MOVE_MS);
-  await wait(MOVE_MS+200);
-  setMsg('頭割り着弾！(2番+3番の5人受け) 続けて範囲攻撃…');
+  setMsg('頭割り着弾！(2番+3番の5人受け。1番はまだ自分の塔の位置) 続けて範囲攻撃…');
   await wait(BEAT_MS*0.7);
   const first1 = FIRST_SAFE[cast1];
   await askInOutP(`${CAST_JP[cast1]}: どう動く？(内→外/外→内)`, first1,
@@ -947,12 +932,18 @@ async function startRun(){
       await askFacingQ('塔を正しく置くための向きは？', myJump, fExplain);
     }
   } else {
-    setMsg('1番のあなたは塔①を出し終えた。3番の塔踏みと直線誘導を待つ(次は2番の塔担当か頭割り合流)。');
-    await wait(BEAT_MS*1.5);
+    // 1番: 連旋を避けたら塔の位置を離れる(とどまると3番が踏みに来る自分の塔を踏んでしまう)
+    const mySlot1 = slot1[selectedRole];
+    const choices=[
+      {id:'stay', angle:WSE_ANGLE[mySlot1], r:R_MID, label:'その場で待つ'},
+      {id:'north', angle:0, r:R_WAIT, label:'ボス正面(A側)へ'},
+    ];
+    await ask('連旋を避けた1番のあなたは？', choices, 'north',
+      '塔の位置にとどまると自分の塔(踏めない塔)を踏んでしまう。3番が踏みに来る前にボス正面(A側)へ離れて、2番の塔に備える');
   }
   group3.forEach(r=> moveTokenAnimated(r, WSE_ANGLE[slot3[r]], R_MID, MOVE_MS));
   group2.forEach(r=> moveTokenAnimated(r, NWNE_ANGLE[north2[r]], R2, MOVE_MS));
-  group1.forEach((r,i)=> moveTokenAnimated(r, (i-(group1.length-1)/2)*10, R_WAIT, MOVE_MS)); // 1番はA側待機に戻る
+  group1.forEach((r,i)=> moveTokenAnimated(r, (i-(group1.length-1)/2)*10, R_WAIT, MOVE_MS)); // 1番は塔を離れてA側待機へ
   applySeparation(MOVE_MS);
   await wait(MOVE_MS+200);
   if(patternUsed==='mixed'){
