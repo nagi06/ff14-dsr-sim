@@ -38,7 +38,7 @@
   ・ゲイルスコグルは省略。頭割り・直線の当たり判定/ダメージは演出のみ。
   ・塔の出現位置は担当者の立ち位置スロット(西/南/東/北西/北東)に固定(前後のずれは表現しない)。
   ・4塔(ダークドラゴンダイブ)のペア配置・調整優先度は記事ベースの仮モデル(PTマクロ確定後に精緻化予定)。
-  ・ソウルテザーの線は必ずタンクが取る前提(線取りの奪い合いは省略)。
+  ・ソウルテザーの線は必ずタンクが取る前提(線取りの奪い合いは省略)。PT固定: MT=ボス線/ST=分身線(2026-07-12ユーザー確定)。
 -->
 <style>
   :root{
@@ -161,7 +161,7 @@
           <b>時系列</b>：<br>
           ①1番が西/南/東に散開して塔設置(2番3番はボス正面で頭割り1) → ②連旋1回目を避けつつ<b>3番が1番の塔を踏む</b>(自分が後で塔を出すスロットと同じ場所)＋直線誘導。並行して<b>2番は北へ移動して塔設置</b>(左=4-A間/右=A-1間、タゲサから離れたA寄り) →③2番の塔を<b>西/東にいた1番</b>が踏む(西→左塔/東→右塔)＋直線誘導→すぐ頭割り2に合流。中間(南)の1番は踏まずに頭割り2へ。2番も設置後すぐ頭割り2へ → ④連旋2回目 → ⑤<b>3番がその場で塔設置</b>(ミックスは向き注意) → ⑥3番の塔を<b>2番(左右)＋頭割りにいた1番(真ん中)</b>が踏む＋直線誘導。真ん中の1番のルートは<b>尾牙=ボス下を中央突破／牙尾=円周沿い</b>。<br>
           <b>4塔(ダークドラゴンダイブ)</b>：斜め4方向にペアで散開。固定役(H1/H2/D3/D4)は動かず、調整役(MT/ST/D1/D2)がMT&gt;ST&gt;D1&gt;D2の優先度で 自枠&gt;左&gt;右&gt;対角 の順に調整。塔の柱の数=必要人数(1〜4・合計8)。<br>
-          <b>ソウルテザー</b>：MT=分身線(無敵受け)、ST=ボス線(激減受け)、他6人は南に集合して待機。
+          <b>ソウルテザー</b>：<b>MT=ボス線固定、ST=分身線固定</b>(PT取り決め)、他6人は南に集合して待機。無敵/バフの割り振りはPTで確認。
           <div class="src">当たり判定・ダメージは演出のみの簡略モデルです。必ず自分のPTの取り決めと照らし合わせてください。</div>
         </div>
       </details>
@@ -1197,7 +1197,7 @@ async function startRun(){
 
   // ---- フェーズ12: ソウルテザー ----
   document.getElementById('phaseLabel').textContent='フェーズ12: ソウルテザー';
-  setMsg('ボスと分身から線が伸びる…MT=分身線(無敵)、ST=ボス線(激減)、他は南集合');
+  setMsg('ボスと分身から線が伸びる…MT=ボス線固定、ST=分身線固定、他は南集合');
   const cloneDir = pick(DIAG_POS);
   await wait(BEAT_MS*0.6);
   const cloneP = polar(DIAG_ANGLE[cloneDir], R_OUT);
@@ -1219,13 +1219,13 @@ async function startRun(){
   ];
   let myTetherAnswer;
   let tetherExplain;
-  if(selectedRole==='MT'){ myTetherAnswer='clone'; tetherExplain='MTは分身の線(無敵受け)なので分身の近くへ'; }
-  else if(selectedRole==='ST'){ myTetherAnswer='boss'; tetherExplain='STはボスの線(激減受け)なのでボス直下へ'; }
+  if(selectedRole==='MT'){ myTetherAnswer='boss'; tetherExplain='MTはボスの線固定なのでボス直下へ'; }
+  else if(selectedRole==='ST'){ myTetherAnswer='clone'; tetherExplain='STは分身の線固定なので分身の近くへ'; }
   else { myTetherAnswer='south'; tetherExplain='MT/ST以外は南に集合して待機'; }
   await ask('ソウルテザー：あなたの立ち位置は？', tetherChoices, myTetherAnswer, tetherExplain);
   Object.keys(ROLES).forEach(r=>{
-    if(r==='MT') moveTokenAnimated(r, DIAG_ANGLE[cloneDir], R_OUT*0.72, MOVE_MS);
-    else if(r==='ST') moveTokenAnimated(r, 0, 35, MOVE_MS);
+    if(r==='ST') moveTokenAnimated(r, DIAG_ANGLE[cloneDir], R_OUT*0.72, MOVE_MS);
+    else if(r==='MT') moveTokenAnimated(r, 0, 35, MOVE_MS);
     else moveTokenAnimated(r, 180, R_MID, MOVE_MS);
   });
   applySeparation(MOVE_MS);
@@ -1233,7 +1233,7 @@ async function startRun(){
 
   // 着弾演出
   document.getElementById('phaseLabel').textContent='ソウルテザー着弾';
-  setMsg('分身線(無敵)・ボス線(激減)が着弾…');
+  setMsg('ボス線(MT)・分身線(ST)が着弾…');
   await wait(BEAT_MS*0.8);
   tetherG.remove();
   await wait(BEAT_MS*0.6);
