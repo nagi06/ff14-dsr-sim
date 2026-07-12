@@ -37,7 +37,9 @@
   簡略化した点:
   ・ゲイルスコグルは省略。頭割り・直線の当たり判定/ダメージは演出のみ。
   ・塔の出現位置は担当者の立ち位置スロット(西/南/東/北西/北東)に固定(前後のずれは表現しない)。
-  ・4塔(ダークドラゴンダイブ)のペア配置・調整優先度は記事ベースの仮モデル(PTマクロ確定後に精緻化予定)。
+  ・4塔(ダークドラゴンダイブ)はPTマクロ確定(2026-07-12): ペア=北西D3/MT・北東ST/D4・南西H1/D1・南東D2/H2、
+    遠隔位置固定＆ゲイル誘導(ゲイルは表示省略)、調整優先度=時計回り>反時計>対角。
+    調整役同士の競合順(MT>ST>D1>D2)はマクロ未記載の仮ルール。テザー後: タンク強着弾後バースト、AA南向き(表示省略)。
   ・ソウルテザーの線は必ずタンクが取る前提(線取りの奪い合いは省略)。PT固定: MT=ボス線/ST=分身線(2026-07-12ユーザー確定)。
 -->
 <style>
@@ -160,7 +162,8 @@
           頭割り1回目=<b>2番+3番の5人</b>／2回目=<b>1番+2番の5人</b>。頭割り位置は<b>ボス正面Aマーカー側のタゲサ淵(タゲサを踏まない=必ず外側)</b>。<br>
           <b>時系列</b>：<br>
           ①1番が西/南/東に散開して塔設置(2番3番はボス正面で頭割り1) → ②連旋1回目を避けつつ<b>3番が1番の塔を踏む</b>(自分が後で塔を出すスロットと同じ場所)＋直線誘導。並行して<b>2番は北へ移動して塔設置</b>(左=4-A間/右=A-1間、タゲサから離れたA寄り) →③2番の塔を<b>西/東にいた1番</b>が踏む(西→左塔/東→右塔)＋直線誘導→すぐ頭割り2に合流。中間(南)の1番は踏まずに頭割り2へ。2番も設置後すぐ頭割り2へ → ④連旋2回目 → ⑤<b>3番がその場で塔設置</b>(ミックスは向き注意) → ⑥3番の塔を<b>2番(左右)＋頭割りにいた1番(真ん中)</b>が踏む＋直線誘導。真ん中の1番のルートは<b>尾牙=ボス下を中央突破／牙尾=円周沿い</b>。<br>
-          <b>4塔(ダークドラゴンダイブ)</b>：斜め4方向にペアで散開。固定役(H1/H2/D3/D4)は動かず、調整役(MT/ST/D1/D2)がMT&gt;ST&gt;D1&gt;D2の優先度で 自枠&gt;左&gt;右&gt;対角 の順に調整。塔の柱の数=必要人数(1〜4・合計8)。<br>
+          <b>4塔(ダークドラゴンダイブ)</b>：斜め4方向にペアで散開(北西=D3/MT、北東=ST/D4、南西=H1/D1、南東=D2/H2)。<b>遠隔(H1/H2/D3/D4)は位置固定＆ゲイル誘導</b>、調整役(MT/ST/D1/D2)が<b>自枠&gt;時計回り&gt;反時計&gt;対角</b>の順に調整(調整役同士の優先はMT&gt;ST&gt;D1&gt;D2の仮ルール)。塔の柱の数=必要人数(1〜4・合計8)。<br>
+          <b>タンク強着弾後</b>：バーストタイム。MTはボスのAAを【南】向きに誘導。<br>
           <b>ソウルテザー</b>：<b>MT=ボス線固定、ST=分身線固定</b>(PT取り決め)、他6人は南に集合して待機。無敵/バフの割り振りはPTで確認。
           <div class="src">当たり判定・ダメージは演出のみの簡略モデルです。必ず自分のPTの取り決めと照らし合わせてください。</div>
         </div>
@@ -767,7 +770,7 @@ function drawTowerCounts(){
   DIAG_POS.forEach((p,i)=> counts[p]=combo[i]);
   return counts;
 }
-// 決定的な塔割り当てアルゴリズム: 固定役がまず自ペアの塔を1確保→調整役がMT>ST>D1>D2の順に 自枠>左>右>対角 で埋める
+// 決定的な塔割り当てアルゴリズム: 固定役がまず自ペアの塔を1確保→調整役がMT>ST>D1>D2(仮)の順に 自枠>時計>反時計>対角 で埋める(PTマクロ準拠)
 function assignDiagTowers(counts){
   const need = Object.assign({}, counts);
   const assign = {}; // role -> position
@@ -778,7 +781,8 @@ function assignDiagTowers(counts){
   });
   ADJ_PRIORITY.forEach(role=>{
     const home = HOME_OF_ADJ[role];
-    const order = [home, DIAG_CCW[home], DIAG_CW[home], DIAG_OPP[home]];
+    // PTマクロ: 調整優先度は 自枠 > 時計回り > 反時計 > 対角
+    const order = [home, DIAG_CW[home], DIAG_CCW[home], DIAG_OPP[home]];
     for(const p of order){
       if(need[p]>0){ assign[role]=p; need[p]-=1; return; }
     }
@@ -1179,7 +1183,7 @@ async function startRun(){
   const towerChoices = DIAG_POS.map(p=>({id:p, angle:DIAG_ANGLE[p], r:R_OUT, label:DIAG_LABEL[p]+'('+towerCounts[p]+'人)'}));
   const towerExplain = isFixedRole
     ? `固定役(${selectedRole})は動かず、自ペアの塔【${DIAG_LABEL[myTower]}】を踏む`
-    : `4塔は柱の数=必要人数。固定役(H1/H2/D3/D4)は動かず、調整役(MT/ST/D1/D2)がMT>ST>D1>D2の優先度で 自枠>左>右>対角 に調整。あなたは【${DIAG_LABEL[myTower]}】`;
+    : `4塔は柱の数=必要人数。遠隔(H1/H2/D3/D4)は位置固定、調整役(MT/ST/D1/D2)が 自枠>時計回り>反時計>対角 で調整。あなたは【${DIAG_LABEL[myTower]}】`;
   await ask(isFixedRole? '4塔踏み：あなたは動かず自分の塔を踏む' : '4塔踏み：どの塔を踏む？',
     towerChoices, myTower, towerExplain);
   Object.keys(towerAssign).forEach(r=> moveTokenAnimated(r, DIAG_ANGLE[towerAssign[r]], R_OUT, MOVE_MS));
