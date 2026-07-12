@@ -5,16 +5,29 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>絶竜詩篇 P3 ニーズヘッグ「堕天のドラゴンダイブ(サイコロ)」練習シミュレーター</title>
 <!--
-  簡略化した点(このシミュレーターの前提):
-  ・塔の出現位置は固定モデル: 1番塔=西/南/東、2番塔=北西/北東、3番塔=西/南/東(1番と同位置)。
-    実際のゲームでは中心角度やギミック処理でズレることがあるが、練習用に単純化。
-  ・ゲイルスコグル(直線範囲攻撃)は省略。演出・回答ステップとも含まれない。
-  ・2番の立ち位置(散開)は「北西/北東」の2択に簡略化(本来の細かい前後位置は省略)。
-  ・連旋(内側/外側)の判定は「盤面中央寄り/外周寄り」の2択タップのみ。実際の被弾範囲の細かい図形は省略。
-  ・矢印持ち(スパイン/イルーシヴ)の初期固定は「イルーシヴ=西(D)固定、スパイン=東(B)固定」という
-    PT取り決めベースの簡略ルールとして扱う。
+  2026-07-12 ユーザー提供の詳細ルールに基づき全面改修。モデル化のルール:
+  ・サイコロ: 1番×3人/2番×2人/3番×3人を完全ランダム付与。
+  ・ダイブ系デバフは2パターン:
+    - 全員ハイジャンプ: 8人全員HJ。散開はロール優先度(西 H1/MT/ST/D1/D2/D3/D4/H2 東)。
+    - ミックス: 1番と3番の各3人に イルーシブ×1/スパイン×1/HJ×1、2番の2人に イルーシブ×1/スパイン×1。
+  ・ダイブの意味 = 塔が自分のどこに出るか:
+    - スパインダイブ=前方 → ボスを向く必要 / イルーシブダイブ=後方 → ボスに背を向ける / HJ=真上 → 向き自由。
+  ・位置ルール(ミックス): イルーシブ=マーカーD側(西)固定、スパイン=マーカーB側(東)固定、HJ=中間(南)。
+    全員HJ時は優先度で西/南/東(2番は北西/北東)。
+  ・塔は数字順(1→2→3)に時間差で出現。自分の塔は踏めない(耐性低下)ので別の数字が踏む。
+  ・塔踏み担当(モデル化した取り決め):
+    - 1番の塔(西/南/東) → 3番が「自分が後で塔を出すのと同じスロット」を踏む。
+    - 2番の塔(北西/北東) → 初期散開で西にいた1番→北西、東にいた1番→北東。中間(南)の1番は踏まず頭割り2に合流。
+    - 3番の塔(西/南/東) → 北西の2番→西、北東の2番→東、頭割りに行っていた1番→真ん中(南)。
+  ・塔着弾後に竜騎士の分身が出現し最も近い1名へ直線攻撃 → 踏んだ本人が「塔の外周側」に立って外に誘導。
+  ・並行してボスが 牙尾の連旋(頭割り→足元範囲→円範囲) or 尾牙の連旋(頭割り→円範囲→足元範囲) を2回詠唱(各回独立抽選)。
+    頭割り1回目=2番+3番の5人 / 2回目=1番+2番の5人。
+    避け方: 牙尾=外→内、尾牙=内→外。
+  ・真ん中担当の1番が3番塔へ向かうルート: 尾牙=ボス下を中央突破 / 牙尾=円周沿い。
+  簡略化した点:
+  ・ゲイルスコグルは省略。頭割り・直線の当たり判定/ダメージは演出のみ。
+  ・塔の出現位置は担当者の立ち位置スロット(西/南/東/北西/北東)に固定(前後のずれは表現しない)。
   ・4塔(ダークドラゴンダイブ)のペア配置・調整優先度は記事ベースの仮モデル(PTマクロ確定後に精緻化予定)。
-  ・ゲイルスコグルは引き続き省略。
   ・ソウルテザーの線は必ずタンクが取る前提(線取りの奪い合いは省略)。
 -->
 <style>
@@ -76,7 +89,7 @@
 <body>
 <div id="app">
   <h1>絶竜詩篇 P3 ニーズヘッグ「堕天のドラゴンダイブ(サイコロ)」練習シミュレーター</h1>
-  <div class="sub">番号(1/2/3)デバフ＋ジャンプ種別(ハイジャンプ/スパイン↑/イルーシヴ↓)の簡略モデルです</div>
+  <div class="sub">サイコロ(1/2/3)＋ダイブ種別(ハイジャンプ/スパイン/イルーシブ)＋連旋(牙尾/尾牙)の判断練習</div>
 
   <!-- SETUP -->
   <div id="setupScreen">
@@ -85,17 +98,26 @@
       <div class="role-grid" id="roleGrid"></div>
     </div>
     <div class="panel">
+      <h2>ダイブデバフのパターン</h2>
+      <div class="speed-grid" id="patternGrid">
+        <div class="speed-btn selected" data-pattern="random">ランダム</div>
+        <div class="speed-btn" data-pattern="allhigh">全員ハイジャンプ</div>
+        <div class="speed-btn" data-pattern="mixed">ミックス</div>
+      </div>
+      <div class="seconds-hint">ミックス＝1番と3番に イルーシブ/スパイン/ハイジャンプ が1人ずつ、2番に イルーシブ/スパイン が1人ずつ付くパターン。</div>
+    </div>
+    <div class="panel">
       <h2>モード</h2>
       <div class="speed-grid" id="modeGrid">
-        <div class="speed-btn selected" data-mode="review">確認モード<br><span style="font-size:10px;color:var(--dim);">正解を見ながら動きを覚える</span></div>
+        <div class="speed-btn selected" data-mode="review">確認モード<br><span style="font-size:10px;color:var(--dim);">正解を見ながらじっくり覚える</span></div>
         <div class="speed-btn" data-mode="practice">練習モード<br><span style="font-size:10px;color:var(--dim);">制限時間内に自分で判断</span></div>
       </div>
     </div>
     <div class="panel" id="speedPanel">
       <h2 id="speedPanelTitle">確認モードの待ち時間(秒)</h2>
       <div class="seconds-row">
-        <input type="range" id="secondsSlider" min="3" max="60" step="1" value="20">
-        <input type="number" id="secondsInput" min="3" max="120" step="1" value="20">
+        <input type="range" id="secondsSlider" min="3" max="60" step="1" value="30">
+        <input type="number" id="secondsInput" min="3" max="120" step="1" value="30">
         <span>秒</span>
       </div>
       <div class="seconds-hint" id="secondsHint">緑をタップすれば即座に次へ進めます。この秒数は「タップしなかった場合」に自動で次へ進むまでの待ち時間です。</div>
@@ -104,18 +126,23 @@
 
     <div class="panel" style="margin-top:10px;">
       <details>
-        <summary>カンペ(ルール概要・簡略版)を見る</summary>
+        <summary>カンペ(ルール概要)を見る</summary>
         <div class="rules">
-          <b>デバフ抽選</b>：番号1×3人／2×2人／3×3人をランダム付与。ジャンプ種別は全体でハイジャンプ×4・スパイン(↑)×2・イルーシヴ(↓)×2。<b>2番の2人は必ず矢印(スパインorイルーシヴ)持ち</b>。残り2つの矢印は1番/3番のメンバーにランダム。<br>
-          <b>ジャンプ種別の意味</b>：ハイジャンプ＝自分の足元に塔。スパイン(↑)＝前方に塔→ボスを向いて立つ。イルーシヴ(↓)＝後方に塔→ボスに背を向けて立つ。<br>
-          <b>散開優先度(PT取り決め)</b>：西 H1/MT/ST/D1/D2/D3/D4/H2 東(H1が最西優先、H2が最東優先)。同じ役目が複数人いる時はこの順で西から埋める。<b>矢印固定：イルーシヴ→西(D)、スパイン→東(B)</b>。矢印持ちの位置を先に固定し、残りを優先度で埋める。<br>
-          <b>塔の出現(簡略・固定)</b>：1番塔3本＝西(D)・南(C)・東(B)。2番塔2本＝北西寄り・北東寄り。3番塔3本＝西・南・東(1番と同位置)。<br>
-          <b>連旋</b>：「内→外」か「外→内」を開始時に抽選。1回目・2回目でその通り／逆に内外をタップで回答。<br>
-          <b>時系列</b>：①初期散開(1番=西/南/東、他=北に集合) → ②1番着弾(塔3本・連旋1回目) → ③塔踏み1(3番が西/南/東、2番は北西/北東へ散開) → ④2番着弾(塔2本・連旋2回目) → ⑤塔踏み2(初期散開で西/東にいた1番の2人が北西/北東塔、3番は西/南/東へ散開) → ⑥3番着弾(塔3本) → ⑦塔踏み3(2番2人＋南にいた1番1人が優先度順に西/南/東) → ⑧最終配置確認 → ⑨4塔散開(斜め4方向にペアで散開) → ⑩4塔踏み(必要人数抽選・調整役が優先度で調整) → ⑪ソウルテザー(MT=分身線/ST=ボス線/他は南待機) → ⑫リザルト。<br>
-          <b>簡略化した点</b>：塔の詳細な出現角度は固定モデル。ゲイルスコグル(直線範囲)は省略。2番の立ち位置は北西/北東の2択に簡略化。連旋は中央寄り/外周寄りの2択タップで判定。<br>
-          <b>4塔(ダークドラゴンダイブ)</b>：斜め4方向(北東/南東/南西/北西)にペアで散開。固定役(H1/H2/D3/D4)は動かず、調整役(MT/ST/D1/D2)がMT&gt;ST&gt;D1&gt;D2の優先度で 自枠&gt;左&gt;右&gt;対角 の順に空きのある塔へ調整。塔の柱の数=必要人数(1〜4・合計8)。<br>
+          <b>サイコロ(完全ランダム)</b>：1番×3人／2番×2人／3番×3人。塔は数字順(1→2→3)に時間差で出現。<b>自分の塔は踏めない(耐性低下)</b>ので別の数字が処理する。<br>
+          <b>ダイブデバフ(2パターン)</b>：<br>
+          ・全員ハイジャンプ → 散開はロール優先度(西 H1/MT/ST/D1/D2/D3/D4/H2 東)。<br>
+          ・ミックス → 1番/3番の各3人に イルーシブ×1・スパイン×1・HJ×1、2番の2人に イルーシブ×1・スパイン×1。<br>
+          <b>ダイブの意味＝塔が出る位置</b>：スパイン=前方(→<b>ボスを向く</b>)／イルーシブ=後方(→<b>ボスに背を向ける</b>)／ハイジャンプ=真上(向き自由)。<br>
+          <b>位置(ミックス)</b>：イルーシブ=<b>マーカーD側(西)</b>固定、スパイン=<b>マーカーB側(東)</b>固定、ハイジャンプ=その中間(南)。<br>
+          <b>竜騎士の分身</b>：塔着弾後に出現し、最も近い1名へ直線攻撃を詠唱。<b>塔を踏んだ本人が「塔の外周側」に立って直線を外に誘導</b>する(味方に当てない)。<br>
+          <b>牙尾/尾牙の連旋(2回・各回独立抽選)</b>：ボス正面の1名に頭割り→<br>
+          ・牙尾=足元範囲→円範囲(避け:<b>外→内</b>) ・尾牙=円範囲→足元範囲(避け:<b>内→外</b>)。<br>
+          頭割り1回目=<b>2番+3番の5人</b>／2回目=<b>1番+2番の5人</b>。<br>
+          <b>時系列</b>：<br>
+          ①1番が西/南/東に散開して塔設置(2番3番はボス正面で頭割り1) → ②連旋1回目を避けつつ<b>3番が1番の塔を踏む</b>(自分が後で塔を出すスロットと同じ場所)＋直線誘導。並行して<b>2番は北へ移動して塔設置</b> → ③2番の塔を<b>西/東にいた1番</b>が踏む(北西/北東)＋直線誘導→すぐ頭割り2に合流。中間(南)の1番は踏まずに頭割り2へ。2番も設置後すぐ頭割り2へ → ④連旋2回目 → ⑤<b>3番がその場で塔設置</b>(ミックスは向き注意) → ⑥3番の塔を<b>2番(左右)＋頭割りにいた1番(真ん中)</b>が踏む＋直線誘導。真ん中の1番のルートは<b>尾牙=ボス下を中央突破／牙尾=円周沿い</b>。<br>
+          <b>4塔(ダークドラゴンダイブ)</b>：斜め4方向にペアで散開。固定役(H1/H2/D3/D4)は動かず、調整役(MT/ST/D1/D2)がMT&gt;ST&gt;D1&gt;D2の優先度で 自枠&gt;左&gt;右&gt;対角 の順に調整。塔の柱の数=必要人数(1〜4・合計8)。<br>
           <b>ソウルテザー</b>：MT=分身線(無敵受け)、ST=ボス線(激減受け)、他6人は南に集合して待機。
-          <div class="src">実際の座標・タイミングにはランダム要素や細かい前後位置があるため、本ツールは練習用に簡略化したモデルです。必ず自分のPTの取り決めと照らし合わせてください。</div>
+          <div class="src">当たり判定・ダメージは演出のみの簡略モデルです。必ず自分のPTの取り決めと照らし合わせてください。</div>
         </div>
       </details>
     </div>
@@ -176,6 +203,8 @@ const MARKERS = [
   {id:'4', angle:315},
 ];
 const MARK_ANGLE = {}; MARKERS.forEach(m=>MARK_ANGLE[m.id]=m.angle);
+// マーカー色(ゲーム準拠): A/1=赤, B/2=黄, C/3=青, D/4=紫
+const MARKER_COLORS = {A:'#ff5c5c','1':'#ff5c5c', B:'#ffd24d','2':'#ffd24d', C:'#4da6ff','3':'#4da6ff', D:'#c07aff','4':'#c07aff'};
 const R_OUT=170, R_MID=132, R_IN=95, R_MARK=196;
 const MOVE_MS=1000;
 const BEAT_MS=1400;
@@ -184,6 +213,7 @@ function polar(angleDeg,r){
   const rad = angleDeg*Math.PI/180;
   return {x: r*Math.sin(rad), y: -r*Math.cos(rad)};
 }
+function xyToPolar(x,y){ return {angle: Math.atan2(x,-y)*180/Math.PI, r: Math.hypot(x,y)}; }
 function shuffle(arr){
   const a=arr.slice();
   for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
@@ -198,7 +228,7 @@ function svgEl(tag,attrs){
 }
 
 // ---------- setup screen ----------
-let selectedRole=null, timeLimitMs=20000, reviewMode=true;
+let selectedRole=null, timeLimitMs=30000, reviewMode=true, patternSetting='random';
 const roleGrid=document.getElementById('roleGrid');
 Object.keys(ROLES).forEach(id=>{
   const r=ROLES[id];
@@ -213,9 +243,16 @@ Object.keys(ROLES).forEach(id=>{
   };
   roleGrid.appendChild(btn);
 });
+document.querySelectorAll('#patternGrid .speed-btn').forEach(btn=>{
+  btn.onclick=()=>{
+    document.querySelectorAll('#patternGrid .speed-btn').forEach(b=>b.classList.remove('selected'));
+    btn.classList.add('selected');
+    patternSetting = btn.dataset.pattern;
+  };
+});
 const secondsSlider=document.getElementById('secondsSlider');
 const secondsInput=document.getElementById('secondsInput');
-const DEFAULT_SECONDS = {review:20, practice:10};
+const DEFAULT_SECONDS = {review:30, practice:12};
 function setSeconds(sec){
   sec = Math.max(3, Math.min(120, Math.round(sec)));
   timeLimitMs = sec*1000;
@@ -256,7 +293,7 @@ document.getElementById('backBtn').onclick=()=>{
 // ---------- game state ----------
 let svg, score=0, total=0, logEl, timerTimeout;
 let tokens={};
-let numberOf={}, jumpType={}, castOrder=null; // castOrder: 'in'(内→外) or 'out'(外→内)
+let numberOf={}, jumpType={}, patternUsed=null;
 
 function log(text, ok){
   const div=document.createElement('div');
@@ -285,9 +322,9 @@ function initSVG(){
   });
   MARKERS.forEach(m=>{
     const p=polar(m.angle,R_MARK);
-    const isLetter=/[A-D]/.test(m.id);
-    svg.appendChild(svgEl('circle',{cx:p.x,cy:p.y,r:11,fill:isLetter?'#12304a':'#3a2a12',stroke:isLetter?'#5fd0ff':'#ffb14d','stroke-width':1.5}));
-    const t=svgEl('text',{x:p.x,y:p.y+4,fill:isLetter?'#8fe3ff':'#ffcf94','font-size':12,'font-weight':'bold','text-anchor':'middle'});
+    const col=MARKER_COLORS[m.id];
+    svg.appendChild(svgEl('circle',{cx:p.x,cy:p.y,r:11,fill:'#141b2c',stroke:col,'stroke-width':2}));
+    const t=svgEl('text',{x:p.x,y:p.y+4,fill:col,'font-size':12,'font-weight':'bold','text-anchor':'middle'});
     t.textContent=m.id;
     svg.appendChild(t);
   });
@@ -320,6 +357,18 @@ function moveTokenAnimated(role, angle, r, ms){
   tok.g.style.transition = `transform ${ms}ms ease-in-out`;
   tok.g.setAttribute('transform', `translate(${p.x},${p.y})`);
   tok.angle=angle; tok.r=r;
+  // 位置が変わったら向き矢印は一旦消す(意味がずれるため)
+  tok.g.querySelectorAll('.faceArrow').forEach(e=>e.remove());
+}
+// 向き矢印: facing='face'(ボスを向く=中央向き) / 'back'(ボスに背=外周向き)
+function drawFacingArrow(role, facing){
+  const tok=tokens[role]; if(!tok) return;
+  tok.g.querySelectorAll('.faceArrow').forEach(e=>e.remove());
+  if(facing!=='face' && facing!=='back') return;
+  const bearing = facing==='face' ? tok.angle+180 : tok.angle;
+  const sub=svgEl('g',{class:'faceArrow', transform:`rotate(${bearing})`});
+  sub.appendChild(svgEl('path',{d:'M0,-30 L8,-18 L-8,-18 Z', fill:'#ffffff', stroke:'#0a0e18','stroke-width':1}));
+  tok.g.appendChild(sub);
 }
 // 重なり防止: ほぼ同座標のトークン同士を小さな円状に散らして全員見えるようにする(見た目のみ、内部座標は変えない)
 function applySeparation(ms){
@@ -358,6 +407,47 @@ function drawTower(angle, r, label){
   return g;
 }
 function clearTowers(){ svg.querySelectorAll('.towerMark').forEach(el=>el.remove()); }
+// 竜騎士の分身+外周向き直線(誘導成功の見た目)
+function drawCloneLine(angle, r){
+  const p=polar(angle, r);
+  const o=polar(angle, 215);
+  const g=svgEl('g',{class:'cloneMark'});
+  g.appendChild(svgEl('line',{x1:p.x,y1:p.y,x2:o.x,y2:o.y,stroke:'#ff8a5c','stroke-width':12,opacity:0.4,'stroke-linecap':'round'}));
+  g.appendChild(svgEl('circle',{cx:p.x,cy:p.y,r:12,fill:'#33202a',stroke:'#ff8a5c','stroke-width':2}));
+  const t=svgEl('text',{x:p.x,y:p.y+4,fill:'#ffb894','font-size':9,'text-anchor':'middle'});
+  t.textContent='分身';
+  g.appendChild(t);
+  svg.insertBefore(g, svg.querySelector('g')?svg.querySelectorAll('g')[0]:null);
+  return g;
+}
+function clearClones(){ svg.querySelectorAll('.cloneMark').forEach(el=>el.remove()); }
+// 頭割りマーク(ボス正面=北)
+function drawStackMark(){
+  const p=polar(0, 60);
+  const g=svgEl('g',{class:'stackMark'});
+  g.appendChild(svgEl('circle',{cx:p.x,cy:p.y,r:26,fill:'none',stroke:'#ffcc4d','stroke-width':2,'stroke-dasharray':'5,4'}));
+  const t=svgEl('text',{x:p.x,y:p.y-32,fill:'#ffcc4d','font-size':10,'text-anchor':'middle'});
+  t.textContent='頭割り';
+  g.appendChild(t);
+  svg.insertBefore(g, svg.querySelector('g')?svg.querySelectorAll('g')[0]:null);
+  return g;
+}
+function clearStackMark(){ svg.querySelectorAll('.stackMark').forEach(el=>el.remove()); }
+// ルートヒント(確認モード用): 中央突破 or 円周沿い
+function drawRouteHint(route){
+  const g=svgEl('g',{class:'routeHint'});
+  const start=polar(0,60), end=polar(180,R_MID);
+  if(route==='center'){
+    g.appendChild(svgEl('path',{d:`M ${start.x} ${start.y} L 0 0 L ${end.x} ${end.y}`, fill:'none', stroke:'#3ddc84','stroke-width':3,'stroke-dasharray':'7,5',opacity:0.9}));
+  } else {
+    const e=polar(90,R_MID);
+    const s2=polar(20,R_MID);
+    g.appendChild(svgEl('path',{d:`M ${start.x} ${start.y} L ${s2.x} ${s2.y} A ${R_MID} ${R_MID} 0 0 1 ${end.x} ${end.y}`, fill:'none', stroke:'#3ddc84','stroke-width':3,'stroke-dasharray':'7,5',opacity:0.9}));
+  }
+  svg.appendChild(g);
+  return g;
+}
+function clearRouteHint(){ svg.querySelectorAll('.routeHint').forEach(el=>el.remove()); }
 
 function clearTimer(){ clearTimeout(timerTimeout); }
 function runTimer(ms, onExpire){
@@ -433,6 +523,11 @@ function finishChoice(els, chosenId, correctIds, ok){
   });
   if(ok){ score++; setScore(); setMsg('正解！', 'good'); log('正解: '+correctIds.join('/'), true); }
 }
+function ask(promptText, choices, correctId, explain){
+  return new Promise(resolve=>{
+    askChoice(promptText, choices, correctId, timeLimitMs, ()=>resolve(), explain);
+  }).then(v=>{ clearTimer(); svg.querySelectorAll('.slot').forEach(el=>el.remove()); return v; });
+}
 
 // 連旋(内外)の2択。中央寄りリング/外周寄りリングをタップ。
 function askInOut(promptText, correctSide, timeMs, cb, explain){
@@ -458,7 +553,6 @@ function askInOut(promptText, correctSide, timeMs, cb, explain){
     els.push(c);
   });
   // タップ判定は「面」で行う: 半径125より内側=内側、それより外(盤面全体)=外側。
-  // 外側の透明円を先に置き、内側の透明円を上に重ねる(SVGは後勝ちなので内側が優先される)。
   const pickSide=(id)=>{
     if(answered) return;
     const ok = id===correctSide;
@@ -476,8 +570,8 @@ function askInOut(promptText, correctSide, timeMs, cb, explain){
     els.push(hit);
   });
   // ラベル表示(タップ領域の目安)
-  const lin=svgEl('text',{x:0,y:65,'text-anchor':'middle','font-size':11,fill:'var(--dim)'}); lin.textContent='内側(中央寄り)リングをタップ';
-  const lout=svgEl('text',{x:0,y:-185,'text-anchor':'middle','font-size':11,fill:'var(--dim)'}); lout.textContent='外側(外周寄り)リングをタップ';
+  const lin=svgEl('text',{x:0,y:65,'text-anchor':'middle','font-size':11,fill:'var(--dim)',class:'inoutRing'}); lin.textContent='内側(中央寄り)をタップ';
+  const lout=svgEl('text',{x:0,y:-185,'text-anchor':'middle','font-size':11,fill:'var(--dim)',class:'inoutRing'}); lout.textContent='外側(外周寄り)をタップ';
   svg.appendChild(lin); svg.appendChild(lout);
   els.push(lin); els.push(lout);
 
@@ -494,6 +588,11 @@ function askInOut(promptText, correctSide, timeMs, cb, explain){
     });
   }
 }
+function askInOutP(promptText, correctSide, explain){
+  return new Promise(resolve=>{
+    askInOut(promptText, correctSide, timeLimitMs, ()=>resolve(), explain);
+  }).then(v=>{ clearTimer(); svg.querySelectorAll('.inoutRing').forEach(el=>el.remove()); return v; });
+}
 
 function wait(ms){ return new Promise(res=>setTimeout(res, ms)); }
 function waitForResultButton(){
@@ -504,49 +603,78 @@ function waitForResultButton(){
   });
 }
 
-// ---------- debuff assignment logic ----------
-const JUMP_JP = {high:'ハイジャンプ', spine:'スパイン↑', illusive:'イルーシヴ↓'};
-function assignDebuffs(){
-  const roleIds = Object.keys(ROLES);
-  const shuffled = shuffle(roleIds);
-  const numberOf_ = {};
-  shuffled.slice(0,3).forEach(r=>numberOf_[r]=1);
-  shuffled.slice(3,5).forEach(r=>numberOf_[r]=2);
-  shuffled.slice(5,8).forEach(r=>numberOf_[r]=3);
+// ---------- debuff / position logic ----------
+const DIVE_JP = {high:'ハイジャンプ', spine:'スパインダイブ', illusive:'イルーシブダイブ'};
+const CAST_JP = {kiba:'牙尾の連旋', biba:'尾牙の連旋'};
+const CAST_DESC = {kiba:'足元範囲→円範囲(避け: 外→内)', biba:'円範囲→足元範囲(避け: 内→外)'};
+// 牙尾: 足元→円 → 最初は外が安置 / 尾牙: 円→足元 → 最初は内が安置
+const FIRST_SAFE = {kiba:'out', biba:'in'};
+const FACING_JP = {face:'ボスを向く', back:'ボスに背を向ける', free:'向き自由'};
+const CORRECT_FACING = {spine:'face', illusive:'back', high:'free'};
 
-  const group2 = roleIds.filter(r=>numberOf_[r]===2);
-  const group13 = roleIds.filter(r=>numberOf_[r]!==2);
-
-  const arrowSlots = shuffle(['spine','spine','illusive','illusive']);
-  const jumpType_ = {};
-  const g2shuf = shuffle(group2);
-  jumpType_[g2shuf[0]] = arrowSlots[0];
-  jumpType_[g2shuf[1]] = arrowSlots[1];
-  const g13shuf = shuffle(group13);
-  const arrowRecipients = g13shuf.slice(0,2);
-  jumpType_[arrowRecipients[0]] = arrowSlots[2];
-  jumpType_[arrowRecipients[1]] = arrowSlots[3];
-  g13shuf.slice(2).forEach(r=> jumpType_[r]='high');
-
-  return {numberOf: numberOf_, jumpType: jumpType_};
+function assignDebuffs(pattern){
+  const shuffled = shuffle(Object.keys(ROLES));
+  const num = {};
+  shuffled.slice(0,3).forEach(r=>num[r]=1);
+  shuffled.slice(3,5).forEach(r=>num[r]=2);
+  shuffled.slice(5,8).forEach(r=>num[r]=3);
+  const jump = {};
+  if(pattern==='allhigh'){
+    Object.keys(num).forEach(r=> jump[r]='high');
+  } else {
+    [1,3].forEach(n=>{
+      const g = shuffle(Object.keys(num).filter(r=>num[r]===n));
+      jump[g[0]]='illusive'; jump[g[1]]='spine'; jump[g[2]]='high';
+    });
+    const g2 = shuffle(Object.keys(num).filter(r=>num[r]===2));
+    jump[g2[0]]='illusive'; jump[g2[1]]='spine';
+  }
+  return {numberOf:num, jumpType:jump};
 }
-// 指定グループを 西/南/東 に配置する(イルーシヴ=西固定, スパイン=東固定, 残りは優先度で埋める)
+// 3人グループ(1番/3番)を西/南/東へ: ミックス=イルーシブ西/スパイン東/HJ中間(南)、全HJ=優先度順
 function spreadWSE(group){
-  let west=null, east=null;
-  group.forEach(r=>{ if(jumpType[r]==='illusive') west=r; if(jumpType[r]==='spine') east=r; });
-  const remaining = group.filter(r=> r!==west && r!==east);
-  const slots = ['W','S','E'].filter(s=> !((s==='W'&&west)||(s==='E'&&east)) );
-  const remSorted = PRIORITY.filter(r=>remaining.includes(r));
   const out={};
-  if(west) out[west]='W';
-  if(east) out[east]='E';
-  remSorted.forEach((r,idx)=> out[r]=slots[idx]);
-  return out; // role -> 'W'|'S'|'E'
+  if(patternUsed==='mixed'){
+    group.forEach(r=>{ out[r] = jumpType[r]==='illusive'?'W' : jumpType[r]==='spine'?'E' : 'S'; });
+  } else {
+    PRIORITY.filter(r=>group.includes(r)).forEach((r,i)=> out[r]=['W','S','E'][i]);
+  }
+  return out;
+}
+// 2番の北側配置: ミックス=イルーシブ北西/スパイン北東、全HJ=優先度順
+function spreadNWNE(group2){
+  const out={};
+  if(patternUsed==='mixed'){
+    group2.forEach(r=>{ out[r] = jumpType[r]==='illusive'?'NW':'NE'; });
+  } else {
+    PRIORITY.filter(r=>group2.includes(r)).forEach((r,i)=> out[r]=['NW','NE'][i]);
+  }
+  return out;
 }
 const WSE_ANGLE = {W:270, S:180, E:90};
-const WSE_LABEL = {W:'西(D)', S:'南(C)', E:'東(B)'};
+const WSE_LABEL = {W:'西(D側)', S:'南(中間)', E:'東(B側)'};
 const NWNE_ANGLE = {NW:315, NE:45};
 const NWNE_LABEL = {NW:'北西', NE:'北東'};
+const R2 = R_MID*0.85; // 2番の塔の半径
+
+// 向きの3択(自分の担当スロットに応じた説明つき)
+async function askFacingQ(promptText, myJump, explain){
+  const opts=[
+    {id:'face', x:-120, y:150, label:'ボスを向く'},
+    {id:'back', x:0,    y:150, label:'背を向ける'},
+    {id:'free', x:120,  y:150, label:'向き自由'},
+  ];
+  const choices=opts.map(o=>{ const pp=xyToPolar(o.x,o.y); return {id:o.id, angle:pp.angle, r:pp.r, label:o.label}; });
+  await ask(promptText, choices, CORRECT_FACING[myJump], explain);
+}
+// 直線誘導の2択(塔の外周側/中央側)
+async function askAimQ(promptText, slotAngle, slotR, explain){
+  const choices=[
+    {id:'outer', angle:slotAngle, r:Math.min(slotR+48, 200), label:'塔の外周側'},
+    {id:'inner', angle:slotAngle, r:Math.max(slotR-58, 40),  label:'中央側'},
+  ];
+  await ask(promptText, choices, 'outer', explain);
+}
 
 // ---------- 4塔(ダークドラゴンダイブ)+ソウルテザー: 仮モデル定数 ----------
 // 斜め4方向。マーカー4=北西/1=北東/2=南東/3=南西。時計回り順: NW→NE→SE→SW
@@ -623,235 +751,329 @@ async function startRun(){
   initSVG();
   tokens={};
 
-  const assigned = assignDebuffs();
+  patternUsed = patternSetting==='random' ? pick(['allhigh','mixed']) : patternSetting;
+  const assigned = assignDebuffs(patternUsed);
   numberOf = assigned.numberOf; jumpType = assigned.jumpType;
-  castOrder = pick(['in','out']); // 'in'=内から, 'out'=外から
+  const cast1 = pick(['kiba','biba']);
+  const cast2 = pick(['kiba','biba']);
 
   const group1 = PRIORITY.filter(r=>numberOf[r]===1);
   const group2 = PRIORITY.filter(r=>numberOf[r]===2);
   const group3 = PRIORITY.filter(r=>numberOf[r]===3);
 
-  // ---- Phase 0: 基本隊形(デバフ付与前) ----
-  // MTだけが北(Aマーカー付近・ボスの正面)に立ち、残り7人はボスの南側に横一列で待機。
-  // 並び順は西から優先度順(H1/ST/D1/D2/D3/D4/H2。MTは北なので除く)。
+  const slot1 = spreadWSE(group1);   // 1番の散開(塔設置)スロット
+  const slot3 = spreadWSE(group3);   // 3番の担当スロット(1番塔踏み位置=自分の塔設置位置)
+  const north2 = spreadNWNE(group2); // 2番の北側スロット
+  const g1West = group1.find(r=>slot1[r]==='W');
+  const g1South = group1.find(r=>slot1[r]==='S'); // 中間の1番=2番塔を踏まない・頭割り2合流・3番の真ん中塔担当
+  const g1East = group1.find(r=>slot1[r]==='E');
+  const stomp2 = {}; stomp2[g1West]='NW'; stomp2[g1East]='NE';  // 2番塔の踏み担当
+  const stomp3 = {}; stomp3[g1South]='S';                        // 3番塔の踏み担当
+  group2.forEach(r=> stomp3[r] = north2[r]==='NW' ? 'W' : 'E');
+
+  const myNum = numberOf[selectedRole];
+  const myJump = jumpType[selectedRole];
+  const routeCorrect = cast2==='biba' ? 'center' : 'edge'; // 尾牙=中央突破 / 牙尾=円周沿い
+
+  // ---- 基本隊形(デバフ付与前) ----
   document.getElementById('debuffNum').textContent = '-';
   document.getElementById('debuffJump').textContent = '-';
   document.getElementById('castName').textContent = '詠唱中…';
   document.getElementById('phaseLabel').textContent='基本隊形(デバフ付与前)';
   setMsg('MTはボス正面(北)、残り7人はボスの南側に横一列で待機。');
-  const xyToPolar=(x,y)=>({angle: Math.atan2(x,-y)*180/Math.PI, r: Math.hypot(x,y)});
   drawToken('MT', 0, R_MID); // 北(Aマーカー付近)
   const southLine = PRIORITY.filter(r=>r!=='MT'); // 西→東
   southLine.forEach((r,idx)=>{
-    const x = (idx - (southLine.length-1)/2) * 36; // 西(-x)→東(+x)
-    const y = 110; // ボスの南側
-    const p = xyToPolar(x,y);
+    const x = (idx - (southLine.length-1)/2) * 36;
+    const p = xyToPolar(x, 110);
     drawToken(r, p.angle, p.r);
   });
   await wait(BEAT_MS*1.6);
 
-  // 詠唱→デバフ確定の演出
+  // ---- デバフ確定 ----
   document.getElementById('phaseLabel').textContent='デバフ付与';
-  document.getElementById('debuffNum').textContent = numberOf[selectedRole]+'番';
-  document.getElementById('debuffJump').textContent = JUMP_JP[jumpType[selectedRole]];
-  document.getElementById('castName').textContent = '邪竜の連旋: '+(castOrder==='in'?'内から':'外から');
-  setMsg(`デバフ確定！ あなたは【${numberOf[selectedRole]}番・${JUMP_JP[jumpType[selectedRole]]}】`);
-  log(`デバフ: ${selectedRole}=${numberOf[selectedRole]}番・${JUMP_JP[jumpType[selectedRole]]} / 連旋:${castOrder==='in'?'内から':'外から'}`, null);
+  document.getElementById('debuffNum').textContent = myNum+'番';
+  document.getElementById('debuffJump').textContent = DIVE_JP[myJump];
+  document.getElementById('castName').textContent = 'パターン: '+(patternUsed==='allhigh'?'全員ハイジャンプ':'ミックス');
+  setMsg(`デバフ確定！ あなたは【${myNum}番・${DIVE_JP[myJump]}】`);
+  log(`デバフ: ${selectedRole}=${myNum}番・${DIVE_JP[myJump]} / パターン:${patternUsed==='allhigh'?'全員HJ':'ミックス'}`, null);
+  group1.concat(group2, group3).forEach(r=>{
+    log(` ${r}: ${numberOf[r]}番・${DIVE_JP[jumpType[r]]}`, null);
+  });
   await wait(BEAT_MS*1.6);
 
-  // ---- Phase 1: 初期散開 ----
-  document.getElementById('phaseLabel').textContent='フェーズ1: 初期散開';
-  setMsg('1番の3人は西/南/東へ散開(イルーシヴ=西固定、スパイン=東固定)。それ以外はボス正面(北)に集合。');
-  const initPos1 = spreadWSE(group1); // role->W/S/E (1番のみ)
-  Object.keys(ROLES).forEach(r=>{
-    if(initPos1[r]){
-      moveTokenAnimated(r, WSE_ANGLE[initPos1[r]], R_MID, MOVE_MS);
-    } else {
-      // 北(A)付近に集合。役割ごとに少しずらして重ならないように配置(MTが1番でなければMTは北のまま)
-      const others = PRIORITY.filter(x=>!initPos1[x]);
-      const idx = others.indexOf(r);
-      const offset = (idx - (others.length-1)/2) * 12;
-      moveTokenAnimated(r, offset, R_MID, MOVE_MS);
+  // ---- フェーズ1: 1番散開(塔設置) / 2番3番はボス正面へ ----
+  document.getElementById('phaseLabel').textContent='フェーズ1: 1番散開・頭割り1準備';
+  if(myNum===1){
+    const myTarget = slot1[selectedRole];
+    const choices = ['W','S','E'].map(s=>({id:s, angle:WSE_ANGLE[s], r:R_MID, label:WSE_LABEL[s]}));
+    const explain = patternUsed==='mixed'
+      ? `ミックスなのでダイブで位置が決まる: イルーシブ=西(D側)/スパイン=東(B側)/HJ=中間。あなたは${DIVE_JP[myJump]}なので【${WSE_LABEL[myTarget]}】`
+      : `全員HJなので優先度(西 H1/MT/ST/D1/D2/D3/D4/H2 東)で並ぶ。あなたは【${WSE_LABEL[myTarget]}】`;
+    await ask('1番のあなたはどこで塔を出す？', choices, myTarget, explain);
+    if(patternUsed==='mixed'){
+      const fExplain = myJump==='spine' ? 'スパインダイブは前方に塔が出るので、塔を自分の位置に置くにはボスを向く'
+        : myJump==='illusive' ? 'イルーシブダイブは後方に塔が出るので、ボスに背を向ける'
+        : 'ハイジャンプは真上に塔が出るので向きは自由';
+      await askFacingQ('塔を正しく置くための向きは？', myJump, fExplain);
     }
+  } else {
+    const choices = [
+      {id:'north', angle:0, r:60, label:'ボス正面(頭割り)'},
+      {id:'W', angle:WSE_ANGLE.W, r:R_MID, label:'西'},
+      {id:'E', angle:WSE_ANGLE.E, r:R_MID, label:'東'},
+    ];
+    await ask(`${myNum}番のあなたは最初どこへ？`, choices, 'north',
+      '2番と3番は1回目の頭割り(牙尾/尾牙の連旋)を受けるため、ボス正面(北)に集合');
+  }
+  // 全員移動
+  group1.forEach(r=> moveTokenAnimated(r, WSE_ANGLE[slot1[r]], R_MID, MOVE_MS));
+  group2.concat(group3).forEach((r,idx)=>{
+    const others=group2.concat(group3);
+    const offset=(others.indexOf(r)-(others.length-1)/2)*10;
+    moveTokenAnimated(r, offset, 60, MOVE_MS);
   });
   applySeparation(MOVE_MS);
-  await wait(MOVE_MS + BEAT_MS);
-
-  // ---- Phase 2: 1番着弾(自動) + 塔3本(西/南/東) + 連旋1回目 ----
-  clearTimer();
-  document.getElementById('phaseLabel').textContent='フェーズ2: 1番着弾';
-  setMsg('1番のデバフが着弾…西・南・東に塔が出現');
-  await wait(BEAT_MS*0.8);
-  clearTowers();
-  drawTower(WSE_ANGLE.W, R_MID, '塔');
-  drawTower(WSE_ANGLE.S, R_MID, '塔');
-  drawTower(WSE_ANGLE.E, R_MID, '塔');
-  await wait(BEAT_MS);
-
-  const correct1 = castOrder==='in' ? 'in' : 'out';
-  await new Promise(resolve=>{
-    askInOut('連旋 1回目：内側/外側どちらへ？',
-      correct1, timeLimitMs, ()=>resolve(),
-      `連旋は「${castOrder==='in'?'内から':'外から'}」なので1回目は${correct1==='in'?'内側':'外側'}`);
-  });
-  clearTimer();
-
-  // ---- Phase 3: 塔踏み1(3番が西/南/東) + 2番が北西/北東へ散開 ----
-  document.getElementById('phaseLabel').textContent='フェーズ3: 塔踏み1 ／ 2番散開';
-  const g3sorted = PRIORITY.filter(r=>group3.includes(r));
-  const stomp1 = {}; // role->W/S/E
-  ['W','S','E'].forEach((s,idx)=> stomp1[g3sorted[idx]] = s);
-  const spread2 = {}; // role->NW/NE (優先度で埋める。矢印持ちが2人とも該当するがNW/NEどちらでも良いので優先度順)
-  const g2sorted = PRIORITY.filter(r=>group2.includes(r));
-  ['NW','NE'].forEach((s,idx)=> spread2[g2sorted[idx]]=s);
-
-  const iAmG3 = numberOf[selectedRole]===3;
-  const iAmG2 = numberOf[selectedRole]===2;
-  if(iAmG3){
-    const myTarget = stomp1[selectedRole];
-    const choices = ['W','S','E'].map(s=>({id:s, angle:WSE_ANGLE[s], r:R_MID, label:WSE_LABEL[s]}));
-    const explain = `3番は優先度(西→東)で塔を踏む。あなたは${PRIORITY.indexOf(selectedRole)+1}番目の順で【${WSE_LABEL[myTarget]}】`;
-    await new Promise(resolve=>{
-      askChoice('塔踏み1：3番はどの塔？', choices, myTarget, timeLimitMs, ()=>resolve(), explain);
-    });
-  } else if(iAmG2){
-    const myTarget = spread2[selectedRole];
-    const choices = ['NW','NE'].map(s=>({id:s, angle:NWNE_ANGLE[s], r:R_MID, label:NWNE_LABEL[s]}));
-    const explain = `2番は優先度順で北西/北東に散開。あなたは【${NWNE_LABEL[myTarget]}】`;
-    await new Promise(resolve=>{
-      askChoice('塔踏み1：2番はどちらへ散開？', choices, myTarget, timeLimitMs, ()=>resolve(), explain);
-    });
-  } else {
-    // 1番の残り(安置待機)
-    const choices = [{id:'wait', angle:180, r:60, label:'安置'}, {id:'W', angle:WSE_ANGLE.W, r:R_MID, label:'西'}, {id:'E', angle:WSE_ANGLE.E, r:R_MID, label:'東'}];
-    setMsg('あなたは1番。塔踏み1には関与せず、安置(南側中央)で待機。');
-    await new Promise(resolve=>{
-      askChoice('塔踏み1：1番のあなたは待機', choices, 'wait', timeLimitMs, ()=>resolve(), '1番は塔踏み1に関与しないので安置で待機');
+  // ミックスなら1番の矢印持ちに向き矢印を表示
+  await wait(MOVE_MS+200);
+  if(patternUsed==='mixed'){
+    group1.forEach(r=>{
+      if(jumpType[r]!=='high') drawFacingArrow(r, CORRECT_FACING[jumpType[r]]);
     });
   }
-  clearTimer();
-  // 全員をスナップ
-  Object.keys(stomp1).forEach(r=> moveTokenAnimated(r, WSE_ANGLE[stomp1[r]], R_MID, MOVE_MS));
-  Object.keys(spread2).forEach(r=> moveTokenAnimated(r, NWNE_ANGLE[spread2[r]], R_MID*0.85, MOVE_MS));
-  // 1番の残り(安置)は中央付近へ
-  group1.forEach(r=>{ if(!stomp1[r]) moveTokenAnimated(r, 180, 55, MOVE_MS); });
-  applySeparation(MOVE_MS);
-  await wait(MOVE_MS+400);
-
-  // ---- Phase 4: 2番着弾(自動) + 塔2本(北西/北東) + 連旋2回目 ----
-  document.getElementById('phaseLabel').textContent='フェーズ4: 2番着弾';
-  setMsg('2番のデバフが着弾…北西・北東に塔が出現');
-  await wait(BEAT_MS*0.8);
-  clearTowers();
-  drawTower(NWNE_ANGLE.NW, R_MID*0.85, '塔');
-  drawTower(NWNE_ANGLE.NE, R_MID*0.85, '塔');
   await wait(BEAT_MS);
 
-  const correct2 = castOrder==='in' ? 'out' : 'in'; // 1回目の逆
-  await new Promise(resolve=>{
-    askInOut('連旋 2回目：内側/外側どちらへ？',
-      correct2, timeLimitMs, ()=>resolve(),
-      `1回目の逆になるので2回目は${correct2==='in'?'内側':'外側'}`);
-  });
-  clearTimer();
+  // ---- フェーズ2: 1番着弾(塔3本) + 連旋1回目(頭割り→2連範囲) ----
+  document.getElementById('phaseLabel').textContent='フェーズ2: 1番着弾・連旋1回目';
+  document.getElementById('castName').textContent = `連旋1回目: ${CAST_JP[cast1]} (${CAST_DESC[cast1]})`;
+  setMsg(`1番のサイコロが着弾…西・南・東に塔①が出現。ボスは${CAST_JP[cast1]}を詠唱！`);
+  drawStackMark();
+  await wait(BEAT_MS);
+  clearTowers();
+  ['W','S','E'].forEach(s=> drawTower(WSE_ANGLE[s], R_MID, '塔①'));
+  Object.keys(tokens).forEach(r=> drawFacingArrow(r, null)); // 着弾したので矢印は消す
+  await wait(BEAT_MS);
+  setMsg('頭割り着弾！(2番+3番の5人受け) 続けて範囲攻撃…');
+  await wait(BEAT_MS*0.7);
+  const first1 = FIRST_SAFE[cast1];
+  await askInOutP(`${CAST_JP[cast1]}: まずどちらへ避ける？`, first1,
+    `${CAST_JP[cast1]}は${CAST_DESC[cast1]}。最初は${first1==='in'?'内側':'外側'}が安置`);
+  setMsg(`続けて${first1==='in'?'外側':'内側'}へ移動して2発目を回避`);
+  clearStackMark();
+  await wait(BEAT_MS);
 
-  // ---- Phase 5: 塔踏み2(初期西/東の1番がNW/NE) + 3番が西/南/東へ散開 ----
-  document.getElementById('phaseLabel').textContent='フェーズ5: 塔踏み2 ／ 3番散開';
-  const g1West = Object.keys(initPos1).find(r=>initPos1[r]==='W');
-  const g1South = Object.keys(initPos1).find(r=>initPos1[r]==='S');
-  const g1East = Object.keys(initPos1).find(r=>initPos1[r]==='E');
-  const stomp2 = {};
-  if(g1West) stomp2[g1West]='NW';
-  if(g1East) stomp2[g1East]='NE';
-  const spread3 = spreadWSE(group3); // role -> W/S/E
-
-  const iAmStomp2 = stomp2[selectedRole]!==undefined;
-  const iAmG3b = numberOf[selectedRole]===3;
-  if(iAmStomp2){
-    const myTarget = stomp2[selectedRole];
-    const choices = ['NW','NE'].map(s=>({id:s, angle:NWNE_ANGLE[s], r:R_MID*0.85, label:NWNE_LABEL[s]}));
-    const wasWest = initPos1[selectedRole]==='W';
-    const explain = `初期散開で${wasWest?'西':'東'}にいた1番なので【${NWNE_LABEL[myTarget]}】塔を踏む`;
-    await new Promise(resolve=>{
-      askChoice('塔踏み2：北の塔はどちら？', choices, myTarget, timeLimitMs, ()=>resolve(), explain);
-    });
-  } else if(iAmG3b){
-    const myTarget = spread3[selectedRole];
+  // ---- フェーズ3: 3番が1番の塔を踏む / 2番は北へ移動 ----
+  document.getElementById('phaseLabel').textContent='フェーズ3: 塔踏み1(3番) / 2番北移動';
+  if(myNum===3){
+    const myTarget = slot3[selectedRole];
     const choices = ['W','S','E'].map(s=>({id:s, angle:WSE_ANGLE[s], r:R_MID, label:WSE_LABEL[s]}));
-    const explain = `3番はイルーシヴ=西固定・スパイン=東固定・残りは優先度。あなたは【${WSE_LABEL[myTarget]}】`;
-    await new Promise(resolve=>{
-      askChoice('塔踏み2：3番はどこへ散開？', choices, myTarget, timeLimitMs, ()=>resolve(), explain);
-    });
+    const explain = patternUsed==='mixed'
+      ? `3番は自分が後で塔を出す位置と同じ塔を踏む(イルーシブ=西/スパイン=東/HJ=中間)。あなたは【${WSE_LABEL[myTarget]}】`
+      : `3番は優先度(西→東)で並ぶ位置と同じ塔を踏む。あなたは【${WSE_LABEL[myTarget]}】`;
+    await ask('3番のあなたはどの塔①を踏む？', choices, myTarget, explain);
+  } else if(myNum===2){
+    const myTarget = north2[selectedRole];
+    const choices = ['NW','NE'].map(s=>({id:s, angle:NWNE_ANGLE[s], r:R2, label:NWNE_LABEL[s]}));
+    const explain = patternUsed==='mixed'
+      ? `2番は北側へ移動して塔を出す(イルーシブ=北西/スパイン=北東)。あなたは【${NWNE_LABEL[myTarget]}】`
+      : `2番は北側へ移動して塔を出す(優先度順)。あなたは【${NWNE_LABEL[myTarget]}】`;
+    await ask('2番のあなたはどこで塔を出す？', choices, myTarget, explain);
+    if(patternUsed==='mixed'){
+      const fExplain = myJump==='spine' ? 'スパインダイブ=前方に塔→ボスを向く' : 'イルーシブダイブ=後方に塔→ボスに背を向ける';
+      await askFacingQ('塔を正しく置くための向きは？', myJump, fExplain);
+    }
   } else {
-    // 南にいた1番、および2番は待機
-    setMsg('あなたは塔踏み2に関与せず、安置で待機。');
-    const choices=[{id:'wait', angle:180, r:55, label:'安置'}];
-    await new Promise(resolve=>{
-      askChoice('塔踏み2：あなたは待機', choices, 'wait', timeLimitMs, ()=>resolve(), '南で待機していた1番、および2番は塔踏み2に関与しない');
-    });
+    setMsg('1番のあなたは塔①を出し終えた。3番の塔踏みと直線誘導を待つ(次は2番の塔担当か頭割り合流)。');
+    await wait(BEAT_MS*1.5);
   }
-  clearTimer();
-  Object.keys(stomp2).forEach(r=> moveTokenAnimated(r, NWNE_ANGLE[stomp2[r]], R_MID*0.85, MOVE_MS));
-  Object.keys(spread3).forEach(r=> moveTokenAnimated(r, WSE_ANGLE[spread3[r]], R_MID, MOVE_MS));
-  if(g1South) moveTokenAnimated(g1South, 180, 55, MOVE_MS);
-  group2.forEach(r=> moveTokenAnimated(r, NWNE_ANGLE[spread2[r]], R_MID*0.85, MOVE_MS));
+  group3.forEach(r=> moveTokenAnimated(r, WSE_ANGLE[slot3[r]], R_MID, MOVE_MS));
+  group2.forEach(r=> moveTokenAnimated(r, NWNE_ANGLE[north2[r]], R2, MOVE_MS));
   applySeparation(MOVE_MS);
-  await wait(MOVE_MS+400);
+  await wait(MOVE_MS+200);
+  if(patternUsed==='mixed'){
+    group2.forEach(r=> drawFacingArrow(r, CORRECT_FACING[jumpType[r]]));
+  }
+  await wait(BEAT_MS*0.6);
 
-  // ---- Phase 6: 3番着弾(自動) + 塔3本(西/南/東) ----
-  document.getElementById('phaseLabel').textContent='フェーズ6: 3番着弾';
-  setMsg('3番のデバフが着弾…西・南・東に塔が出現');
-  await wait(BEAT_MS*0.8);
+  // ---- フェーズ4: 竜騎士分身1(1番塔跡)+直線誘導 / 2番塔出現 ----
+  document.getElementById('phaseLabel').textContent='フェーズ4: 直線誘導1(3番)';
   clearTowers();
-  drawTower(WSE_ANGLE.W, R_MID, '塔');
-  drawTower(WSE_ANGLE.S, R_MID, '塔');
-  drawTower(WSE_ANGLE.E, R_MID, '塔');
+  setMsg('塔①処理！ 竜騎士の分身が出現し、最も近い1名(踏んだ本人)へ直線攻撃を詠唱…');
+  await wait(BEAT_MS*0.8);
+  if(myNum===3){
+    const mySlot = slot3[selectedRole];
+    await askAimQ('直線を味方に当てないためにどこに立つ？', WSE_ANGLE[mySlot], R_MID,
+      '直線は最も近い自分に向く。塔の外周側に立てば直線が外に向き、味方に当たらない');
+  } else {
+    setMsg('3番の3人が直線を外周へ誘導中…');
+    await wait(BEAT_MS);
+  }
+  ['W','S','E'].forEach(s=> drawCloneLine(WSE_ANGLE[s], R_MID));
+  group3.forEach(r=> moveTokenAnimated(r, WSE_ANGLE[slot3[r]], R_MID+30, MOVE_MS*0.7));
+  applySeparation(MOVE_MS*0.7);
+  await wait(MOVE_MS+300);
+  setMsg('直線発射！外周へ誘導成功。並行して2番のサイコロが着弾…');
+  ['NW','NE'].forEach(s=> drawTower(NWNE_ANGLE[s], R2, '塔②'));
+  group2.forEach(r=> drawFacingArrow(r, null));
+  await wait(BEAT_MS);
+  clearClones();
+
+  // ---- フェーズ5: 1番(西/東)が2番塔を踏む / 中間1番は頭割り2へ ----
+  document.getElementById('phaseLabel').textContent='フェーズ5: 塔踏み2(1番)';
+  if(myNum===1){
+    if(selectedRole===g1South){
+      const choices = [
+        {id:'north', angle:0, r:60, label:'頭割りへ合流'},
+        {id:'NW', angle:NWNE_ANGLE.NW, r:R2, label:'北西塔'},
+        {id:'NE', angle:NWNE_ANGLE.NE, r:R2, label:'北東塔'},
+      ];
+      const explain = patternUsed==='mixed'
+        ? 'ミックスでは2番の塔はハイジャンプが付いていない1番(西/東の2人)が踏む。中間のあなたは踏まず頭割り2へ合流'
+        : '2番の塔は西/東にいた1番が踏む。中間(南)のあなたは踏まず頭割り2へ合流';
+      await ask('中間担当のあなたは次にどこへ？', choices, 'north', explain);
+    } else {
+      const myTarget = stomp2[selectedRole];
+      const choices = ['NW','NE'].map(s=>({id:s, angle:NWNE_ANGLE[s], r:R2, label:NWNE_LABEL[s]}));
+      const wasWest = slot1[selectedRole]==='W';
+      await ask('あなたはどの塔②を踏む？', choices, myTarget,
+        `${wasWest?'西':'東'}で塔を出した1番なので、そのまま近い【${NWNE_LABEL[myTarget]}】塔を踏む`);
+    }
+  } else {
+    setMsg('西/東の1番が塔②を踏みに北へ。中間の1番と2番は頭割りへ向かう…');
+    await wait(BEAT_MS*1.2);
+  }
+  moveTokenAnimated(g1West, NWNE_ANGLE.NW, R2, MOVE_MS);
+  moveTokenAnimated(g1East, NWNE_ANGLE.NE, R2, MOVE_MS);
+  moveTokenAnimated(g1South, -6, 60, MOVE_MS);
+  applySeparation(MOVE_MS);
+  await wait(MOVE_MS+300);
+
+  // ---- フェーズ6: 直線誘導2 + 連旋2回目(1番+2番の5人頭割り) ----
+  document.getElementById('phaseLabel').textContent='フェーズ6: 直線誘導2・連旋2回目';
+  clearTowers();
+  document.getElementById('castName').textContent = `連旋2回目: ${CAST_JP[cast2]} (${CAST_DESC[cast2]})`;
+  setMsg(`塔②処理！分身の直線を外へ誘導→すぐ頭割りへ。ボスは${CAST_JP[cast2]}を詠唱！`);
+  drawStackMark();
+  await wait(BEAT_MS*0.8);
+  if(selectedRole===g1West || selectedRole===g1East){
+    const mySlot = stomp2[selectedRole];
+    await askAimQ('直線を誘導してからどうする？', NWNE_ANGLE[mySlot], R2,
+      '塔の外周側に立って直線を外へ誘導→詠唱が見えたらすぐ頭割りに合流(1番+2番の5人受け)');
+  }
+  ['NW','NE'].forEach(s=> drawCloneLine(NWNE_ANGLE[s], R2));
+  moveTokenAnimated(g1West, NWNE_ANGLE.NW, R2+28, MOVE_MS*0.6);
+  moveTokenAnimated(g1East, NWNE_ANGLE.NE, R2+28, MOVE_MS*0.6);
+  await wait(MOVE_MS+200);
+  setMsg('直線発射！1番と2番は頭割りへ集合(5人受け)…');
+  clearClones();
+  // 1番全員+2番が頭割り位置へ
+  group1.concat(group2).forEach((r,idx)=>{
+    const all=group1.concat(group2);
+    const offset=(all.indexOf(r)-(all.length-1)/2)*10;
+    moveTokenAnimated(r, offset, 60, MOVE_MS);
+  });
+  applySeparation(MOVE_MS);
+  await wait(MOVE_MS+300);
+  setMsg('頭割り着弾！(1番+2番の5人受け) 続けて範囲攻撃…');
+  await wait(BEAT_MS*0.7);
+  const first2 = FIRST_SAFE[cast2];
+  await askInOutP(`${CAST_JP[cast2]}: まずどちらへ避ける？`, first2,
+    `${CAST_JP[cast2]}は${CAST_DESC[cast2]}。最初は${first2==='in'?'内側':'外側'}が安置`);
+  setMsg(`続けて${first2==='in'?'外側':'内側'}へ移動して2発目を回避`);
+  clearStackMark();
   await wait(BEAT_MS);
 
-  // ---- Phase 7: 塔踏み3(2番2人+南の1番が優先度でW/S/E) ----
-  document.getElementById('phaseLabel').textContent='フェーズ7: 塔踏み3';
-  const stomp3Candidates = PRIORITY.filter(r => group2.includes(r) || r===g1South);
-  const stomp3 = {};
-  ['W','S','E'].forEach((s,idx)=> stomp3[stomp3Candidates[idx]]=s);
+  // ---- フェーズ7: 3番がその場で塔設置(向き注意) ----
+  document.getElementById('phaseLabel').textContent='フェーズ7: 3番の塔設置';
+  if(myNum===3){
+    if(patternUsed==='mixed'){
+      const fExplain = myJump==='spine' ? 'スパインダイブ=前方に塔→ボスを向く。向きを間違えると塔が変な位置に出て処理不能に！'
+        : myJump==='illusive' ? 'イルーシブダイブ=後方に塔→ボスに背を向ける。向きを間違えると塔が変な位置に出て処理不能に！'
+        : 'ハイジャンプは真上に塔が出るので向きは自由';
+      await askFacingQ('3番のあなた、塔を正しく置く向きは？', myJump, fExplain);
+    } else {
+      setMsg('全員ハイジャンプなので向きは自由。その場(自分の担当位置)で塔を出す。');
+      await wait(BEAT_MS*1.2);
+    }
+  } else {
+    setMsg('3番が担当位置で塔を設置中(ミックスなら向き注意)…');
+    await wait(BEAT_MS*1.2);
+  }
+  group3.forEach(r=> moveTokenAnimated(r, WSE_ANGLE[slot3[r]], R_MID, MOVE_MS*0.6));
+  applySeparation(MOVE_MS*0.6);
+  await wait(MOVE_MS*0.6+200);
+  if(patternUsed==='mixed'){
+    group3.forEach(r=>{ if(jumpType[r]!=='high') drawFacingArrow(r, CORRECT_FACING[jumpType[r]]); });
+  }
+  await wait(BEAT_MS*0.8);
+  setMsg('3番のサイコロが着弾…西・南・東に塔③が出現！');
+  ['W','S','E'].forEach(s=> drawTower(WSE_ANGLE[s], R_MID, '塔③'));
+  group3.forEach(r=> drawFacingArrow(r, null));
+  await wait(BEAT_MS);
 
-  const iAmStomp3 = stomp3[selectedRole]!==undefined;
-  if(iAmStomp3){
+  // ---- フェーズ8: 塔踏み3(2番=左右 / 中間の1番=真ん中・ルート選択) ----
+  document.getElementById('phaseLabel').textContent='フェーズ8: 塔踏み3';
+  if(myNum===2){
     const myTarget = stomp3[selectedRole];
     const choices = ['W','S','E'].map(s=>({id:s, angle:WSE_ANGLE[s], r:R_MID, label:WSE_LABEL[s]}));
-    const rank = stomp3Candidates.indexOf(selectedRole)+1;
-    const explain = `2番2人＋南で待機していた1番が優先度(西→東)で塔を踏む。あなたは${rank}番目の順で【${WSE_LABEL[myTarget]}】`;
-    await new Promise(resolve=>{
-      askChoice('塔踏み3：あなたはどの塔？', choices, myTarget, timeLimitMs, ()=>resolve(), explain);
-    });
+    await ask('2番のあなたはどの塔③を踏む？', choices, myTarget,
+      `2番は左右の塔を踏む。${NWNE_LABEL[north2[selectedRole]]}にいたあなたは近い側の【${WSE_LABEL[myTarget]}】`);
+  } else if(selectedRole===g1South){
+    // 真ん中の1番: まず塔の選択、次にルート
+    const choices = ['W','S','E'].map(s=>({id:s, angle:WSE_ANGLE[s], r:R_MID, label:WSE_LABEL[s]}));
+    await ask('頭割りにいた1番のあなたはどの塔③を踏む？', choices, 'S',
+      '1番の担当は真ん中(南)の塔。左右は2番が踏む');
+    if(reviewMode) drawRouteHint(routeCorrect);
+    const routeChoices=[
+      {id:'center', angle:180, r:40, label:'ボス下を中央突破'},
+      {id:'edge', angle:135, r:R_MID+25, label:'円周に沿って'},
+    ];
+    await ask('真ん中の塔へのルートは？', routeChoices, routeCorrect,
+      cast2==='biba' ? '2回目が尾牙(円範囲→足元範囲)なのでボス下を通って中央突破'
+                     : '2回目が牙尾(足元範囲→円範囲)なので円周に沿って向かう');
+    clearRouteHint();
   } else {
-    setMsg('あなたは塔踏み3に関与せず、安置で待機。');
-    const choices=[{id:'wait', angle:0, r:55, label:'安置'}];
-    await new Promise(resolve=>{
-      askChoice('塔踏み3：あなたは待機', choices, 'wait', timeLimitMs, ()=>resolve(), '3番(塔踏み1担当済み)は塔踏み3に関与しない');
-    });
+    setMsg('2番の2人と頭割りにいた1番が塔③を踏みに行く。あなたは安全な位置(北)で待機。');
+    await wait(BEAT_MS*1.5);
   }
-  clearTimer();
   Object.keys(stomp3).forEach(r=> moveTokenAnimated(r, WSE_ANGLE[stomp3[r]], R_MID, MOVE_MS));
   applySeparation(MOVE_MS);
-  await wait(MOVE_MS+400);
-  clearTowers();
+  await wait(MOVE_MS+300);
 
-  setMsg('これが最終配置です。確認できたらボタンを押してください', 'good');
-  document.getElementById('phaseLabel').textContent='最終配置の確認';
+  // ---- フェーズ9: 直線誘導3 ----
+  document.getElementById('phaseLabel').textContent='フェーズ9: 直線誘導3';
+  clearTowers();
+  setMsg('塔③処理！分身出現…踏んだ本人が直線を外周へ誘導する');
+  await wait(BEAT_MS*0.8);
+  if(stomp3[selectedRole]!==undefined){
+    const mySlot = stomp3[selectedRole];
+    await askAimQ('直線を味方に当てないためにどこに立つ？', WSE_ANGLE[mySlot], R_MID,
+      '塔の外周側に立って直線を外へ誘導(踏んだ本人だけが誘導する)');
+  } else {
+    setMsg('踏んだ3人が直線を外周へ誘導中…');
+    await wait(BEAT_MS);
+  }
+  ['W','S','E'].forEach(s=> drawCloneLine(WSE_ANGLE[s], R_MID));
+  Object.keys(stomp3).forEach(r=> moveTokenAnimated(r, WSE_ANGLE[stomp3[r]], R_MID+30, MOVE_MS*0.7));
+  applySeparation(MOVE_MS*0.7);
+  await wait(MOVE_MS+400);
+  setMsg('直線発射！サイコロ完了！', 'good');
+  clearClones();
+  await wait(BEAT_MS*0.8);
+
+  setMsg('これがサイコロ終了時の配置です。確認できたらボタンを押してください', 'good');
+  document.getElementById('phaseLabel').textContent='サイコロ終了・配置確認';
   await waitForResultButton();
 
-  // ---- Phase 8: 4塔散開(ペア基本位置へ移動) ----
-  document.getElementById('phaseLabel').textContent='フェーズ8: 4塔散開';
+  // ---- フェーズ10: 4塔散開(ペア基本位置へ移動) ----
+  document.getElementById('phaseLabel').textContent='フェーズ10: 4塔散開';
   setMsg('ダークドラゴンダイブ準備…斜め4方向にペアで散開(固定役は動かず、調整役が後で調整)');
   await wait(BEAT_MS*0.8);
   clearTowers();
   const myPos = Object.keys(PAIR_OF_POS).find(p=> PAIR_OF_POS[p].fixed===selectedRole || PAIR_OF_POS[p].adj===selectedRole);
   const pairChoices = DIAG_POS.map(p=>({id:p, angle:DIAG_ANGLE[p], r:R_OUT, label:DIAG_LABEL[p]}));
   const pairExplain = `${selectedRole}のペア基本位置は【${DIAG_LABEL[myPos]}】(${PAIR_OF_POS[myPos].fixed}固定役+${PAIR_OF_POS[myPos].adj}調整役)`;
-  await new Promise(resolve=>{
-    askChoice('4塔散開：自分のペア基本位置はどこ？', pairChoices, myPos, timeLimitMs, ()=>resolve(), pairExplain);
-  });
-  clearTimer();
+  await ask('4塔散開：自分のペア基本位置はどこ？', pairChoices, myPos, pairExplain);
   Object.keys(ROLES).forEach(r=>{
     const p = Object.keys(PAIR_OF_POS).find(pp=> PAIR_OF_POS[pp].fixed===r || PAIR_OF_POS[pp].adj===r);
     moveTokenAnimated(r, DIAG_ANGLE[p], R_OUT, MOVE_MS);
@@ -859,8 +1081,8 @@ async function startRun(){
   applySeparation(MOVE_MS);
   await wait(MOVE_MS+400);
 
-  // ---- Phase 9: 4塔踏み(人数調整) ----
-  document.getElementById('phaseLabel').textContent='フェーズ9: 4塔踏み';
+  // ---- フェーズ11: 4塔踏み(人数調整) ----
+  document.getElementById('phaseLabel').textContent='フェーズ11: 4塔踏み';
   setMsg('4塔が出現…柱の数が必要人数');
   await wait(BEAT_MS*0.6);
   const towerCounts = drawTowerCounts();
@@ -875,11 +1097,8 @@ async function startRun(){
   const towerExplain = isFixedRole
     ? `固定役(${selectedRole})は動かず、自ペアの塔【${DIAG_LABEL[myTower]}】を踏む`
     : `4塔は柱の数=必要人数。固定役(H1/H2/D3/D4)は動かず、調整役(MT/ST/D1/D2)がMT>ST>D1>D2の優先度で 自枠>左>右>対角 に調整。あなたは【${DIAG_LABEL[myTower]}】`;
-  await new Promise(resolve=>{
-    askChoice(isFixedRole? '4塔踏み：あなたは動かず自分の塔を踏む' : '4塔踏み：どの塔を踏む？',
-      towerChoices, myTower, timeLimitMs, ()=>resolve(), towerExplain);
-  });
-  clearTimer();
+  await ask(isFixedRole? '4塔踏み：あなたは動かず自分の塔を踏む' : '4塔踏み：どの塔を踏む？',
+    towerChoices, myTower, towerExplain);
   Object.keys(towerAssign).forEach(r=> moveTokenAnimated(r, DIAG_ANGLE[towerAssign[r]], R_OUT, MOVE_MS));
   applySeparation(MOVE_MS);
   await wait(MOVE_MS+400);
@@ -893,8 +1112,8 @@ async function startRun(){
   await wait(BEAT_MS*0.8);
   clearTowers();
 
-  // ---- Phase 10: ソウルテザー ----
-  document.getElementById('phaseLabel').textContent='フェーズ10: ソウルテザー';
+  // ---- フェーズ12: ソウルテザー ----
+  document.getElementById('phaseLabel').textContent='フェーズ12: ソウルテザー';
   setMsg('ボスと分身から線が伸びる…MT=分身線(無敵)、ST=ボス線(激減)、他は南集合');
   const cloneDir = pick(DIAG_POS);
   await wait(BEAT_MS*0.6);
@@ -920,10 +1139,7 @@ async function startRun(){
   if(selectedRole==='MT'){ myTetherAnswer='clone'; tetherExplain='MTは分身の線(無敵受け)なので分身の近くへ'; }
   else if(selectedRole==='ST'){ myTetherAnswer='boss'; tetherExplain='STはボスの線(激減受け)なのでボス直下へ'; }
   else { myTetherAnswer='south'; tetherExplain='MT/ST以外は南に集合して待機'; }
-  await new Promise(resolve=>{
-    askChoice('ソウルテザー：あなたの立ち位置は？', tetherChoices, myTetherAnswer, timeLimitMs, ()=>resolve(), tetherExplain);
-  });
-  clearTimer();
+  await ask('ソウルテザー：あなたの立ち位置は？', tetherChoices, myTetherAnswer, tetherExplain);
   Object.keys(ROLES).forEach(r=>{
     if(r==='MT') moveTokenAnimated(r, DIAG_ANGLE[cloneDir], R_OUT*0.72, MOVE_MS);
     else if(r==='ST') moveTokenAnimated(r, 0, 35, MOVE_MS);
