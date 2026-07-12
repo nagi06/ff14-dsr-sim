@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>P3 サイコロ カンペ (1枚)</title>
+<style>
+  :root{
+    --bg:#0f1420; --panel:#182036; --line:#3a4a70;
+    --accent:#5fb3ff; --warn:#ffcc4d; --good:#3ddc84; --bad:#ff5c6c;
+    --text:#e8edf7; --dim:#8ea0c4;
+    --red:#ff5c5c; --yellow:#ffd24d; --blue:#4da6ff; --purple:#c07aff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{width:100%;height:100%;background:var(--bg);color:var(--text);
+    font-family:"Hiragino Sans","Yu Gothic",system-ui,sans-serif;overflow:hidden;}
+  #sheet{width:100vw;height:100vh;display:grid;
+    grid-template-columns:31% 38% 31%;
+    grid-template-rows:auto 1fr;
+    gap:0.6vmin;padding:0.8vmin;}
+  header{grid-column:1/4;display:flex;align-items:baseline;gap:1.5vmin;
+    border-bottom:1px solid var(--line);padding-bottom:0.4vmin;}
+  header h1{font-size:2.2vmin;color:var(--accent);}
+  header .sub{font-size:1.4vmin;color:var(--dim);}
+  .col{display:flex;flex-direction:column;gap:0.6vmin;min-height:0;}
+  .box{background:var(--panel);border:1px solid var(--line);border-radius:0.8vmin;
+    padding:0.9vmin 1.1vmin;flex:0 0 auto;}
+  .box h2{font-size:1.7vmin;color:var(--accent);margin-bottom:0.4vmin;}
+  .box p,.box li{font-size:1.55vmin;line-height:1.5;}
+  .box ol,.box ul{padding-left:2.2vmin;}
+  b{color:var(--warn);}
+  .g{color:var(--good);} .r{color:var(--bad);} .a{color:var(--accent);}
+  #diagBox{flex:1 1 auto;display:flex;flex-direction:column;min-height:0;}
+  #diagBox svg{flex:1;width:100%;min-height:0;}
+  .tl li{margin-bottom:0.45vmin;}
+  .tl .who{display:inline-block;font-weight:bold;color:var(--accent);}
+  table{width:100%;border-collapse:collapse;font-size:1.5vmin;}
+  td,th{border:1px solid var(--line);padding:0.35vmin 0.55vmin;text-align:left;line-height:1.4;}
+  th{color:var(--dim);font-weight:normal;white-space:nowrap;}
+</style>
+</head>
+<body>
+<div id="sheet">
+  <header>
+    <h1>P3 ニーズヘッグ「サイコロ」カンペ</h1>
+    <div class="sub">サイコロ 1×3人 / 2×2人 / 3×3人 ・ 塔は数字順に出現 ・ <b>自分の塔は踏めない</b> ・ 頭割りは常に5人＋軽減</div>
+  </header>
+
+  <!-- 左: ダイブと位置 -->
+  <div class="col">
+    <div class="box">
+      <h2>ダイブデバフ = 塔が出る場所</h2>
+      <table>
+        <tr><th>ハイジャンプ</th><td>真上 → <span class="g">向き自由</span></td></tr>
+        <tr><th>スパイン</th><td>前方 → <b>ボスを向く</b></td></tr>
+        <tr><th>イルーシブ</th><td>後方 → <b>ボスに背を向ける</b></td></tr>
+      </table>
+      <p style="margin-top:0.4vmin;">向きは<b>着弾2秒前に固定</b>。ボスをタゲって向き確認。</p>
+    </div>
+    <div class="box">
+      <h2>散開位置</h2>
+      <table>
+        <tr><th>ミックス</th><td>イルーシブ=<b>左(D側)</b> / スパイン=<b>右(B側)</b> / HJ=真下</td></tr>
+        <tr><th>全員HJ</th><td>優先度: 西 H1 MT ST D1 D2 D3 D4 H2 東</td></tr>
+        <tr><th>1・3番</th><td>タゲサ淵の<b>左下/真下/右下</b></td></tr>
+        <tr><th>2番</th><td>タゲサから離れた北側 <b>左=4-A間 / 右=A-1間</b></td></tr>
+      </table>
+    </div>
+    <div class="box">
+      <h2>連旋(2回・毎回抽選)</h2>
+      <p><b>牙尾</b> = <span class="r">外→中</span> ／ <b>尾牙</b> = <span class="g">中→外</span></p>
+      <p>頭割りは<b>A側タゲサ淵(タゲサの外)</b>。<br>
+      ①=2番+3番 ／ ②=1番+2番。<br>
+      <span class="a">1番は頭割り①に入らないが内外回避は全員参加</span>。</p>
+    </div>
+    <div class="box">
+      <h2>竜騎士の分身(直線)</h2>
+      <p>塔を踏んだ本人が<b>塔の外周側</b>に立って外へ誘導。<br>
+      対象決定は<b>踏んだ約2秒後</b> → 向き確定を見てから離れる。</p>
+    </div>
+  </div>
+
+  <!-- 中央: 盤面図 -->
+  <div class="col">
+    <div class="box" id="diagBox">
+      <h2>盤面 (①③=タゲサ淵 / ②=北側)</h2>
+      <svg viewBox="-220 -220 440 440" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+  </div>
+
+  <!-- 右: タイムライン -->
+  <div class="col">
+    <div class="box" style="flex:1;">
+      <h2>タイムライン</h2>
+      <ol class="tl">
+        <li><span class="who">1番</span> 左下/真下/右下で塔①設置(向き注意)。<span class="who">2・3番</span>はA側淵で<b>頭割り①</b></li>
+        <li>全員で連旋①回避(内外) → <span class="who">1番</span>は<b>A正面へ</b>(塔に残らない)</li>
+        <li><span class="who">3番</span>が塔①を踏む(<b>自分が後で塔を出す場所と同じ</b>)→直線誘導。<span class="who">2番</span>は北で塔②設置(向き注意)→設置後すぐ頭割りへ</li>
+        <li><span class="who">1番</span> 左にいた人→左塔②・右にいた人→右塔②を踏み誘導→<b>すぐ頭割り②へ</b>。真ん中の1番は直行</li>
+        <li>連旋②回避 → <span class="who">3番</span>はその場(担当位置)で塔③設置(向き注意)→設置後A側へ</li>
+        <li><span class="who">2番</span>=左右の塔③、<span class="who">真ん中の1番</span>=真ん中の塔③<br>
+        ルート: <b>尾牙=ボス下を中央突破</b> ／ <b>牙尾=円周沿い</b><br>
+        踏んだら直線誘導→終わったらA側集合</li>
+      </ol>
+    </div>
+    <div class="box">
+      <h2>事故りやすいポイント</h2>
+      <ul>
+        <li>塔を出したら<b>その場を離れる</b>(残る=踏めない塔を踏む)</li>
+        <li>ミックスの向きミス → 塔が変な場所に出て処理不能</li>
+        <li>誘導後の離脱が早い → 直線が味方に向く(2秒待つ)</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script>
+// 盤面図: シミュレータと同じ座標系・マーカー色(A/1=赤, B/2=黄, C/3=青, D/4=紫)
+const MARKERS=[{id:'A',a:0},{id:'1',a:45},{id:'B',a:90},{id:'2',a:135},{id:'C',a:180},{id:'3',a:225},{id:'D',a:270},{id:'4',a:315}];
+const MC={A:'#ff5c5c','1':'#ff5c5c',B:'#ffd24d','2':'#ffd24d',C:'#4da6ff','3':'#4da6ff',D:'#c07aff','4':'#c07aff'};
+const R_TARGET=100, R_MID=110, R_STACK=115, R2=165, R_MARK=196;
+const svg=document.querySelector('#diagBox svg');
+const ns='http://www.w3.org/2000/svg';
+function el(t,attrs,txt){const e=document.createElementNS(ns,t);for(const k in attrs)e.setAttribute(k,attrs[k]);if(txt!=null)e.textContent=txt;svg.appendChild(e);return e;}
+function pol(a,r){const rad=a*Math.PI/180;return{x:r*Math.sin(rad),y:-r*Math.cos(rad)};}
+// フィールド
+el('circle',{cx:0,cy:0,r:195,fill:'#141b2c',stroke:'#3a4a70','stroke-width':2});
+el('circle',{cx:0,cy:0,r:170,fill:'none',stroke:'#26314f','stroke-width':1,'stroke-dasharray':'3,4'});
+// タゲサ
+el('circle',{cx:0,cy:0,r:R_TARGET,fill:'none',stroke:'#8a5a3a','stroke-width':2.5});
+el('text',{x:0,y:-R_TARGET+14,fill:'#c98a5a','font-size':11,'text-anchor':'middle'},'ターゲットサークル');
+// マーカー
+MARKERS.forEach(m=>{const p=pol(m.a,R_MARK);
+  el('circle',{cx:p.x,cy:p.y,r:11,fill:'#141b2c',stroke:MC[m.id],'stroke-width':2});
+  el('text',{x:p.x,y:p.y+4,fill:MC[m.id],'font-size':12,'font-weight':'bold','text-anchor':'middle'},m.id);});
+// ボス
+el('circle',{cx:0,cy:0,r:16,fill:'#3a2233',stroke:'#ff9dc7','stroke-width':2});
+el('text',{x:0,y:5,fill:'#ff9dc7','font-size':13,'text-anchor':'middle'},'竜');
+// 塔①③ (左下250/真下180/右下110 タゲサ淵)
+[[250,'左下'],[180,'真下'],[110,'右下']].forEach(([a,label])=>{
+  const p=pol(a,R_MID);
+  el('rect',{x:p.x-15,y:p.y-15,width:30,height:30,rx:5,fill:'#2a1f45',stroke:'#b98bff','stroke-width':2});
+  el('text',{x:p.x,y:p.y+4,fill:'#dcc3ff','font-size':11,'text-anchor':'middle'},'①③');
+  const q=pol(a,R_MID+32);
+  el('text',{x:q.x,y:q.y+4,fill:'#b98bff','font-size':10,'text-anchor':'middle'},label);
+});
+// 塔② (337.5/22.5 r165)
+[[337.5,'左(4-A間)'],[22.5,'右(A-1間)']].forEach(([a,label])=>{
+  const p=pol(a,R2);
+  el('rect',{x:p.x-14,y:p.y-14,width:28,height:28,rx:5,fill:'#1f2a45',stroke:'#5fb3ff','stroke-width':2});
+  el('text',{x:p.x,y:p.y+4,fill:'#9fd0ff','font-size':11,'text-anchor':'middle'},'②');
+  el('text',{x:p.x,y:p.y+26,fill:'#5fb3ff','font-size':9,'text-anchor':'middle'},label);
+});
+// 頭割り (A側タゲサ淵)
+const st=pol(0,R_STACK);
+el('circle',{cx:st.x,cy:st.y,r:20,fill:'none',stroke:'#ffcc4d','stroke-width':2,'stroke-dasharray':'5,4'});
+el('text',{x:st.x,y:st.y-26,fill:'#ffcc4d','font-size':11,'text-anchor':'middle'},'頭割り(5人・タゲサ外)');
+// 連旋の動き(内外)矢印
+const f=pol(135,30), e=pol(135,R_STACK);
+el('line',{x1:f.x,y1:f.y,x2:e.x,y2:e.y,stroke:'#3ddc84','stroke-width':2,'stroke-dasharray':'4,3'});
+el('text',{x:e.x+6,y:e.y+16,fill:'#3ddc84','font-size':10,'text-anchor':'middle'},'内=足元⇔外=淵');
+</script>
+</body>
+</html>
