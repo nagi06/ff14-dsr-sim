@@ -13,7 +13,8 @@
   ・ダイブの意味 = 塔が自分のどこに出るか:
     - スパインダイブ=前方 → ボスを向く必要 / イルーシブダイブ=後方 → ボスに背を向ける / HJ=真上 → 向き自由。
   ・位置ルール(ミックス): イルーシブ=マーカーD側(西)固定、スパイン=マーカーB側(東)固定、HJ=中間(南)。
-    全員HJ時は優先度で西/南/東。2番の塔位置=向かって左が4-A間・右がA-1間、内周から2つ目の円(R_MID)上。
+    全員HJ時は優先度で西/南/東。1番/3番の塔=タゲサ淵のすぐ外。2番の塔=タゲサから離れた北側(A寄り)、
+    向かって左が4-A間・右がA-1間。1番の連旋1回避は「A側へ移動しながら避ける」(その場の内外ではない)。
   ・連旋の避けは 内→外 or 外→内 の連続移動。内=ボスの足元/外=ターゲットサークル際(盤面に可視化、表示は多少オーバー)。
     仕事が終わった人はAマーカー側(ボス正面)に集合する。
   ・塔を出したらその場を離れる(残ると自分の塔=踏めない塔を踏む)。1番は塔①設置後すぐA側で待機、
@@ -155,7 +156,7 @@
           目安はボスの<b>ターゲットサークル</b>: 内=<b>ボスの足元</b>／外=<b>ターゲットサークル際</b>(大げさに動く余裕はない)。<br>
           頭割り1回目=<b>2番+3番の5人</b>／2回目=<b>1番+2番の5人</b>。頭割り位置は<b>ボス正面Aマーカー側のタゲサ淵(タゲサを踏まない=必ず外側)</b>。<br>
           <b>時系列</b>：<br>
-          ①1番が西/南/東に散開して塔設置(2番3番はボス正面で頭割り1) → ②連旋1回目を避けつつ<b>3番が1番の塔を踏む</b>(自分が後で塔を出すスロットと同じ場所)＋直線誘導。並行して<b>2番は北へ移動して塔設置</b>(左=4-A間/右=A-1間、内周から2つ目の円) → ③2番の塔を<b>西/東にいた1番</b>が踏む(西→左塔/東→右塔)＋直線誘導→すぐ頭割り2に合流。中間(南)の1番は踏まずに頭割り2へ。2番も設置後すぐ頭割り2へ → ④連旋2回目 → ⑤<b>3番がその場で塔設置</b>(ミックスは向き注意) → ⑥3番の塔を<b>2番(左右)＋頭割りにいた1番(真ん中)</b>が踏む＋直線誘導。真ん中の1番のルートは<b>尾牙=ボス下を中央突破／牙尾=円周沿い</b>。<br>
+          ①1番が西/南/東に散開して塔設置(2番3番はボス正面で頭割り1) → ②連旋1回目を避けつつ<b>3番が1番の塔を踏む</b>(自分が後で塔を出すスロットと同じ場所)＋直線誘導。並行して<b>2番は北へ移動して塔設置</b>(左=4-A間/右=A-1間、タゲサから離れたA寄り) →③2番の塔を<b>西/東にいた1番</b>が踏む(西→左塔/東→右塔)＋直線誘導→すぐ頭割り2に合流。中間(南)の1番は踏まずに頭割り2へ。2番も設置後すぐ頭割り2へ → ④連旋2回目 → ⑤<b>3番がその場で塔設置</b>(ミックスは向き注意) → ⑥3番の塔を<b>2番(左右)＋頭割りにいた1番(真ん中)</b>が踏む＋直線誘導。真ん中の1番のルートは<b>尾牙=ボス下を中央突破／牙尾=円周沿い</b>。<br>
           <b>4塔(ダークドラゴンダイブ)</b>：斜め4方向にペアで散開。固定役(H1/H2/D3/D4)は動かず、調整役(MT/ST/D1/D2)がMT&gt;ST&gt;D1&gt;D2の優先度で 自枠&gt;左&gt;右&gt;対角 の順に調整。塔の柱の数=必要人数(1〜4・合計8)。<br>
           <b>ソウルテザー</b>：MT=分身線(無敵受け)、ST=ボス線(激減受け)、他6人は南に集合して待機。
           <div class="src">当たり判定・ダメージは演出のみの簡略モデルです。必ず自分のPTの取り決めと照らし合わせてください。</div>
@@ -221,10 +222,11 @@ const MARKERS = [
 const MARK_ANGLE = {}; MARKERS.forEach(m=>MARK_ANGLE[m.id]=m.angle);
 // マーカー色(ゲーム準拠): A/1=赤, B/2=黄, C/3=青, D/4=紫
 const MARKER_COLORS = {A:'#ff5c5c','1':'#ff5c5c', B:'#ffd24d','2':'#ffd24d', C:'#4da6ff','3':'#4da6ff', D:'#c07aff','4':'#c07aff'};
-const R_OUT=170, R_MID=132, R_MARK=196;
-const R_TARGET=122; // ボス中心のターゲットサークル(牙尾/尾牙の目安)。1番/3番の塔(R_MID=132)がタゲサの淵に出るイメージ
-const R_STACK=R_TARGET+18; // 頭割り位置: ボス正面Aマーカー側のタゲサ淵(タゲサを踏まない=必ず外側)
-const R_WAIT=165; // 塔を出し終えた人のA側待機位置(頭割りよりさらに外)
+const R_OUT=170, R_MARK=196;
+const R_TARGET=100; // ボス中心のターゲットサークル(牙尾/尾牙の目安)
+const R_MID=R_TARGET+10; // 1番/3番の塔=タゲサの淵のすぐ外
+const R_STACK=R_TARGET+15; // 頭割り位置: ボス正面Aマーカー側のタゲサ淵(タゲサを踏まない=必ず外側)
+const R_WAIT=165; // 塔を出し終えた人のA側待機位置(タゲサから離れた北側)
 const MOVE_MS=1000;
 const BEAT_MS=1400;
 
@@ -343,7 +345,7 @@ function initSVG(){
     const p=polar(a,195);
     svg.appendChild(svgEl('line',{x1:0,y1:0,x2:p.x,y2:p.y,stroke:'#2a3556','stroke-width':1}));
   });
-  [R_OUT,R_MID].forEach(r=>{
+  [R_OUT].forEach(r=>{
     svg.appendChild(svgEl('circle',{cx:0,cy:0,r,fill:'none',stroke:'#26314f','stroke-width':1,'stroke-dasharray':'3,4'}));
   });
   // ボスのターゲットサークル(牙尾/尾牙の内外の目安)
@@ -373,8 +375,8 @@ function drawToken(role, angle, r){
   const p=polar(angle,r);
   const isUser = role===selectedRole;
   const g=svgEl('g',{transform:`translate(${p.x},${p.y})`});
-  g.appendChild(svgEl('circle',{r:16, fill:info.color, stroke:isUser?'#ffffff':'#0a0e18','stroke-width':isUser?3:1.5}));
-  const t=svgEl('text',{x:0,y:4,fill:'#08111f','font-size':11,'font-weight':'bold','text-anchor':'middle'});
+  g.appendChild(svgEl('circle',{r:13, fill:info.color, stroke:isUser?'#ffffff':'#0a0e18','stroke-width':isUser?3:1.5}));
+  const t=svgEl('text',{x:0,y:3.5,fill:'#08111f','font-size':10,'font-weight':'bold','text-anchor':'middle'});
   t.textContent=role;
   g.appendChild(t);
   svg.appendChild(g);
@@ -398,7 +400,7 @@ function drawFacingArrow(role, facing){
   if(facing!=='face' && facing!=='back') return;
   const bearing = facing==='face' ? tok.angle+180 : tok.angle;
   const sub=svgEl('g',{class:'faceArrow', transform:`rotate(${bearing})`});
-  sub.appendChild(svgEl('path',{d:'M0,-30 L8,-18 L-8,-18 Z', fill:'#ffffff', stroke:'#0a0e18','stroke-width':1}));
+  sub.appendChild(svgEl('path',{d:'M0,-26 L7,-15 L-7,-15 Z', fill:'#ffffff', stroke:'#0a0e18','stroke-width':1}));
   tok.g.appendChild(sub);
 }
 // 重なり防止: ほぼ同座標のトークン同士を小さな円状に散らして全員見えるようにする(見た目のみ、内部座標は変えない)
@@ -408,7 +410,7 @@ function applySeparation(ms){
   const parent=pts.map((_,i)=>i);
   const find=i=>parent[i]===i?i:(parent[i]=find(parent[i]));
   for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){
-    if(Math.hypot(pts[i].x-pts[j].x,pts[i].y-pts[j].y)<24) parent[find(i)]=find(j);
+    if(Math.hypot(pts[i].x-pts[j].x,pts[i].y-pts[j].y)<20) parent[find(i)]=find(j);
   }
   const groups={};
   pts.forEach((p,i)=>{const g=find(i);(groups[g]=groups[g]||[]).push(p);});
@@ -418,7 +420,7 @@ function applySeparation(ms){
       const tok=tokens[p.role];
       let x=p.x, y=p.y;
       if(g.length>1){
-        const R=12+4*g.length;
+        const R=10+3.5*g.length;
         const a=(k/g.length)*2*Math.PI - Math.PI/2;
         x=cx+R*Math.cos(a); y=cy+R*Math.sin(a);
       }
@@ -568,7 +570,7 @@ function askInOut(promptText, correctSide, timeMs, cb, explain){
   let answered=false;
   const rings=[
     {id:'in', r:30, label:'ボス足元'},
-    {id:'out', r:R_TARGET+18, label:'サークル際'},
+    {id:'out', r:R_STACK, label:'サークル際'},
   ];
   const els=[];
   // 見た目の破線リング(タップ判定はしない)
@@ -593,7 +595,7 @@ function askInOut(promptText, correctSide, timeMs, cb, explain){
     else{ setMsg('不正解…正解は「'+MOVE_JP[correctSide]+'」','bad'); log('不正解 (正解: '+MOVE_JP[correctSide]+')', false); }
     cb(ok);
   };
-  [{id:'out', r:1000},{id:'in', r:125}].forEach(h=>{
+  [{id:'out', r:1000},{id:'in', r:70}].forEach(h=>{
     const hit=svgEl('circle',{cx:0,cy:0,r:h.r,class:'inoutRing',fill:'transparent'});
     hit.style.cursor='pointer';
     hit.addEventListener('click',()=>pickSide(h.id));
@@ -601,7 +603,7 @@ function askInOut(promptText, correctSide, timeMs, cb, explain){
     els.push(hit);
   });
   // ラベル表示(タップ領域の目安)
-  const lin=svgEl('text',{x:0,y:120,'text-anchor':'middle','font-size':11,fill:'var(--dim)',class:'inoutRing'}); lin.textContent='内→外(まずボス足元) は中央寄りをタップ';
+  const lin=svgEl('text',{x:0,y:135,'text-anchor':'middle','font-size':11,fill:'var(--dim)',class:'inoutRing'}); lin.textContent='内→外(まずボス足元) は中央寄りをタップ';
   const lout=svgEl('text',{x:0,y:-185,'text-anchor':'middle','font-size':11,fill:'var(--dim)',class:'inoutRing'}); lout.textContent='外→内(まずサークル際) は外周寄りをタップ';
   svg.appendChild(lin); svg.appendChild(lout);
   els.push(lin); els.push(lout);
@@ -685,10 +687,10 @@ function spreadNWNE(group2){
 }
 const WSE_ANGLE = {W:270, S:180, E:90};
 const WSE_LABEL = {W:'西(D側)', S:'南(中間)', E:'東(B側)'};
-// 2番の塔: 向かって左=4マーカーとAの間 / 右=1マーカーとAの間、内周から2つ目の円(R_MID)上
+// 2番の塔: 向かって左=4マーカーとAの間 / 右=1マーカーとAの間。タゲサから離れた北側(A寄り)
 const NWNE_ANGLE = {NW:337.5, NE:22.5};
 const NWNE_LABEL = {NW:'左(4-A間)', NE:'右(A-1間)'};
-const R2 = R_MID; // 2番の塔の半径(内周から2つ目の円)
+const R2 = 165; // 2番の塔の半径(タゲサから離す)
 
 // 向きの3択(自分の担当スロットに応じた説明つき)
 async function askFacingQ(promptText, myJump, explain){
@@ -703,7 +705,7 @@ async function askFacingQ(promptText, myJump, explain){
 // 連旋の連続回避アニメ: 対象ロールを 内→外 or 外→内 に連続移動させる
 async function dodgeAnim(roles, firstSide){
   // 内=ボスの足元 / 外=ターゲットサークル際。大げさに動く余裕はない(表示は多少オーバー)
-  const R_FEET=30, R_EDGE=R_TARGET+18;
+  const R_FEET=30, R_EDGE=R_STACK;
   const r1 = firstSide==='in' ? R_FEET : R_EDGE;
   const r2 = firstSide==='in' ? R_EDGE : R_FEET;
   roles.forEach(r=>{ const t=tokens[r]; moveTokenAnimated(r, t.angle, r1, MOVE_MS*0.6); });
@@ -909,7 +911,10 @@ async function startRun(){
   await askInOutP(`${CAST_JP[cast1]}: どう動く？(内→外/外→内)`, first1,
     `${CAST_JP[cast1]}は${CAST_DESC[cast1]}。${MOVE_JP[first1]}の連続移動で回避`);
   clearStackMark();
-  await dodgeAnim(PRIORITY.slice(), first1); // 全員(1番もA側で)内外を回避
+  // 1番はA側へ移動しながら範囲を避ける(その場の内外ではなく移動で回避)
+  setMsg('1番は範囲を避けつつA側正面へ移動…');
+  group1.forEach((r,i)=> moveTokenAnimated(r, (i-(group1.length-1)/2)*10, R_WAIT, MOVE_MS*2.2));
+  await dodgeAnim(group2.concat(group3), first1); // 頭割り組は内外の連続移動で回避
 
   // ---- フェーズ3: 3番が1番の塔を踏む / 2番は北へ移動 ----
   document.getElementById('phaseLabel').textContent='フェーズ3: 塔踏み1(3番) / 2番北移動';
@@ -924,8 +929,8 @@ async function startRun(){
     const myTarget = north2[selectedRole];
     const choices = ['NW','NE'].map(s=>({id:s, angle:NWNE_ANGLE[s], r:R2, label:NWNE_LABEL[s]}));
     const explain = patternUsed==='mixed'
-      ? `2番はボス北側で塔を出す(イルーシブ=左(4-A間)/スパイン=右(A-1間)、内周から2つ目の円)。あなたは【${NWNE_LABEL[myTarget]}】`
-      : `2番はボス北側で塔を出す(優先度順、内周から2つ目の円)。あなたは【${NWNE_LABEL[myTarget]}】`;
+      ? `2番はタゲサから離れた北側(A寄り)で塔を出す(イルーシブ=左(4-A間)/スパイン=右(A-1間))。あなたは【${NWNE_LABEL[myTarget]}】`
+      : `2番はタゲサから離れた北側(A寄り)で塔を出す(優先度順)。あなたは【${NWNE_LABEL[myTarget]}】`;
     await ask('2番のあなたはどこで塔を出す？', choices, myTarget, explain);
     if(patternUsed==='mixed'){
       const fExplain = myJump==='spine' ? 'スパインダイブ=前方に塔→ボスを向く' : 'イルーシブダイブ=後方に塔→ボスに背を向ける';
