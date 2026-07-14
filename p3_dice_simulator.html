@@ -11,7 +11,8 @@
     - 全員ハイジャンプ: 8人全員HJ。散開はロール優先度(西 H1/MT/ST/D1/D2/D3/D4/H2 東)。
     - ミックス: 1番と3番の各3人に イルーシブ×1/スパイン×1/HJ×1、2番の2人に イルーシブ×1/スパイン×1。
   ・ダイブの意味 = 塔が自分のどこに出るか:
-    - スパインダイブ=前方 → ボスを向く必要 / イルーシブダイブ=後方 → ボスに背を向ける / HJ=真上 → 向き自由。
+    - スパインダイブ=前方 / イルーシブダイブ=後方 / HJ=真上(向き自由)。
+    - 矢印持ちの向き(PT取り決め2026-07-13): 1/2/3とも全員「西のD」を向く。これで前方塔/後方塔が問題なく出る。
   ・位置ルール(ミックス): イルーシブ=マーカーD側(西)固定、スパイン=マーカーB側(東)固定、HJ=中間(南)。
     全員HJ時は優先度で西/南/東。1番/3番の塔=タゲサ淵のすぐ外。2番の塔=タゲサから離れた北側(A寄り)、
     向かって左が4-A間・右がA-1間。1番/3番の塔はボスを囲む下半分(斜め左下250°/真下180°/斜め右下110°)。
@@ -151,7 +152,8 @@
           <b>ダイブデバフ(2パターン)</b>：<br>
           ・全員ハイジャンプ → 散開はロール優先度(西 H1/MT/ST/D1/D2/D3/D4/H2 東)。<br>
           ・ミックス → 1番/3番の各3人に イルーシブ×1・スパイン×1・HJ×1、2番の2人に イルーシブ×1・スパイン×1。<br>
-          <b>ダイブの意味＝塔が出る位置</b>：スパイン=前方(→<b>ボスを向く</b>)／イルーシブ=後方(→<b>ボスに背を向ける</b>)／ハイジャンプ=真上(向き自由)。<br>
+          <b>ダイブの意味＝塔が出る位置</b>：スパイン=前方／イルーシブ=後方／ハイジャンプ=真上(向き自由)。<br>
+          <b>矢印持ちの向き(PT取り決め)</b>：1/2/3とも<b>全員「西のD」を向く</b>。これでスパイン=前方塔/イルーシブ=後方塔が問題なく出る。<br>
           <b>位置(ミックス)</b>：イルーシブ=<b>マーカーD側(西)</b>固定、スパイン=<b>マーカーB側(東)</b>固定、ハイジャンプ=その中間(南)。<br>
           <b>塔を出したら離れる</b>：塔の位置にとどまると自分の塔(踏めない塔)を踏んでしまう。ただし頭割り1の時点では<b>1番はまだ塔の位置</b>(頭割りは常に5人・1番は不参加)。<b>牙尾/尾牙の内外回避には1番も参加</b>(避けないと喰らって倒される)。回避が終わったら<b>A正面へ集合</b>して2番の塔を待つ(ここに判断は不要)。2番=塔②が出たら頭割りへ/3番=塔③が出たらA側へ。<br>
           <b>竜騎士の分身</b>：塔着弾後に出現し、最も近い1名へ直線攻撃を詠唱。<b>塔を踏んだ本人が「塔の外周側」に立って直線を外に誘導</b>する(味方に当てない)。<b>対象決定は塔を踏んだ約2秒後</b>なので、踏んですぐ離れず<b>分身の向き確定を見てから</b>頭割りへ集合する。<br>
@@ -399,12 +401,12 @@ function moveTokenAnimated(role, angle, r, ms){
   // 位置が変わったら向き矢印は一旦消す(意味がずれるため)
   tok.g.querySelectorAll('.faceArrow').forEach(e=>e.remove());
 }
-// 向き矢印: facing='face'(ボスを向く=中央向き) / 'back'(ボスに背=外周向き)
+// 向き矢印: facing='west'(西D向き=絶対方位270°) / 'face'(ボスを向く=中央向き) / 'back'(ボスに背=外周向き)
 function drawFacingArrow(role, facing){
   const tok=tokens[role]; if(!tok) return;
   tok.g.querySelectorAll('.faceArrow').forEach(e=>e.remove());
-  if(facing!=='face' && facing!=='back') return;
-  const bearing = facing==='face' ? tok.angle+180 : tok.angle;
+  if(facing!=='face' && facing!=='back' && facing!=='west') return;
+  const bearing = facing==='west' ? 270 : facing==='face' ? tok.angle+180 : tok.angle;
   const sub=svgEl('g',{class:'faceArrow', transform:`rotate(${bearing})`});
   sub.appendChild(svgEl('path',{d:'M0,-26 L7,-15 L-7,-15 Z', fill:'#ffffff', stroke:'#0a0e18','stroke-width':1}));
   tok.g.appendChild(sub);
@@ -649,8 +651,10 @@ const CAST_DESC = {kiba:'足元範囲→円範囲(動き: 外→内)', biba:'円
 // 牙尾: 足元→円 → 外→内の連続移動 / 尾牙: 円→足元 → 内→外の連続移動
 const FIRST_SAFE = {kiba:'out', biba:'in'};
 const MOVE_JP = {in:'内→外(ボス足元→サークル際)', out:'外→内(サークル際→ボス足元)'};
-const FACING_JP = {face:'ボスを向く', back:'ボスに背を向ける', free:'向き自由'};
-const CORRECT_FACING = {spine:'face', illusive:'back', high:'free'};
+// PT取り決め(2026-07-13): 矢印持ち(スパイン/イルーシブ)は1/2/3とも全員「西のD」を向く。
+// これで前方塔(スパイン)/後方塔(イルーシブ)が問題なく出る。HJは向き自由。
+const FACING_JP = {west:'西(D)を向く', face:'ボスを向く', back:'ボスに背を向ける', free:'向き自由'};
+const CORRECT_FACING = {spine:'west', illusive:'west', high:'free'};
 
 function assignDebuffs(pattern){
   const shuffled = shuffle(Object.keys(ROLES));
@@ -702,9 +706,10 @@ const R2 = 165; // 2番の塔の半径(タゲサから離す)
 // 向きの3択(自分の担当スロットに応じた説明つき)
 async function askFacingQ(promptText, myJump, explain){
   const opts=[
-    {id:'face', x:-120, y:150, label:'ボスを向く'},
-    {id:'back', x:0,    y:150, label:'背を向ける'},
-    {id:'free', x:120,  y:150, label:'向き自由'},
+    {id:'west', x:-150, y:150, label:'西(D)を向く'},
+    {id:'face', x:-50,  y:150, label:'ボスを向く'},
+    {id:'back', x:50,   y:150, label:'背を向ける'},
+    {id:'free', x:150,  y:150, label:'向き自由'},
   ];
   const choices=opts.map(o=>{ const pp=xyToPolar(o.x,o.y); return {id:o.id, angle:pp.angle, r:pp.r, label:o.label}; });
   await ask(promptText, choices, CORRECT_FACING[myJump], explain);
@@ -876,9 +881,8 @@ async function startRun(){
       : `全員HJなので優先度(西 H1/MT/ST/D1/D2/D3/D4/H2 東)で並ぶ。あなたは【${WSE_LABEL[myTarget]}】`;
     await ask('1番のあなたはどこで塔を出す？', choices, myTarget, explain);
     if(patternUsed==='mixed'){
-      const fExplain = myJump==='spine' ? 'スパインダイブは前方に塔が出るので、塔を自分の位置に置くにはボスを向く'
-        : myJump==='illusive' ? 'イルーシブダイブは後方に塔が出るので、ボスに背を向ける'
-        : 'ハイジャンプは真上に塔が出るので向きは自由';
+      const fExplain = myJump==='high' ? 'ハイジャンプは真上に塔が出るので向きは自由'
+        : '矢印持ちは全員【西のD】を向く(PT取り決め)。これでスパイン=前方塔/イルーシブ=後方塔が正しく出る';
       await askFacingQ('塔を正しく置くための向きは？', myJump, fExplain);
     }
   } else {
@@ -943,7 +947,7 @@ async function startRun(){
       : `2番はタゲサから離れた北側(A寄り)で塔を出す(優先度順)。あなたは【${NWNE_LABEL[myTarget]}】`;
     await ask('2番のあなたはどこで塔を出す？', choices, myTarget, explain);
     if(patternUsed==='mixed'){
-      const fExplain = myJump==='spine' ? 'スパインダイブ=前方に塔→ボスを向く' : 'イルーシブダイブ=後方に塔→ボスに背を向ける';
+      const fExplain = '矢印持ちは全員【西のD】を向く(PT取り決め)。これでスパイン=前方塔/イルーシブ=後方塔が正しく出る';
       await askFacingQ('塔を正しく置くための向きは？', myJump, fExplain);
     }
   } else {
@@ -1055,9 +1059,8 @@ async function startRun(){
   document.getElementById('phaseLabel').textContent='フェーズ7: 3番の塔設置';
   if(myNum===3){
     if(patternUsed==='mixed'){
-      const fExplain = myJump==='spine' ? 'スパインダイブ=前方に塔→ボスを向く。向きを間違えると塔が変な位置に出て処理不能に！'
-        : myJump==='illusive' ? 'イルーシブダイブ=後方に塔→ボスに背を向ける。向きを間違えると塔が変な位置に出て処理不能に！'
-        : 'ハイジャンプは真上に塔が出るので向きは自由';
+      const fExplain = myJump==='high' ? 'ハイジャンプは真上に塔が出るので向きは自由'
+        : '矢印持ちは全員【西のD】を向く(PT取り決め)。向きを間違えると塔が変な位置に出て処理不能に！';
       await askFacingQ('3番のあなた、塔を正しく置く向きは？', myJump, fExplain);
     } else {
       setMsg('全員ハイジャンプなので向きは自由。その場(自分の担当位置)で塔を出す。');
