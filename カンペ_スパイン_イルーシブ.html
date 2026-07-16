@@ -2,60 +2,86 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>カンペ：スパイン／イルーシブ</title>
+<title>カンペ：サイコロ（イルスパ＋1/2/3）</title>
 <style>
   html,body{margin:0;padding:0;background:#0d1117;color:#e6edf3;font-family:"Segoe UI","Hiragino Sans","Yu Gothic UI",sans-serif;height:100%;overflow:hidden}
-  .stage{width:100vw;height:56.25vw;max-height:100vh;max-width:177.78vh;margin:auto;position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:4vmin;padding:3vmin;box-sizing:border-box}
-  .rules{flex:1;display:flex;flex-direction:column;gap:3vmin}
-  .card{background:#161b22;border:2px solid #30363d;border-radius:1.5vmin;padding:3vmin 3.5vmin;display:flex;align-items:center;gap:3vmin}
-  .arrow{font-size:7vmin;line-height:1;width:9vmin;text-align:center}
-  .up{color:#58a6ff}.down{color:#ff7b72}
-  .card .txt{font-size:4.2vmin;font-weight:700}
-  .card .txt small{display:block;font-size:2.2vmin;font-weight:400;color:#8b949e;margin-top:.5vmin}
-  .marker{font-size:5.5vmin;font-weight:900;padding:1vmin 2.5vmin;border-radius:1vmin;margin-left:auto}
-  .mB{background:#c9a227;color:#111}
-  .mD{background:#8250df;color:#fff}
-  .face{background:#1c2431;border:2px solid #8250df;border-radius:1.5vmin;padding:2.5vmin 3.5vmin;font-size:3.6vmin;font-weight:700;text-align:center}
+  .stage{width:100vw;height:56.25vw;max-height:100vh;max-width:177.78vh;margin:auto;position:absolute;inset:0;display:flex;flex-direction:column;gap:2vmin;padding:2.5vmin 3vmin;box-sizing:border-box}
+  h1{font-size:2.6vmin;color:#8b949e;margin:0;text-align:center;letter-spacing:.3vmin}
+  /* --- top: debuff rules --- */
+  .top{display:flex;gap:2vmin;flex:1}
+  .card{flex:1;background:#161b22;border:2px solid #30363d;border-radius:1.5vmin;padding:1.5vmin 2vmin;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1vmin;text-align:center}
+  .card .icon{font-size:5vmin;line-height:1}
+  .up{color:#58a6ff}.down{color:#ff7b72}.hj{color:#a3be5c}
+  .card .name{font-size:2.6vmin;font-weight:700}
+  .card .rule{font-size:2.4vmin;font-weight:700;color:#e3b341}
+  .card .pos{font-size:2vmin;color:#8b949e}
+  .pos b.mB{color:#111;background:#c9a227;padding:.2vmin 1vmin;border-radius:.6vmin}
+  .pos b.mD{color:#fff;background:#8250df;padding:.2vmin 1vmin;border-radius:.6vmin}
+  .face{background:#1c2431;border:2px solid #8250df;border-radius:1.5vmin;padding:1vmin;font-size:2.4vmin;font-weight:700;text-align:center}
   .face .big{color:#c9a2ff}
-  /* field */
-  .field{position:relative;width:44vmin;height:44vmin;flex:none}
-  .ring{position:absolute;inset:4vmin;border:2px solid #30363d;border-radius:50%;background:radial-gradient(circle,#141a23 60%,#10151d)}
-  .mk{position:absolute;width:7vmin;height:7vmin;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:3.4vmin;font-weight:900;transform:translate(-50%,-50%)}
-  .mk.a{background:#c94f4f;color:#fff;left:50%;top:4vmin}
-  .mk.b{background:#c9a227;color:#111;left:calc(100% - 4vmin);top:50%}
-  .mk.c{background:#3f7fd4;color:#fff;left:50%;top:calc(100% - 4vmin)}
-  .mk.d{background:#8250df;color:#fff;left:4vmin;top:50%}
-  .mk.b,.mk.d{box-shadow:0 0 2vmin currentColor}
-  .lbl{position:absolute;transform:translate(-50%,-50%);font-size:2.4vmin;font-weight:700;text-align:center;line-height:1.3}
-  .lbl.spine{left:calc(100% - 14vmin);top:38%;color:#58a6ff}
-  .lbl.elusive{left:14vmin;top:62%;color:#ff7b72}
-  h1{position:absolute;top:1vmin;left:50%;transform:translateX(-50%);font-size:3vmin;color:#8b949e;margin:0;letter-spacing:.3vmin}
+  /* --- bottom: 1/2/3 flow --- */
+  .flows{flex:1.5;display:flex;flex-direction:column;gap:1.5vmin}
+  .flow{display:flex;align-items:center;gap:1.5vmin;background:#161b22;border:2px solid #30363d;border-radius:1.5vmin;padding:1.2vmin 2vmin;flex:1}
+  .num{width:6vmin;height:6vmin;border-radius:1vmin;display:flex;align-items:center;justify-content:center;font-size:3.6vmin;font-weight:900;flex:none}
+  .n1{background:#c94f4f;color:#fff}.n2{background:#3f7fd4;color:#fff}.n3{background:#a3be5c;color:#111}
+  .steps{display:flex;align-items:center;gap:1.2vmin;flex:1;justify-content:space-around}
+  .step{font-size:2.3vmin;font-weight:700;background:#21262d;border-radius:1vmin;padding:1vmin 1.5vmin;text-align:center;line-height:1.35}
+  .step small{display:block;font-size:1.7vmin;font-weight:400;color:#8b949e}
+  .step.tower{border:2px solid #e3b341;color:#e3b341}
+  .step.soak{border:2px solid #58a6ff;color:#58a6ff}
+  .ar{font-size:2.6vmin;color:#484f58;flex:none}
 </style>
 </head>
 <body>
 <div class="stage">
-  <h1>スパイン／イルーシブ カンペ</h1>
-  <div class="rules">
+  <h1>サイコロ カンペ</h1>
+
+  <div class="top">
     <div class="card">
-      <div class="arrow up">↑</div>
-      <div class="txt">スパインダイブ<small>前方ジャンプ（矢印 上）</small></div>
-      <div class="marker mB">B</div>
+      <div class="icon up">↑</div>
+      <div class="name">スパイン</div>
+      <div class="rule">前（D側）に塔が飛ぶ</div>
+      <div class="pos">立ち位置：<b class="mB">B</b></div>
     </div>
     <div class="card">
-      <div class="arrow down">↓</div>
-      <div class="txt">イルーシブジャンプ<small>後方ジャンプ（矢印 下）</small></div>
-      <div class="marker mD">D</div>
+      <div class="icon hj">●</div>
+      <div class="name">ハイジャンプ（矢印なし）</div>
+      <div class="rule">足元に塔</div>
     </div>
-    <div class="face">向きは いずれも <span class="big">Dマーカー</span> を向く</div>
+    <div class="card">
+      <div class="icon down">↓</div>
+      <div class="name">イルーシブ</div>
+      <div class="rule">後ろ（B側）に塔が飛ぶ</div>
+      <div class="pos">立ち位置：<b class="mD">D</b></div>
+    </div>
   </div>
-  <div class="field">
-    <div class="ring"></div>
-    <div class="mk a">A</div>
-    <div class="mk b">B</div>
-    <div class="mk c">C</div>
-    <div class="mk d">D</div>
-    <div class="lbl spine">↑スパイン<br>ここに立つ</div>
-    <div class="lbl elusive">↓イルーシブ<br>ここに立つ</div>
+  <div class="face">向きは全員 <span class="big">D</span>。Dを北とした地図で、矢印の方向＝塔が出る方向</div>
+
+  <div class="flows">
+    <div class="flow">
+      <div class="num n1">1</div>
+      <div class="steps">
+        <div class="step tower">塔を出す<small>最初のジャンプ</small></div><div class="ar">→</div>
+        <div class="step">頭割り</div><div class="ar">→</div>
+        <div class="step soak">2番の塔を踏む<small>余りの1人は3番の塔へ</small></div>
+      </div>
+    </div>
+    <div class="flow">
+      <div class="num n2">2</div>
+      <div class="steps">
+        <div class="step">頭割り</div><div class="ar">→</div>
+        <div class="step tower">塔を出す<small>2回目のジャンプ</small></div><div class="ar">→</div>
+        <div class="step soak">3番の塔を踏む</div>
+      </div>
+    </div>
+    <div class="flow">
+      <div class="num n3">3</div>
+      <div class="steps">
+        <div class="step">頭割り</div><div class="ar">→</div>
+        <div class="step soak">1番の塔を踏む</div><div class="ar">→</div>
+        <div class="step tower">塔を出す<small>最後のジャンプ</small></div>
+      </div>
+    </div>
   </div>
 </div>
 </body>
