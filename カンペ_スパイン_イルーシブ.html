@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>カンペ：スパイン／イルーシブ</title>
+<style>
+  html,body{margin:0;padding:0;background:#0d1117;color:#e6edf3;font-family:"Segoe UI","Hiragino Sans","Yu Gothic UI",sans-serif;height:100%;overflow:hidden}
+  .stage{width:100vw;height:56.25vw;max-height:100vh;max-width:177.78vh;margin:auto;position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:4vmin;padding:3vmin;box-sizing:border-box}
+  .rules{flex:1;display:flex;flex-direction:column;gap:3vmin}
+  .card{background:#161b22;border:2px solid #30363d;border-radius:1.5vmin;padding:3vmin 3.5vmin;display:flex;align-items:center;gap:3vmin}
+  .arrow{font-size:7vmin;line-height:1;width:9vmin;text-align:center}
+  .up{color:#58a6ff}.down{color:#ff7b72}
+  .card .txt{font-size:4.2vmin;font-weight:700}
+  .card .txt small{display:block;font-size:2.2vmin;font-weight:400;color:#8b949e;margin-top:.5vmin}
+  .marker{font-size:5.5vmin;font-weight:900;padding:1vmin 2.5vmin;border-radius:1vmin;margin-left:auto}
+  .mB{background:#c9a227;color:#111}
+  .mD{background:#8250df;color:#fff}
+  .face{background:#1c2431;border:2px solid #8250df;border-radius:1.5vmin;padding:2.5vmin 3.5vmin;font-size:3.6vmin;font-weight:700;text-align:center}
+  .face .big{color:#c9a2ff}
+  /* field */
+  .field{position:relative;width:44vmin;height:44vmin;flex:none}
+  .ring{position:absolute;inset:4vmin;border:2px solid #30363d;border-radius:50%;background:radial-gradient(circle,#141a23 60%,#10151d)}
+  .mk{position:absolute;width:7vmin;height:7vmin;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:3.4vmin;font-weight:900;transform:translate(-50%,-50%)}
+  .mk.a{background:#c94f4f;color:#fff;left:50%;top:4vmin}
+  .mk.b{background:#c9a227;color:#111;left:calc(100% - 4vmin);top:50%}
+  .mk.c{background:#3f7fd4;color:#fff;left:50%;top:calc(100% - 4vmin)}
+  .mk.d{background:#8250df;color:#fff;left:4vmin;top:50%}
+  .mk.b,.mk.d{box-shadow:0 0 2vmin currentColor}
+  .lbl{position:absolute;transform:translate(-50%,-50%);font-size:2.4vmin;font-weight:700;text-align:center;line-height:1.3}
+  .lbl.spine{left:calc(100% - 14vmin);top:38%;color:#58a6ff}
+  .lbl.elusive{left:14vmin;top:62%;color:#ff7b72}
+  h1{position:absolute;top:1vmin;left:50%;transform:translateX(-50%);font-size:3vmin;color:#8b949e;margin:0;letter-spacing:.3vmin}
+</style>
+</head>
+<body>
+<div class="stage">
+  <h1>スパイン／イルーシブ カンペ</h1>
+  <div class="rules">
+    <div class="card">
+      <div class="arrow up">↑</div>
+      <div class="txt">スパインダイブ<small>前方ジャンプ（矢印 上）</small></div>
+      <div class="marker mB">B</div>
+    </div>
+    <div class="card">
+      <div class="arrow down">↓</div>
+      <div class="txt">イルーシブジャンプ<small>後方ジャンプ（矢印 下）</small></div>
+      <div class="marker mD">D</div>
+    </div>
+    <div class="face">向きは いずれも <span class="big">Dマーカー</span> を向く</div>
+  </div>
+  <div class="field">
+    <div class="ring"></div>
+    <div class="mk a">A</div>
+    <div class="mk b">B</div>
+    <div class="mk c">C</div>
+    <div class="mk d">D</div>
+    <div class="lbl spine">↑スパイン<br>ここに立つ</div>
+    <div class="lbl elusive">↓イルーシブ<br>ここに立つ</div>
+  </div>
+</div>
+</body>
+</html>
