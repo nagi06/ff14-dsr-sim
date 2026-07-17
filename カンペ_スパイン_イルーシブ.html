@@ -5,31 +5,30 @@
 <title>カンペ：サイコロ（イルスパ＋1/2/3）</title>
 <style>
   html,body{margin:0;padding:0;background:#0d1117;color:#e6edf3;font-family:"Segoe UI","Hiragino Sans","Yu Gothic UI",sans-serif;height:100%;overflow:hidden}
-  .stage{width:100vw;height:56.25vw;max-height:100vh;max-width:177.78vh;margin:auto;position:absolute;inset:0;display:flex;flex-direction:column;gap:2vmin;padding:2.5vmin 3vmin;box-sizing:border-box}
-  h1{font-size:2.6vmin;color:#8b949e;margin:0;text-align:center;letter-spacing:.3vmin}
-  /* --- top: debuff rules --- */
-  .top{display:flex;gap:2vmin;flex:1}
-  .card{flex:1;background:#161b22;border:2px solid #30363d;border-radius:1.5vmin;padding:1.5vmin 2vmin;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1vmin;text-align:center}
-  .card .icon{font-size:5vmin;line-height:1}
+  .stage{width:100vw;height:56.25vw;max-height:100vh;max-width:177.78vh;margin:auto;position:absolute;inset:0;display:flex;flex-direction:column;gap:1.2vmin;padding:1.5vmin 2.5vmin;box-sizing:border-box;overflow:hidden}
+  h1{font-size:2.2vmin;color:#8b949e;margin:0;text-align:center;letter-spacing:.3vmin;flex:none}
+  /* --- top: field map + legend --- */
+  .top{display:flex;gap:1.5vmin;flex:1.4;min-height:0;align-items:stretch}
+  .map{flex:none;height:100%;aspect-ratio:1;background:#161b22;border:2px solid #30363d;border-radius:1.5vmin;box-sizing:border-box}
+  .map svg{width:100%;height:100%;display:block}
+  .legend{flex:1;min-width:0;display:flex;flex-direction:column;gap:1vmin;justify-content:center}
+  .lg{background:#161b22;border:2px solid #30363d;border-radius:1.2vmin;padding:.8vmin 1.6vmin;font-size:2.1vmin;font-weight:700;display:flex;align-items:center;gap:1.2vmin;min-height:0}
+  .lg .ic{font-size:2.8vmin;width:3.6vmin;text-align:center;flex:none}
   .up{color:#58a6ff}.down{color:#ff7b72}.hj{color:#a3be5c}
-  .card .name{font-size:2.6vmin;font-weight:700}
-  .card .rule{font-size:2.4vmin;font-weight:700;color:#e3b341}
-  .card .pos{font-size:2vmin;color:#8b949e}
-  .pos b.mB{color:#111;background:#c9a227;padding:.2vmin 1vmin;border-radius:.6vmin}
-  .pos b.mD{color:#fff;background:#8250df;padding:.2vmin 1vmin;border-radius:.6vmin}
-  .face{background:#1c2431;border:2px solid #8250df;border-radius:1.5vmin;padding:1vmin;font-size:2.4vmin;font-weight:700;text-align:center}
+  .lg small{font-weight:400;color:#8b949e;margin-left:auto;font-size:1.7vmin}
+  .face{background:#1c2431;border:2px solid #8250df;border-radius:1.2vmin;padding:.8vmin 1.6vmin;font-size:2vmin;font-weight:700}
   .face .big{color:#c9a2ff}
   /* --- bottom: 1/2/3 flow --- */
-  .flows{flex:1.5;display:flex;flex-direction:column;gap:1.5vmin}
-  .flow{display:flex;align-items:center;gap:1.5vmin;background:#161b22;border:2px solid #30363d;border-radius:1.5vmin;padding:1.2vmin 2vmin;flex:1}
-  .num{width:6vmin;height:6vmin;border-radius:1vmin;display:flex;align-items:center;justify-content:center;font-size:3.6vmin;font-weight:900;flex:none}
+  .flows{flex:1.5;display:flex;flex-direction:column;gap:1vmin;min-height:0}
+  .flow{display:flex;align-items:center;gap:1.2vmin;background:#161b22;border:2px solid #30363d;border-radius:1.5vmin;padding:.8vmin 1.6vmin;flex:1;min-height:0}
+  .num{width:5vmin;height:5vmin;border-radius:1vmin;display:flex;align-items:center;justify-content:center;font-size:3vmin;font-weight:900;flex:none}
   .n1{background:#c94f4f;color:#fff}.n2{background:#3f7fd4;color:#fff}.n3{background:#a3be5c;color:#111}
-  .steps{display:flex;align-items:center;gap:1.2vmin;flex:1;justify-content:space-around}
-  .step{font-size:2.3vmin;font-weight:700;background:#21262d;border-radius:1vmin;padding:1vmin 1.5vmin;text-align:center;line-height:1.35}
-  .step small{display:block;font-size:1.7vmin;font-weight:400;color:#8b949e}
+  .steps{display:flex;align-items:center;gap:1vmin;flex:1;justify-content:space-around}
+  .step{font-size:2vmin;font-weight:700;background:#21262d;border-radius:1vmin;padding:.7vmin 1.2vmin;text-align:center;line-height:1.3}
+  .step small{display:block;font-size:1.5vmin;font-weight:400;color:#8b949e}
   .step.tower{border:2px solid #e3b341;color:#e3b341}
   .step.soak{border:2px solid #58a6ff;color:#58a6ff}
-  .ar{font-size:2.6vmin;color:#484f58;flex:none}
+  .ar{font-size:2.2vmin;color:#484f58;flex:none}
 </style>
 </head>
 <body>
@@ -37,25 +36,47 @@
   <h1>サイコロ カンペ</h1>
 
   <div class="top">
-    <div class="card">
-      <div class="icon up">↑</div>
-      <div class="name">スパイン</div>
-      <div class="rule">前（D側）に塔が飛ぶ</div>
-      <div class="pos">立ち位置：<b class="mB">B</b></div>
+    <div class="map">
+      <svg viewBox="0 0 340 340" xmlns="http://www.w3.org/2000/svg" role="img">
+        <title>立ち位置図（D北・B南）</title>
+        <defs>
+          <marker id="aht" markerWidth="7" markerHeight="7" refX="5" refY="2.5" orient="auto"><path d="M0,0 L6,2.5 L0,5 Z" fill="#e3b341"/></marker>
+        </defs>
+        <circle cx="170" cy="170" r="130" fill="#10151d" stroke="#4b5563" stroke-width="2"/>
+        <!-- markers: D top, B bottom, C left, A right -->
+        <circle cx="170" cy="40" r="17" fill="#8250df"/><text x="170" y="46" text-anchor="middle" font-size="15" font-weight="900" fill="#fff">D</text>
+        <circle cx="170" cy="300" r="17" fill="#c9a227"/><text x="170" y="306" text-anchor="middle" font-size="15" font-weight="900" fill="#111">B</text>
+        <circle cx="40" cy="170" r="14" fill="#3f7fd4"/><text x="40" y="175" text-anchor="middle" font-size="12" font-weight="900" fill="#fff">C</text>
+        <circle cx="300" cy="170" r="14" fill="#c94f4f"/><text x="300" y="175" text-anchor="middle" font-size="12" font-weight="900" fill="#fff">A</text>
+
+        <!-- spine: stands B side, tower flies forward (up) -->
+        <circle cx="170" cy="258" r="9" fill="#58a6ff"/>
+        <path d="M163,247 L170,235 L177,247 Z" fill="#58a6ff"/>
+        <path d="M170,242 L170,212" stroke="#e3b341" stroke-width="3.5" stroke-dasharray="5 4" marker-end="url(#aht)" fill="none"/>
+        <circle cx="170" cy="197" r="13" fill="none" stroke="#e3b341" stroke-width="2.5"/>
+        <text x="196" y="262" font-size="13" font-weight="700" fill="#58a6ff">↑スパイン</text>
+
+        <!-- elusive: stands D side, tower flies backward (down) -->
+        <circle cx="170" cy="82" r="9" fill="#ff7b72"/>
+        <path d="M163,71 L170,59 L177,71 Z" fill="#ff7b72"/>
+        <path d="M170,98 L170,128" stroke="#e3b341" stroke-width="3.5" stroke-dasharray="5 4" marker-end="url(#aht)" fill="none"/>
+        <circle cx="170" cy="143" r="13" fill="none" stroke="#e3b341" stroke-width="2.5"/>
+        <text x="196" y="86" font-size="13" font-weight="700" fill="#ff7b72">↓イルーシブ</text>
+
+        <!-- high jump: stands C side, tower on self -->
+        <circle cx="88" cy="170" r="13" fill="none" stroke="#e3b341" stroke-width="2.5"/>
+        <circle cx="88" cy="170" r="9" fill="#a3be5c"/>
+        <path d="M81,159 L88,147 L95,159 Z" fill="#a3be5c"/>
+        <text x="88" y="203" font-size="13" font-weight="700" fill="#a3be5c" text-anchor="middle">●ハイジャン</text>
+      </svg>
     </div>
-    <div class="card">
-      <div class="icon hj">●</div>
-      <div class="name">ハイジャンプ（矢印なし）</div>
-      <div class="rule">足元に塔</div>
-    </div>
-    <div class="card">
-      <div class="icon down">↓</div>
-      <div class="name">イルーシブ</div>
-      <div class="rule">後ろ（B側）に塔が飛ぶ</div>
-      <div class="pos">立ち位置：<b class="mD">D</b></div>
+    <div class="legend">
+      <div class="lg"><span class="ic up">↑</span>スパイン：Bマカ側に立つ<small>塔は前（D側）に飛ぶ</small></div>
+      <div class="lg"><span class="ic hj">●</span>ハイジャンプ：Cマカ側に立つ<small>塔は足元</small></div>
+      <div class="lg"><span class="ic down">↓</span>イルーシブ：Dマカ側に立つ<small>塔は後ろ（B側）に飛ぶ</small></div>
+      <div class="face">向きは全員 <span class="big">D</span>（北）。矢印の方向＝塔が飛ぶ方向</div>
     </div>
   </div>
-  <div class="face">向きは全員 <span class="big">D</span>。Dを北とした地図で、矢印の方向＝塔が出る方向</div>
 
   <div class="flows">
     <div class="flow">
