@@ -202,10 +202,17 @@ const RAW_MARKERS = [
 const MARKER_COLORS = {A:'#ff5c5c','1':'#ff5c5c', B:'#ffd24d','2':'#ffd24d', C:'#4da6ff','3':'#4da6ff', D:'#c07aff','4':'#c07aff'};
 const MOVE_MS = 900;
 const BEAT_MS = 1300;
+const ROTATE_MS = 1400; // 北基準確定の盤面回転演出の所要時間
 
 function polar(angleDeg, r){
   const rad = angleDeg*Math.PI/180;
   return {x: r*Math.sin(rad), y: -r*Math.cos(rad)};
+}
+// 角度を(-180,180]の範囲に正規化(最短回転方向を選ぶため)
+function normalizeAngle180(a){
+  a = ((a % 360) + 360) % 360;
+  if(a > 180) a -= 360;
+  return a;
 }
 function choicePos(ch){
   if(ch.x!==undefined && ch.x!==null) return {x:ch.x, y:ch.y};
@@ -447,7 +454,67 @@ function setMsg(text, kind){
 function setScore(){ document.getElementById('scoreTag').textContent = reviewMode? '確認モード' : score+'/'+total; }
 function setInfo(html){ document.getElementById('infoText').innerHTML = html; }
 
-function initSVG(dragonMarker){
+// 盤面を「真北=A」の生の向き(未回転)で描画する。ドラゴンは実際に出現した方位に表示する。
+// マーカーラベルとドラゴンラベルはそれぞれ独立した<g class="counterRot">に入れておき、
+// 後で盤面(boardG)を回転させる際に逆回転させて文字が逆さにならないようにする。
+function buildBoardRaw(dragonMarker){
+  svg = document.getElementById('arena');
+  svg.innerHTML='';
+  const boardG = svgEl('g',{id:'boardG', transform:'rotate(0)'});
+  svg.appendChild(boardG);
+  const bg=svgEl('circle',{cx:0,cy:0,r:210,fill:'#141b2c',stroke:'#3a4a70','stroke-width':2});
+  boardG.appendChild(bg);
+  [45,135,225,315].forEach(a=>{
+    const p=polar(a,210);
+    boardG.appendChild(svgEl('line',{x1:0,y1:0,x2:p.x,y2:p.y,stroke:'#2a3556','stroke-width':1}));
+  });
+  RAW_MARKERS.forEach(m=>{
+    const p = polar(m.angle, 185);
+    const col = MARKER_COLORS[m.id];
+    boardG.appendChild(svgEl('circle',{cx:p.x,cy:p.y,r:11,fill:'#141b2c',stroke:col,'stroke-width':2}));
+    const labelG = svgEl('g',{class:'counterRot', transform:`translate(${p.x},${p.y}) rotate(0)`});
+    const t=svgEl('text',{x:0,y:4,fill:col,'font-size':11,'font-weight':'bold','text-anchor':'middle'});
+    t.textContent = m.id;
+    labelG.appendChild(t);
+    boardG.appendChild(labelG);
+  });
+  // ドラゴンアイコン(実際に出現した方位=生の角度に表示)
+  const dragonAngle = RAW_MARKERS.find(m=>m.id===dragonMarker).angle;
+  const dp = polar(dragonAngle, 205);
+  boardG.appendChild(svgEl('circle',{cx:dp.x,cy:dp.y,r:14,fill:'#2a1633',stroke:'#ff9dc7','stroke-width':2}));
+  const dragonLabelG = svgEl('g',{class:'counterRot', transform:`translate(${dp.x},${dp.y}) rotate(0)`});
+  const dt=svgEl('text',{x:0,y:4,fill:'#ff9dc7','font-size':9,'text-anchor':'middle'});
+  dt.textContent='竜';
+  dragonLabelG.appendChild(dt);
+  boardG.appendChild(dragonLabelG);
+  // 中心
+  boardG.appendChild(svgEl('circle',{cx:0,cy:0,r:6,fill:'#555'}));
+  return boardG;
+}
+
+// boardG全体をdeltaTheta度だけ回転させ、ドラゴンを画面上(北)に合わせるアニメーション。
+// マーカー/ドラゴンのラベルは同時に逆回転させ、正立を保つ。
+function rotateBoardToNorth(boardG, deltaTheta, ms){
+  return new Promise(resolve=>{
+    const labelGs = boardG.querySelectorAll('.counterRot');
+    boardG.style.transition = `transform ${ms}ms ease-in-out`;
+    labelGs.forEach(lg=>{ lg.style.transition = `transform ${ms}ms ease-in-out`; });
+    // rAFは非表示タブで停止するため使わない(スタイル反映を強制してからタイマーで適用)
+    boardG.getBoundingClientRect();
+    setTimeout(()=>{
+      boardG.setAttribute('transform', `rotate(${deltaTheta})`);
+      labelGs.forEach(lg=>{
+        const tr = lg.getAttribute('transform');
+        lg.setAttribute('transform', tr.replace(/rotate\([^)]*\)/, `rotate(${-deltaTheta})`));
+      });
+    }, 30);
+    setTimeout(resolve, ms + 80);
+  });
+}
+
+// 回転演出が終わった後の盤面(従来どおりドラゴン基準に正規化済みの静的な描画)。
+// 以降のフェーズはすべてこの正規化済み座標系を前提に動く(回転アニメーションの影響を受けない)。
+function initSVGNormalized(dragonMarker){
   svg = document.getElementById('arena');
   svg.innerHTML='';
   const bg=svgEl('circle',{cx:0,cy:0,r:210,fill:'#141b2c',stroke:'#3a4a70','stroke-width':2});
@@ -622,7 +689,6 @@ async function startRun(){
   document.getElementById('viewResultBtn').hidden=true;
 
   const R = drawScenario();
-  initSVG(R.dragonMarker);
   tokens={};
 
   const myIsLine = R.lineRoles.includes(selectedRole);
@@ -631,11 +697,27 @@ async function startRun(){
   const myIsThunder = R.thunderRoles.includes(selectedRole);
   const roleTagJP = myIsLine ? 'スパイラルピアス(線)持ち' : myIsBlue ? 'スカイワードリープ(青玉)持ち' : '無職';
 
+  // ---- 出題0(演出のみ): 北基準確定 ----
+  // 1) まず真北=Aの生の向きで盤面を描画し、ドラゴンを実際の出現方位に表示する。
+  const boardG = buildBoardRaw(R.dragonMarker);
+  document.getElementById('phaseLabel').textContent='ヴェズルフェルニル出現！実際の方位を確認';
+  setInfo(`ヴェズルフェルニル出現位置: 実マーカー<b>${R.dragonMarker}</b><br>`+
+    `あなた=<b>${selectedRole}</b> / <b>${roleTagJP}</b>${myIsThunder? '(サンダーも付与)':''}`);
+  setMsg('ドラゴンの方角を確認してください');
+  await wait(reviewMode ? 900 : 500);
+
+  // 2) カメラを回してドラゴンを画面上(北)に合わせる回転アニメーション(最短回転方向)。
+  document.getElementById('phaseLabel').textContent='カメラを回転してドラゴンを北(画面上)に合わせる';
+  setMsg('盤面が回転してドラゴン=北になります…');
+  const dragonAngle = RAW_MARKERS.find(m=>m.id===R.dragonMarker).angle;
+  const deltaTheta = normalizeAngle180(-dragonAngle);
+  await rotateBoardToNorth(boardG, deltaTheta, ROTATE_MS);
+
+  // 3) 回転完了。以降は従来どおりドラゴン=北に正規化済みの静的な盤面で進行(ロジック・出題は変更なし)。
+  initSVGNormalized(R.dragonMarker);
   setInfo(`ヴェズルフェルニル出現位置: 実マーカー<b>${R.dragonMarker}</b>(これを北とみなす)<br>`+
     `あなた=<b>${selectedRole}</b> / <b>${roleTagJP}</b>${myIsThunder? '(サンダーも付与)':''}`);
-
-  // ---- 出題0(演出のみ): 北基準確定 ----
-  document.getElementById('phaseLabel').textContent='ヴェズルフェルニル出現！この方向を北とみなす';
+  document.getElementById('phaseLabel').textContent='北基準確定！デバフ抽選(線/青玉/サンダー)へ';
   setMsg('盤面はドラゴン=北に正規化して表示しています');
   ORDER.forEach((r,i)=>{
     const x = (i-3.5)*30;
