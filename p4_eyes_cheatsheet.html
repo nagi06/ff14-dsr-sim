@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>P4 邪眼 カンペ (MT基準・1枚)</title>
+<!-- 2026-07-19 作成。PTマクロ(リリードール式)準拠: 赤線DPSスタート・近接青眼寄せ・ダイブ青眼集合。MT目線。 -->
+<style>
+  :root{
+    --bg:#0f1420; --panel:#182036; --line:#3a4a70;
+    --accent:#5fb3ff; --warn:#ffcc4d; --good:#3ddc84; --bad:#ff5c6c;
+    --text:#e8edf7; --dim:#8ea0c4;
+    --red:#ff5c6c; --blue:#5fb3ff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{width:100%;height:100%;background:var(--bg);color:var(--text);
+    font-family:"Hiragino Sans","Yu Gothic",system-ui,sans-serif;overflow:hidden;}
+  #sheet{width:100vw;height:100vh;display:grid;
+    grid-template-columns:33% 36% 31%;
+    grid-template-rows:auto 1fr;
+    gap:0.6vmin;padding:0.8vmin;}
+  header{grid-column:1/4;display:flex;align-items:baseline;gap:1.5vmin;
+    border-bottom:1px solid var(--line);padding-bottom:0.4vmin;}
+  header h1{font-size:2.2vmin;color:var(--accent);}
+  header .sub{font-size:1.4vmin;color:var(--dim);}
+  .col{display:flex;flex-direction:column;gap:0.6vmin;min-height:0;}
+  .box{background:var(--panel);border:1px solid var(--line);border-radius:0.8vmin;
+    padding:0.9vmin 1.1vmin;flex:0 0 auto;}
+  .box h2{font-size:1.7vmin;color:var(--accent);margin-bottom:0.4vmin;}
+  .box p,.box li{font-size:1.5vmin;line-height:1.5;}
+  .box ol,.box ul{padding-left:2.2vmin;}
+  b{color:var(--warn);}
+  .g{color:var(--good);} .rd{color:var(--red);font-weight:bold;} .bl{color:var(--blue);font-weight:bold;} .a{color:var(--accent);}
+  .diag{flex:1 1 auto;display:flex;flex-direction:column;min-height:0;}
+  .diag svg{flex:1;width:100%;min-height:0;}
+  .tl li{margin-bottom:0.5vmin;}
+  .tl .who{display:inline-block;font-weight:bold;color:var(--accent);}
+  table{width:100%;border-collapse:collapse;font-size:1.45vmin;}
+  td,th{border:1px solid var(--line);padding:0.35vmin 0.55vmin;text-align:left;line-height:1.4;}
+  th{color:var(--dim);font-weight:normal;white-space:nowrap;}
+  .mt{background:#243156;}
+</style>
+</head>
+<body>
+<div id="sheet">
+  <header>
+    <h1>P4 邪眼 カンペ【MT基準】</h1>
+    <div class="sub"><span class="rd">赤線</span>=被弾で目にダメージ ／ <span class="bl">青線</span>=被弾で目が回復 ／ 線は<b>接触で交換</b>(4秒再交換不可) ／ ダメージを受けていいのは<span class="rd">常に赤線の人だけ</span></div>
+  </header>
+
+  <!-- 左: MTの流れ -->
+  <div class="col">
+    <div class="box" style="flex:1;">
+      <h2>MTのやること(時系列)</h2>
+      <ol class="tl">
+        <li><b>南に全員集合</b>でバフ2個受け(盟友+巫女、ないと攻撃が通らない) → <span class="who">MT</span>は<b>青眼(西)のタゲ取り</b></li>
+        <li>苦悶の咆哮(全体+DoT、軽減) → <b>邪竜爪牙</b>で線抽選。MTの担当は<span class="bl">青線</span>。<span class="rd">赤線</span>が付いたら<b>中央の調整エリア</b>へ行くと勝手に入れ替わる</li>
+        <li>担当位置=<b>北西の青玉「4」の横</b>で待機(<span class="bl">青線</span>のまま)</li>
+        <li>黄玉が1段階育つ → DPSが頭割りで起爆(見てるだけ)</li>
+        <li>DPSが赤線を渡しに来る → <b>青眼の北で D1 と接触</b>して<span class="rd">赤線</span>をもらう</li>
+        <li>青玉「4」が<b>2段階</b>育ったら<span class="rd">赤線</span>のまま触れて起爆</li>
+        <li><b>青眼に集合</b>。MTは×字の<b>①(北西)固定</b>。DPS(青線)は目の直下</li>
+        <li><b>ミラージュダイブ×4</b>(下の交代表)。自分に来たら → D1/D2が来るので線を渡して<b>目の直下へ</b>。<br>
+        <span class="a">1回目に被弾したら3回目は自分が交換に出る</span>(優先度MT&gt;ST&gt;H2&gt;H1、先の人=番号の小さい方へ)</li>
+        <li>4回目は交代なし → ゲージが溜まる前に両目破壊 → 憤怒の波動(全体)</li>
+      </ol>
+    </div>
+  </div>
+
+  <!-- 中央: 盤面図2枚 -->
+  <div class="col">
+    <div class="box diag">
+      <h2>玉取り配置(マクロ図) → 黄玉後は邪眼の南北で受け渡し</h2>
+      <svg id="d1" viewBox="-220 -205 440 410" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+    <div class="box diag">
+      <h2>ダイブ集合(青眼) ①MT ②ST ③H2 ④H1 固定・青線は直下</h2>
+      <svg id="d2" viewBox="-150 -120 300 240" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+  </div>
+
+  <!-- 右: 交代表と事故ポイント -->
+  <div class="col">
+    <div class="box">
+      <h2>ミラージュダイブ交代表(全4回・毎回赤4人から2人抽選)</h2>
+      <table>
+        <tr><th>1回目</th><td><b>D1＞D2</b> が交換に来る</td></tr>
+        <tr><th>2回目</th><td><b>D3＞D4</b> が交換に来る</td></tr>
+        <tr class="mt"><th>3回目</th><td><b>1回目の被弾者2人</b>が出る(<b>MT＞ST＞H2＞H1</b>)</td></tr>
+        <tr><th>4回目</th><td>交代なし(以降ダイブなし)</td></tr>
+      </table>
+      <p style="margin-top:0.4vmin;">先に書いてある人が<b>①〜④の番号が小さい方</b>の被弾位置へ。交換は<b>青線側から動いて重なる</b>。</p>
+    </div>
+    <div class="box">
+      <h2>玉のルール</h2>
+      <table>
+        <tr><th>黄玉(東西2個)</th><td><span class="rd">赤線</span>のDPSペアが<b>1段階</b>で頭割り(西=D1D2/東=D3D4)</td></tr>
+        <tr><th>青玉(数字4個)</th><td><span class="rd">赤線</span>のTHが<b>2段階</b>で1人受け(MT=4/ST=1/H1=3/H2=2)</td></tr>
+      </table>
+      <p style="margin-top:0.4vmin;">玉は鎖が付いた瞬間に出現し<b>5秒ごとに成長</b>。触れた人には火耐性低下(同じ人は連続で取れない)。</p>
+    </div>
+    <div class="box" style="flex:1;">
+      <h2>MTの事故ポイント</h2>
+      <ul>
+        <li>調整エリアに<b>用のない人が入らない</b>(青線同士でも接触判定に注意、色が合っていたら近づかない)</li>
+        <li>受け渡し前に青玉に触らない(<span class="bl">青線</span>被弾=目が回復)</li>
+        <li>被弾したら<b>すぐ直下に入る</b>(×字に残ると次のダイブに巻き込み、直下の外だとノックバック死)</li>
+        <li>3回目に出るかは<b>1回目の被弾者かどうか</b>。1回目で被弾したら「3回目は自分」と唱え続ける</li>
+        <li>両目のHPバランス管理(削りすぎ注意)はPTの指示に従う</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script>
+const ns='http://www.w3.org/2000/svg';
+const MC={A:'#ff5c5c','1':'#ff5c5c',B:'#ffd24d','2':'#ffd24d',C:'#4da6ff','3':'#4da6ff',D:'#c07aff','4':'#c07aff'};
+function E(svg,t,attrs,txt){const e=document.createElementNS(ns,t);for(const k in attrs)e.setAttribute(k,attrs[k]);if(txt!=null)e.textContent=txt;svg.appendChild(e);return e;}
+function pol(a,r){const rad=a*Math.PI/180;return{x:r*Math.sin(rad),y:-r*Math.cos(rad)};}
+const ROLE_COL={MT:'#4da6ff',ST:'#1f6fd6',H1:'#3ddc84',H2:'#1fa25c',D1:'#ff9d4d',D2:'#ffcc4d',D3:'#ff6b6b',D4:'#c96bff'};
+function token(svg,x,y,label,hi){
+  E(svg,'circle',{cx:x,cy:y,r:13,fill:ROLE_COL[label]||'#8ea0c4',stroke:hi?'#ffffff':'#0a0e18','stroke-width':hi?3:1.5});
+  E(svg,'text',{x:x,y:y+3.5,fill:'#08111f','font-size':10,'font-weight':'bold','text-anchor':'middle'},label);
+}
+
+// ===== 図1: 玉取り配置 =====
+const s1=document.getElementById('d1');
+E(s1,'circle',{cx:0,cy:0,r:195,fill:'#141b2c',stroke:'#3a4a70','stroke-width':2});
+// マーカー
+[{id:'A',a:0},{id:'1',a:45},{id:'B',a:90},{id:'2',a:135},{id:'C',a:180},{id:'3',a:225},{id:'D',a:270},{id:'4',a:315}].forEach(m=>{
+  const p=pol(m.a,180);
+  E(s1,'circle',{cx:p.x,cy:p.y,r:10,fill:'#141b2c',stroke:MC[m.id],'stroke-width':2});
+  E(s1,'text',{x:p.x,y:p.y+3.5,fill:MC[m.id],'font-size':11,'font-weight':'bold','text-anchor':'middle'},m.id);
+});
+// 目
+const eW=pol(270,105), eE=pol(90,105);
+E(s1,'circle',{cx:eW.x,cy:eW.y,r:16,fill:'#1a2438',stroke:'#5fb3ff','stroke-width':2.5});
+E(s1,'circle',{cx:eW.x,cy:eW.y,r:5.5,fill:'#5fb3ff'});
+E(s1,'text',{x:eW.x,y:eW.y-22,fill:'#5fb3ff','font-size':11,'text-anchor':'middle','font-weight':'bold'},'青眼');
+E(s1,'circle',{cx:eE.x,cy:eE.y,r:16,fill:'#33202a',stroke:'#ff5c6c','stroke-width':2.5});
+E(s1,'circle',{cx:eE.x,cy:eE.y,r:5.5,fill:'#ff5c6c'});
+E(s1,'text',{x:eE.x,y:eE.y-22,fill:'#ff5c6c','font-size':11,'text-anchor':'middle','font-weight':'bold'},'赤眼');
+// 調整エリア
+E(s1,'circle',{cx:0,cy:0,r:30,fill:'none',stroke:'#ffcc4d','stroke-width':1.5,'stroke-dasharray':'5,4'});
+E(s1,'text',{x:0,y:-38,fill:'#ffcc4d','font-size':10,'text-anchor':'middle'},'調整エリア(色違いはここで交換)');
+// 玉
+function ball(svg,a,r,col,label,owner,ownerHi){
+  const p=pol(a,r);
+  E(svg,'circle',{cx:p.x,cy:p.y,r:9,fill:'#141b2c',stroke:col,'stroke-width':3});
+  E(svg,'circle',{cx:p.x,cy:p.y,r:3.5,fill:col,opacity:0.75});
+  if(label) E(svg,'text',{x:p.x,y:p.y-14,fill:col,'font-size':9,'text-anchor':'middle'},label);
+  return p;
+}
+ball(s1,270,150,'#ffd24d','黄(1段階)');
+ball(s1,90,150,'#ffd24d','黄(1段階)');
+ball(s1,315,150,'#5fb3ff','青(2段階)');
+ball(s1,45,150,'#5fb3ff','青(2段階)');
+ball(s1,225,150,'#5fb3ff','青(2段階)');
+ball(s1,135,150,'#5fb3ff','青(2段階)');
+// トークン(マクロ図: 左列MT,D1,D2,H1 / 右列ST,D3,D4,H2)
+const wB=pol(315,127); token(s1,wB.x,wB.y,'MT',true);
+const eB=pol(45,127);  token(s1,eB.x,eB.y,'ST');
+const wY=pol(270,127); token(s1,wY.x-10,wY.y-14,'D1'); token(s1,wY.x+8,wY.y+12,'D2');
+const eY=pol(90,127);  token(s1,eY.x-8,eY.y-14,'D3'); token(s1,eY.x+10,eY.y+12,'D4');
+const wH=pol(225,127); token(s1,wH.x,wH.y,'H1');
+const eH=pol(135,127); token(s1,eH.x,eH.y,'H2');
+// 受け渡し矢印(邪眼の南北)
+function arrow(svg,x1,y1,x2,y2,col){
+  E(svg,'line',{x1,y1,x2,y2,stroke:col,'stroke-width':2,'stroke-dasharray':'4,3'});
+  const a=Math.atan2(y2-y1,x2-x1);
+  E(svg,'path',{d:`M${x2},${y2} L${x2-8*Math.cos(a-0.4)},${y2-8*Math.sin(a-0.4)} L${x2-8*Math.cos(a+0.4)},${y2-8*Math.sin(a+0.4)} Z`,fill:col});
+}
+arrow(s1,wY.x-10,wY.y-14, eW.x-2,eW.y-32,'#ff5c6c'); // D1→青眼北
+arrow(s1,wY.x+8,wY.y+12,  eW.x-2,eW.y+32,'#ff5c6c'); // D2→青眼南
+arrow(s1,eY.x-8,eY.y-14,  eE.x+2,eE.y-32,'#ff5c6c'); // D3→赤眼北
+arrow(s1,eY.x+10,eY.y+12, eE.x+2,eE.y+32,'#ff5c6c'); // D4→赤眼南
+E(s1,'text',{x:eW.x,y:eW.y-36,fill:'#ff5c6c','font-size':9,'text-anchor':'middle'},'北: D1→MT');
+E(s1,'text',{x:eW.x,y:eW.y+44,fill:'#ff5c6c','font-size':9,'text-anchor':'middle'},'南: D2→H1');
+E(s1,'text',{x:eE.x,y:eE.y-36,fill:'#ff5c6c','font-size':9,'text-anchor':'middle'},'北: D3→ST');
+E(s1,'text',{x:eE.x,y:eE.y+44,fill:'#ff5c6c','font-size':9,'text-anchor':'middle'},'南: D4→H2');
+
+// ===== 図2: ダイブ集合(青眼ズーム) =====
+const s2=document.getElementById('d2');
+E(s2,'circle',{cx:0,cy:0,r:20,fill:'#1a2438',stroke:'#5fb3ff','stroke-width':3});
+E(s2,'circle',{cx:0,cy:0,r:7,fill:'#5fb3ff'});
+E(s2,'text',{x:0,y:-28,fill:'#5fb3ff','font-size':12,'font-weight':'bold','text-anchor':'middle'},'青眼');
+// ×字 ①北西 ②北東 ③南東 ④南西
+const CROSS=[[1,315,'MT'],[2,45,'ST'],[3,135,'H2'],[4,225,'H1']];
+CROSS.forEach(([n,b,role])=>{
+  const rad=b*Math.PI/180, x=68*Math.sin(rad), y=-68*Math.cos(rad);
+  E(s2,'circle',{cx:x,cy:y,r:19,fill:'none',stroke:'#ff5c6c','stroke-width':2,'stroke-dasharray':'4,3'});
+  token(s2,x,y,role,role==='MT');
+  E(s2,'text',{x:x,y:y-26,fill:'#ffcc4d','font-size':13,'font-weight':'bold','text-anchor':'middle'},['①','②','③','④'][n-1]);
+});
+// 青線だまり(直下)
+E(s2,'circle',{cx:0,cy:34,r:22,fill:'none',stroke:'#5fb3ff','stroke-width':1.5,'stroke-dasharray':'4,3'});
+['D1','D2','D3','D4'].forEach((r,i)=>{ token(s2,-16+(i%2)*32,26+Math.floor(i/2)*16,r); });
+E(s2,'text',{x:0,y:70,fill:'#5fb3ff','font-size':10,'text-anchor':'middle'},'青線(DPS)は目の直下に密集');
+E(s2,'text',{x:0,y:100,fill:'#8ea0c4','font-size':10,'text-anchor':'middle'},'被弾したら線を渡して直下へ。数え方は①→④(北西から時計回り)');
+</script>
+</body>
+</html>
