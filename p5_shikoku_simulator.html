@@ -211,10 +211,17 @@ const RAW_MARKERS = [
 const MARKER_COLORS = {A:'#ff5c5c','1':'#ff5c5c', B:'#ffd24d','2':'#ffd24d', C:'#4da6ff','3':'#4da6ff', D:'#c07aff','4':'#c07aff'};
 const MOVE_MS = 900;
 const BEAT_MS = 1300;
+const ROTATE_MS = 1400; // 北基準確定の盤面回転演出の所要時間(p5_fuusou_simulator.htmlと統一)
 
 function polar(angleDeg, r){
   const rad = angleDeg*Math.PI/180;
   return {x: r*Math.sin(rad), y: -r*Math.cos(rad)};
+}
+// 角度を(-180,180]の範囲に正規化(最短回転方向を選ぶため。fuusouシムから流用)
+function normalizeAngle180(a){
+  a = ((a % 360) + 360) % 360;
+  if(a > 180) a -= 360;
+  return a;
 }
 function shuffle(arr){
   const a = arr.slice();
@@ -512,7 +519,71 @@ function setMsg(text, kind){
 function setScore(){ document.getElementById('scoreTag').textContent = reviewMode? '確認モード' : score+'/'+total; }
 function setInfo(html){ document.getElementById('infoText').innerHTML = html; }
 
-function initSVG(gerrickMarker){
+// 盤面を「真北=A」の生の向き(未回転)で描画する。ゲリックは実際に出現した方位に表示する。
+// p5_fuusou_simulator.htmlのbuildBoardRawを流用(ドラゴン→ゲリック/斧アイコンに差し替えただけ)。
+// マーカーラベルとゲリックラベルはそれぞれ独立した<g class="counterRot">に入れておき、
+// 後で盤面(boardG)を回転させる際に逆回転させて文字が逆さにならないようにする。
+function buildBoardRaw(gerrickMarker){
+  svg = document.getElementById('arena');
+  svg.innerHTML='';
+  const boardG = svgEl('g',{id:'boardG', transform:'rotate(0)'});
+  svg.appendChild(boardG);
+  const bg=svgEl('circle',{cx:0,cy:0,r:210,fill:'#141b2c',stroke:'#3a4a70','stroke-width':2});
+  boardG.appendChild(bg);
+  [45,135,225,315].forEach(a=>{
+    const p=polar(a,210);
+    boardG.appendChild(svgEl('line',{x1:0,y1:0,x2:p.x,y2:p.y,stroke:'#2a3556','stroke-width':1}));
+  });
+  RAW_MARKERS.forEach(m=>{
+    const p = polar(m.angle, 185);
+    const col = MARKER_COLORS[m.id];
+    boardG.appendChild(svgEl('circle',{cx:p.x,cy:p.y,r:11,fill:'#141b2c',stroke:col,'stroke-width':2}));
+    const labelG = svgEl('g',{class:'counterRot', transform:`translate(${p.x},${p.y}) rotate(0)`});
+    const t=svgEl('text',{x:0,y:4,fill:col,'font-size':11,'font-weight':'bold','text-anchor':'middle'});
+    t.textContent = m.id;
+    labelG.appendChild(t);
+    boardG.appendChild(labelG);
+  });
+  // ゲリックアイコン(実際に出現した方位=生の角度に表示)
+  const gerrickAngle = RAW_MARKERS.find(m=>m.id===gerrickMarker).angle;
+  const gp = polar(gerrickAngle, 205);
+  boardG.appendChild(svgEl('circle',{cx:gp.x,cy:gp.y,r:14,fill:'#3a2233',stroke:'#ffcc4d','stroke-width':2}));
+  const gerrickLabelG = svgEl('g',{class:'counterRot', transform:`translate(${gp.x},${gp.y}) rotate(0)`});
+  const gt=svgEl('text',{x:0,y:4,fill:'#ffcc4d','font-size':9,'text-anchor':'middle'});
+  gt.textContent='斧';
+  gerrickLabelG.appendChild(gt);
+  boardG.appendChild(gerrickLabelG);
+  // 中心
+  boardG.appendChild(svgEl('circle',{cx:0,cy:0,r:6,fill:'#555'}));
+  return boardG;
+}
+
+// boardG全体をdeltaTheta度だけ回転させ、ゲリックを画面上(北)に合わせるアニメーション。
+// マーカー/ゲリックのラベルは同時に逆回転させ、正立を保つ。
+// p5_fuusou_simulator.htmlのrotateBoardToNorthをそのまま流用。
+// ハマりどころ(HANDOVER.md記録済み): requestAnimationFrameは非表示タブで発火が止まり回転が
+// スキップされるため使わない。getBoundingClientRect()でスタイル反映を強制してからsetTimeoutで適用する。
+function rotateBoardToNorth(boardG, deltaTheta, ms){
+  return new Promise(resolve=>{
+    const labelGs = boardG.querySelectorAll('.counterRot');
+    boardG.style.transition = `transform ${ms}ms ease-in-out`;
+    labelGs.forEach(lg=>{ lg.style.transition = `transform ${ms}ms ease-in-out`; });
+    // rAFは非表示タブで停止するため使わない(スタイル反映を強制してからタイマーで適用)
+    boardG.getBoundingClientRect();
+    setTimeout(()=>{
+      boardG.setAttribute('transform', `rotate(${deltaTheta})`);
+      labelGs.forEach(lg=>{
+        const tr = lg.getAttribute('transform');
+        lg.setAttribute('transform', tr.replace(/rotate\([^)]*\)/, `rotate(${-deltaTheta})`));
+      });
+    }, 30);
+    setTimeout(resolve, ms + 80);
+  });
+}
+
+// 回転演出が終わった後の盤面(従来どおりゲリック基準に正規化済みの静的な描画)。
+// 以降のフェーズはすべてこの正規化済み座標系を前提に動く(回転アニメーションの影響を受けない)。
+function initSVGNormalized(gerrickMarker){
   svg = document.getElementById('arena');
   svg.innerHTML='';
   const bg=svgEl('circle',{cx:0,cy:0,r:210,fill:'#141b2c',stroke:'#3a4a70','stroke-width':2});
@@ -682,13 +753,32 @@ async function startRun(){
   document.getElementById('viewResultBtn').hidden=true;
 
   const R = drawScenario();
-  initSVG(R.gerrickMarker);
   tokens={};
 
   const myGroup = R.group[selectedRole];
   const myNum = R.number[selectedRole];
   const groupJP = myGroup==='sengoku' ? '死の宣告' : '無職';
+
+  // ---- 出題0(演出のみ): 北基準確定(p5_fuusou_simulator.htmlと統一した演出) ----
+  // 1) まず真北=Aの生の向きでゲリックの出現方位を表示し、プレイヤーに実際の方角を確認させる。
+  const boardG = buildBoardRaw(R.gerrickMarker);
+  document.getElementById('phaseLabel').textContent='ゲリック出現！実際の方位を確認';
+  setInfo(`ゲリック出現位置: 実マーカー<b>${R.gerrickMarker}</b><br>あなた=<b>${selectedRole}</b>`);
+  setMsg('ゲリックの方角を確認してください');
+  await wait(reviewMode ? 900 : 500);
+
+  // 2) カメラを回してゲリックを画面上(北)に合わせる回転アニメーション(最短回転方向)。
+  document.getElementById('phaseLabel').textContent='カメラを回転してゲリックを北(画面上)に合わせる';
+  setMsg('盤面が回転してゲリック=北になります…');
+  const gerrickAngleRaw = RAW_MARKERS.find(m=>m.id===R.gerrickMarker).angle;
+  const deltaTheta = normalizeAngle180(-gerrickAngleRaw);
+  await rotateBoardToNorth(boardG, deltaTheta, ROTATE_MS);
+
+  // 3) 回転完了。以降は従来どおりゲリック=北に正規化済みの静的な盤面で進行(ロジック・出題は変更なし)。
+  initSVGNormalized(R.gerrickMarker);
   setInfo(`ゲリック出現マーカー: <b>${R.gerrickMarker}</b>(これを北とみなす)<br>あなた=<b>${selectedRole}</b> / <b>${groupJP}${myNum}番</b>`);
+  document.getElementById('phaseLabel').textContent='北基準確定！整列へ';
+  setMsg('盤面はゲリック=北に正規化して表示しています');
 
   // 初期整列(横一列, ゲリック手前=南寄りに並べる)
   ORDER.forEach((r,i)=>{
