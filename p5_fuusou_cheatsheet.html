@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>P5 至天の陣:風槍 カンペ</title>
+<!--
+  2026-07-20 新規作成。16:9スライド形式のカンペ(6ページ)。
+  出典: P5儀典トールダン_予習メモ.md「風槍マクロの解釈」節+「ユーザー回答による確定事項」節(この2つが正)。
+  ARUTORA節は不使用。座標感覚はp5_fuusou_simulator.htmlのロジックを流用。
+  スタイルはp4_eyes_cheatsheet.html / p3_dice_cheatsheet.htmlに準拠(ダークテーマ・単一HTML完結)。
+
+  重要: このギミックの方位はすべて「降りたドラゴン(ヴェズルフェルニル)=北」の相対方位。
+  図では常に上=ドラゴン北で統一。実フィールドマーカー(A/1=赤,B/2=黄,C/3=青,D/4=紫)との対応は
+  ドラゴンの出現位置次第で毎回変わるため、各図では方位語(時計位置)を主に用い、マーカー色は
+  参考として薄く添えるだけに留めた。
+-->
+<style>
+  :root{
+    --bg:#0a0e18; --panel:#182036; --panel2:#1f2a45; --line:#3a4a70;
+    --accent:#5fb3ff; --good:#3ddc84; --bad:#ff5c6c; --warn:#ffcc4d; --purple:#c96bff;
+    --text:#e8edf7; --dim:#8ea0c4;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{width:100%;height:100%;background:#000;color:var(--text);
+    font-family:"Hiragino Sans","Yu Gothic",system-ui,sans-serif;overflow:hidden;}
+  #stage{position:fixed;inset:0;}
+  .slide{
+    position:absolute;left:50%;top:50%;
+    transform-origin:center center;
+    width:1280px;height:720px;
+    background:var(--bg);
+    display:none;
+    flex-direction:column;
+    padding:26px 40px;
+    border-radius:6px;
+  }
+  .slide.active{display:flex;}
+  .slide h1{font-size:34px;color:var(--accent);margin-bottom:4px;text-align:center;}
+  .slide .sub{font-size:16px;color:var(--dim);text-align:center;margin-bottom:10px;}
+  .body{flex:1;display:flex;gap:24px;min-height:0;}
+  .diagWrap{flex:1.05;display:flex;align-items:center;justify-content:center;min-width:0;}
+  .diagWrap svg{width:100%;height:100%;max-height:600px;}
+  .infoCol{flex:1;display:flex;flex-direction:column;gap:12px;min-width:0;justify-content:center;}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 20px;}
+  .card h2{font-size:18px;color:var(--accent);margin-bottom:8px;}
+  .card p, .card li{font-size:17px;line-height:1.65;}
+  .card ol,.card ul{padding-left:24px;}
+  .action{
+    background:linear-gradient(135deg,#243156,#1a2438);
+    border:2px solid var(--good);
+    border-radius:14px;
+    padding:16px 22px;
+    text-align:center;
+  }
+  .action .label{font-size:14px;color:var(--dim);margin-bottom:4px;}
+  .action .big{font-size:26px;font-weight:bold;color:var(--good);line-height:1.4;}
+  b{color:var(--warn);}
+  .r{color:var(--bad);font-weight:bold;} .y{color:#ffd24d;font-weight:bold;}
+  .bl{color:#4da6ff;font-weight:bold;} .pu{color:var(--purple);font-weight:bold;}
+  .g{color:var(--good);font-weight:bold;}
+  .north{color:var(--accent);font-weight:bold;}
+  /* nav */
+  #nav{position:fixed;bottom:10px;left:0;right:0;display:flex;justify-content:center;align-items:center;gap:10px;z-index:5;}
+  #nav button{background:var(--panel2);border:1px solid var(--line);color:var(--text);
+    border-radius:8px;padding:6px 14px;font-size:14px;cursor:pointer;}
+  #nav button:hover{background:#243156;}
+  #pageDots{display:flex;gap:6px;}
+  .dot{width:10px;height:10px;border-radius:50%;background:var(--line);cursor:pointer;}
+  .dot.active{background:var(--accent);}
+  #pageNum{color:var(--dim);font-size:13px;min-width:50px;text-align:center;}
+
+  /* gantt (page7) */
+  .ganttWrap{flex:1;display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 18px;min-height:0;}
+  .gheaderRow{display:flex;margin-bottom:6px;}
+  .gcorner{visibility:hidden;}
+  .glabel{width:150px;flex:0 0 150px;display:flex;align-items:center;font-size:17px;font-weight:bold;
+    border-right:2px solid var(--line);padding-right:10px;}
+  .gheaderTrack{position:relative;flex:1;display:flex;}
+  .gph{flex:1;text-align:center;font-size:14px;color:var(--dim);font-weight:bold;line-height:1.35;padding:2px 4px;}
+  .gdiv{position:absolute;top:0;bottom:-540px;width:0;border-left:1px dashed #3a4a70;z-index:0;}
+  .grow{display:flex;align-items:center;flex:1;min-height:0;}
+  .gtrack{position:relative;flex:1;height:44px;}
+  .gbar{position:absolute;top:4px;bottom:4px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+    font-size:13px;font-weight:bold;text-align:center;padding:2px 6px;line-height:1.25;overflow:hidden;}
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<div id="nav">
+  <button id="prevBtn">◀ 前へ</button>
+  <div id="pageDots"></div>
+  <button id="nextBtn">次へ ▶</button>
+  <span id="pageNum"></span>
+</div>
+
+<script>
+const ns='http://www.w3.org/2000/svg';
+function E(parent,t,attrs,txt){const e=document.createElementNS(ns,t);for(const k in attrs)e.setAttribute(k,attrs[k]);if(txt!=null)e.textContent=txt;parent.appendChild(e);return e;}
+function pol(cx,cy,angleDeg,r){const rad=angleDeg*Math.PI/180;return{x:cx+r*Math.sin(rad),y:cy-r*Math.cos(rad)};}
+
+// clock -> degree (12時=0=北)
+const CLK = h => (h%12)*30;
+
+// 共通: フィールド円+8方向ドット(時計表記)+ドラゴン北アイコン
+// opts.markers: true なら実マーカー色(A1B2C3D4)を薄く外周に添える(参考用・回転しうる旨を明記)
+function baseField(svg, cx, cy, R, opts){
+  opts = opts||{};
+  E(svg,'circle',{cx,cy,r:R,fill:'#101625',stroke:'#3a4a70','stroke-width':2});
+  // 8方向の薄いガイド線
+  for(let h=0; h<12; h+=1.5){
+    const p = pol(cx,cy,CLK(h),R);
+    E(svg,'line',{x1:cx,y1:cy,x2:p.x,y2:p.y,stroke:'#202c48','stroke-width':1});
+  }
+  // 時計ドット(12,1,2...11)
+  for(let h=0; h<12; h++){
+    const p = pol(cx,cy,CLK(h),R+16);
+    E(svg,'circle',{cx:p.x,cy:p.y,r:4,fill:'#3a4a70'});
+  }
+  if(opts.markers){
+    const MC=[['A','#ff5c5c',0],['1','#ff5c5c',45],['B','#ffd24d',90],['2','#ffd24d',135],
+              ['C','#4da6ff',180],['3','#4da6ff',225],['D','#c07aff',270],['4','#c07aff',315]];
+    MC.forEach(([id,col,a])=>{
+      const p=pol(cx,cy,a,R-14);
+      E(svg,'circle',{cx:p.x,cy:p.y,r:8,fill:'#141b2c',stroke:col,'stroke-width':1.6,opacity:0.5});
+      E(svg,'text',{x:p.x,y:p.y+3.5,fill:col,'font-size':9,'text-anchor':'middle',opacity:0.6},id);
+    });
+  }
+  // 中心
+  E(svg,'circle',{cx,cy,r:5,fill:'#4a5a80'});
+  // ドラゴン北アイコン(常に真上)
+  const dp = pol(cx,cy,0,R+34);
+  E(svg,'circle',{cx:dp.x,cy:dp.y,r:16,fill:'#2a1633',stroke:'#ff9dc7','stroke-width':2.5});
+  E(svg,'text',{x:dp.x,y:dp.y+4,fill:'#ff9dc7','font-size':11,'font-weight':'bold','text-anchor':'middle'},'竜');
+  E(svg,'text',{x:dp.x,y:dp.y-24,fill:'#ff9dc7','font-size':13,'font-weight':'bold','text-anchor':'middle'},'北(ドラゴン)');
+}
+
+function token(svg,x,y,label,col,hi){
+  E(svg,'circle',{cx:x,cy:y,r:14,fill:col||'#5fb3ff',stroke:hi?'#ffffff':'#0a0e18','stroke-width':hi?3:1.5});
+  E(svg,'text',{x,y:y+4,fill:'#08111f','font-size':11,'font-weight':'bold','text-anchor':'middle'},label);
+}
+function labelText(svg,x,y,txt,col,size){
+  E(svg,'text',{x,y,fill:col||'#e8edf7','font-size':size||13,'font-weight':'bold','text-anchor':'middle'},txt);
+}
+function arrow(svg,x1,y1,x2,y2,col,w){
+  w=w||3;
+  E(svg,'line',{x1,y1,x2,y2,stroke:col,'stroke-width':w});
+  const a=Math.atan2(y2-y1,x2-x1);
+  E(svg,'path',{d:`M${x2},${y2} L${x2-11*Math.cos(a-0.4)},${y2-11*Math.sin(a-0.4)} L${x2-11*Math.cos(a+0.4)},${y2-11*Math.sin(a+0.4)} Z`,fill:col});
+}
+function dashCircle(svg,cx,cy,r,col,label){
+  E(svg,'circle',{cx,cy,r,fill:'none',stroke:col,'stroke-width':2.5,'stroke-dasharray':'6,4'});
+  if(label) E(svg,'text',{x:cx,y:cy-r-8,fill:col,'font-size':12,'font-weight':'bold','text-anchor':'middle'},label);
+}
+function fanArea(svg,cx,cy,R,fromDeg,toDeg,col,label,labelR){
+  const p1=pol(cx,cy,fromDeg,R), p2=pol(cx,cy,toDeg,R);
+  const large = ((toDeg-fromDeg+360)%360)>180 ? 1:0;
+  const d=`M${cx},${cy} L${p1.x},${p1.y} A${R},${R} 0 ${large} 1 ${p2.x},${p2.y} Z`;
+  E(svg,'path',{d, fill:col, opacity:0.22});
+  if(label){
+    const mid=(fromDeg+toDeg)/2;
+    const lp=pol(cx,cy,mid,labelR||R*0.62);
+    E(svg,'text',{x:lp.x,y:lp.y,fill:col,'font-size':14,'font-weight':'bold','text-anchor':'middle'},label);
+  }
+}
+
+const CX=210, CY=250, R=150;
+
+// ===================== ページ定義 =====================
+const pages = [];
+
+// ---------- P1: 全体の流れ+北決め ----------
+pages.push({
+  title:'ページ1: 北を決める＆全体の流れ',
+  sub:'詠唱終了時、ヴェズルフェルニル(ドラゴン)が降りた方向 = 「北」',
+  action:'まずドラゴンを探す → その方向を12時として全部を読み替える',
+  build(svg){
+    baseField(svg, CX, CY, R, {markers:true});
+    labelText(svg, CX, CY-R-86, 'ドラゴンの出現位置は毎回ランダム', '#ff9dc7', 13);
+    labelText(svg, CX, CY, '中央', '#8ea0c4', 11);
+  },
+  infoHTML:`
+    <div class="card">
+      <h2>タイムライン概略</h2>
+      <ol>
+        <li>詠唱終了 → <b class="north">ドラゴン方向=北</b>確定</li>
+        <li>初期散開(線×2・青玉×1・無職5名)</li>
+        <li>ツイスターダイブ回避 → 中央へ</li>
+        <li>アスカロンメルシー8方向散開</li>
+        <li>沼(フレア/リキッド)を外周に捨てる</li>
+        <li>サンダー×2＋グリノー安置に全員集合</li>
+      </ol>
+    </div>
+    <div class="card">
+      <h2>絶対ルール</h2>
+      <p>実フィールドマーカー(A/1=<span class="r">赤</span> B/2=<span class="y">黄</span> C/3=<span class="bl">青</span> D/4=<span class="pu">紫</span>)との対応は
+      毎回変わる。<b>この先の全ページは「上=ドラゴン北」で統一表記。</b></p>
+    </div>
+  `
+});
+
+// ---------- P2: 線×2(スパイラルピアス) ----------
+pages.push({
+  title:'ページ2: 線×2(スパイラルピアス)',
+  sub:'北の騎士から対角(南側)へ伸びる直線 → 距離減衰',
+  action:'線が付いたら → 外周ギリギリを南側へ全力ダッシュ',
+  build(svg){
+    baseField(svg, CX, CY, R, {markers:false});
+    // 北の騎士(発生源)
+    const kN = pol(CX,CY,0,40);
+    token(svg,kN.x,kN.y,'騎士','#c96bff');
+    // 中央ダイブ危険円 + 青玉円(避ける対象として小さく表示)
+    dashCircle(svg, CX, CY, 46, '#ff5c6c');
+    labelText(svg,CX,CY+4,'中央ダイブ','#ff5c6c',10);
+    const bluePos = pol(CX,CY,330,R-25);
+    dashCircle(svg, bluePos.x, bluePos.y, 30, '#ffcc4d');
+    // 線2本(南西寄り/南東寄り、外周ギリギリ)
+    const t1 = pol(CX,CY,200,R+18), t2 = pol(CX,CY,160,R+18);
+    arrow(svg, kN.x, kN.y, t1.x, t1.y, '#ff5c6c', 3.5);
+    arrow(svg, kN.x, kN.y, t2.x, t2.y, '#ff5c6c', 3.5);
+    token(svg,t1.x,t1.y,'線',  '#ff5c6c', true);
+    token(svg,t2.x,t2.y,'線',  '#ff5c6c', true);
+    labelText(svg,t1.x-38,t1.y+6,'南西','#8ea0c4',12);
+    labelText(svg,t2.x+38,t2.y+6,'南東','#8ea0c4',12);
+    labelText(svg,CX,CY-R-86,'距離減衰: なるべく遠く(外周)へ','#ff5c6c',13);
+  },
+  infoHTML:`
+    <div class="card">
+      <h2>スパイラルピアス(線)</h2>
+      <p><b>北の騎士の両脇</b>から、<b>ランダム2名</b>へ線が伸びる(距離減衰の直線範囲)。</p>
+      <p>立ち位置は<b>外周ギリギリ</b>・数字マーカーの1つ隣。理由: <b>中央の南向きダイブ</b>と<b>青玉の巨大円</b>を避けるため。</p>
+    </div>
+    <div class="card">
+      <h2>後のメルシーでの位置</h2>
+      <p>アスカロンメルシー8方向散開では線持ちは <span class="north">9時／7時</span> に立つ。</p>
+    </div>
+  `
+});
+
+// ---------- P3: 青玉×1(スカイワードリープ) ----------
+pages.push({
+  title:'ページ3: 青玉×1(スカイワードリープ)',
+  sub:'対象位置を起点に巨大円が発生',
+  action:'青玉が付いたら → 北西(11時)の数字マーカーより少し中央寄りへ単独で',
+  build(svg){
+    baseField(svg, CX, CY, R, {markers:true});
+    const p = pol(CX,CY,330,R-25);
+    dashCircle(svg, p.x, p.y, 55, '#ffcc4d', '巨大円');
+    token(svg,p.x,p.y,'青玉','#ffcc4d', true);
+    labelText(svg,p.x,p.y+70,'11時(北西)','#ffcc4d',14);
+    // 他の人は離れて表示(参考)
+    const others=[[200,'線'],[160,'線']];
+    others.forEach(([a,l])=>{ const q=pol(CX,CY,a,R+18); token(svg,q.x,q.y,l,'#ff5c6c'); });
+  },
+  infoHTML:`
+    <div class="card">
+      <h2>スカイワードリープ(青玉)</h2>
+      <p>対象は<b>1名のみ</b>(線持ちとは重複しない)。着弾で<b>巨大な円形範囲</b>が発生する。</p>
+      <p>捨て場所は<b>北西(11時)の数字マーカー</b>より少し<b>南(中央)寄り</b>。単独で捨てること。</p>
+    </div>
+    <div class="card">
+      <h2>後のメルシーでの位置</h2>
+      <p>アスカロンメルシー8方向散開でも青玉持ちは <span class="north">11時</span> のまま。</p>
+    </div>
+  `
+});
+
+// ---------- P4: 無職5名+緑カータライズ ----------
+pages.push({
+  title:'ページ4: 無職5名＋緑カータライズ',
+  sub:'東側に縦一列(北から T→D→H 優先)',
+  action:'緑が付いたら → 中央経由でシャリベル側(グリノーがいない側)の外周へ全力',
+  build(svg){
+    baseField(svg, CX, CY, R, {markers:false});
+    // 東側縦列 5名
+    const roles=['T','D','D','D','H'];
+    const cols=['#4da6ff','#ff9d4d','#ff9d4d','#ff9d4d','#3ddc84'];
+    roles.forEach((r,i)=>{
+      const x = CX + R + 34;
+      const y = CY - 90 + i*46;
+      token(svg,x,y,r,cols[i], i===0);
+    });
+    labelText(svg, CX+R+34, CY-90-30, '北から T→D→H', '#8ea0c4', 13);
+    // 緑カータライズの誘導矢印(例: グリノー=南 と仮定してシャリベル=北を強調)
+    const g0 = pol(CX,CY,90,R+34);
+    arrow(svg, g0.x, g0.y, CX-6, CY, '#3ddc84', 3);
+    const dest = pol(CX,CY,0,R-28);
+    arrow(svg, CX-6, CY, dest.x, dest.y+18, '#3ddc84', 3);
+    E(svg,'circle',{cx:dest.x,cy:dest.y,r:15,fill:'#233a2a',stroke:'#3ddc84','stroke-width':2.5});
+    labelText(svg,dest.x,dest.y+4,'杖','#3ddc84',11);
+    labelText(svg,dest.x+66,dest.y+4,'シャリベル側(例)','#3ddc84',12);
+    // グリノー(斧)側は反対
+    const grinoh = pol(CX,CY,180,R-28);
+    E(svg,'circle',{cx:grinoh.x,cy:grinoh.y,r:15,fill:'#3a2233',stroke:'#ff9d4d','stroke-width':2.5});
+    labelText(svg,grinoh.x,grinoh.y+4,'斧','#ff9d4d',11);
+    labelText(svg,grinoh.x,grinoh.y+26,'グリノー側=行くな','#ff9d4d',12);
+  },
+  infoHTML:`
+    <div class="card">
+      <h2>無職5名の並び</h2>
+      <p>役(線・青玉)を持たない5名は<b>東側に縦一列</b>。並び順は雰囲気でOK(<b>T→D→H優先</b>)。
+      ツイスターだけ踏まないよう注意。</p>
+    </div>
+    <div class="card">
+      <h2>緑カータライズ(1名に付与)</h2>
+      <p>中央出現時、東側無職の1名に<b class="g">緑カータライズ</b>が付く。</p>
+      <p><b>中央経由でシャリベル(杖持ち)側の外周へ</b>(<b>スプリント推奨</b>)。南北はランダムなので毎回見て判断。</p>
+      <p>理由: <b class="y">グリノーの足元安置(ダイナモ)を潰さないため</b>。</p>
+    </div>
+  `
+});
+
+// ---------- P5: 沼2種 ----------
+pages.push({
+  title:'ページ5: 沼2種(フレア／リキッド)',
+  sub:'フィールドを3扇に分割(ドラゴン北基準)',
+  action:'対象になったら → 自分のエリア(西 or 東)の外周沿いに捨てて、最後はグリノーへ',
+  build(svg){
+    baseField(svg, CX, CY, R, {markers:false});
+    fanArea(svg, CX, CY, R, 240, 360, '#c96bff', 'フレア=西扇', R*0.6);
+    fanArea(svg, CX, CY, R, 0, 120, '#5fb3ff', 'リキッド=東扇', R*0.6);
+    fanArea(svg, CX, CY, R, 120, 240, '#ff5c6c', 'グリノー扇(捨て禁止)', R*0.6);
+    // 北ラベルは baseField内で表示済み
+    const fp = pol(CX,CY,285,R-20); token(svg,fp.x,fp.y,'花4','#c96bff');
+    const lp2 = pol(CX,CY,75,R-20); token(svg,lp2.x,lp2.y,'水5','#5fb3ff');
+  },
+  infoHTML:`
+    <div class="card">
+      <h2>3扇分割(ドラゴン北基準)</h2>
+      <ul>
+        <li><b class="pu">フレア(シャリベルの4連)</b> = <b>西扇</b></li>
+        <li><b class="bl">リキッド(5連追尾)</b> = <b>東扇</b></li>
+        <li><span class="r">グリノーエリア = 南寄りの扇(捨て禁止)</span></li>
+      </ul>
+      <p style="margin-top:6px;">この東西南北は<b class="north">全部ドラゴン=北基準の相対方位</b>。実マーカーとの対応は毎回変わる。</p>
+    </div>
+    <div class="card">
+      <h2>対象者の動き</h2>
+      <p>サンダー非対象のうち<b>西側1名=フレア</b>、<b>東側1名=リキッド</b>。
+      <b>外周沿い</b>に自分のエリアで捨て、捨て終えたら<b>グリノーの足元</b>へ。</p>
+    </div>
+  `
+});
+
+// ---------- P6: サンダー×2+最終集合 ----------
+pages.push({
+  title:'ページ6: サンダー×2＋最終集合',
+  sub:'全員グリノー(斧持ち)のダイナモ安置へ',
+  action:'サンダーが付いたら外周側、付いてなければ内周側でグリノーに集合',
+  build(svg){
+    const cx=CX, cy=CY+40;
+    dashCircle(svg, cx, cy, 95, '#3ddc84', 'ダイナモ安置(グリノー周囲)');
+    E(svg,'circle',{cx,cy,r:16,fill:'#3a2233',stroke:'#ff9d4d','stroke-width':2.5});
+    labelText(svg,cx,cy+5,'斧','#ff9d4d',12);
+    // サンダー2名: 外周側で左右
+    token(svg,cx-70,cy-55,'雷','#ffcc4d', true);
+    token(svg,cx+70,cy-55,'雷','#ffcc4d', true);
+    labelText(svg,cx-70,cy-80,'外周・左','#ffcc4d',12);
+    labelText(svg,cx+70,cy-80,'外周・右','#ffcc4d',12);
+    // 非対象: 内周側に密集
+    const others=[-62.5,-37.5,-12.5,12.5,37.5,62.5];
+    others.forEach((dx,i)=>{ token(svg,cx+dx,cy+38,'','#5fb3ff'); });
+    labelText(svg,cx,cy+72,'非サンダーは内周(グリノー寄り)に密集','#5fb3ff',13);
+    labelText(svg,cx,cy-115,'ドラゴン北は画面上方向のまま','#8ea0c4',11);
+  },
+  infoHTML:`
+    <div class="card">
+      <h2>チェインライトニング(サンダー)×2</h2>
+      <p>誰にでも付き得る(既に線・青玉持ちでも重複あり)。<b>ツイスター直前</b>に東5名(無職)からカータライズ1名も同時抽選。</p>
+    </div>
+    <div class="card">
+      <h2>エンプティディメンション(最終)</h2>
+      <p>グリノー(斧持ち)の周囲だけが安全地帯(ダイナモ)。<b>全員グリノーへ集合。</b></p>
+      <ul>
+        <li><b class="y">サンダー持ち2名</b> = 安置内の<b>外周側で左右</b>に分かれる(<b>早い者勝ち・どちらでもOK</b>)</li>
+        <li><b class="bl">非サンダー</b> = 安置内の<b>内周側</b>(グリノー寄り中央)に密集</li>
+      </ul>
+      <p>緑カータライズは既に外周確定済みなので、この段階では<b>実質無視</b>してよい。</p>
+    </div>
+  `
+});
+
+// ---------- P7: タイムライン表(ガントチャート風) ----------
+pages.push({
+  title:'ページ7: タイムライン表(全デバフまとめ)',
+  sub:'横軸=時間フェーズ／縦=デバフ・役割。バーの位置で「今どこにいるべきか」が一目でわかる',
+  bodyType:'gantt',
+  phases:['①北確認\n初期散開','②ツイスター\n+線+青玉着弾','③メルシー\n8方向散開','④沼捨て\n(フレア/リキッド)','⑤グリノー集合\n(ダイナモ)'],
+  rows:[
+    { label:'線×2', color:'#ff5c6c',
+      segs:[
+        {from:0,to:1,text:'対角(南)外周へ'},
+        {from:1,to:2,text:'着弾'},
+        {from:2,to:3,text:'9時/7時'},
+        {from:3,to:4,text:'(対象なら沼処理)'},
+        {from:4,to:5,text:'グリノーへ'},
+      ]},
+    { label:'青玉', color:'#ffd24d',
+      segs:[
+        {from:0,to:1,text:'11時数字マーカー南寄りへ単独'},
+        {from:1,to:2,text:'着弾'},
+        {from:2,to:4,text:'11時のまま'},
+        {from:4,to:5,text:'グリノーへ'},
+      ]},
+    { label:'無職5名', color:'#5fb3ff',
+      segs:[
+        {from:0,to:1,text:'東側縦一列(T→D→H)'},
+        {from:1,to:2,text:'ツイスター回避'},
+        {from:2,to:3,text:'東半分で散開(最北無色=12時)'},
+        {from:3,to:4,text:'対象なら沼'},
+        {from:4,to:5,text:'グリノーへ'},
+      ]},
+    { label:'緑カータ', color:'#3ddc84',
+      segs:[
+        {from:1,to:2,text:'②で付与→中央経由でシャリベル側外周へスプリント'},
+        {from:2,to:3,text:'外周でメルシー'},
+        {from:3,to:5,text:'位置確定済み・そのまま'},
+      ]},
+    { label:'沼対象2名', color:'#c96bff',
+      segs:[
+        {from:2,to:3,text:'③の後に付与'},
+        {from:3,to:4,text:'フレア=西扇/リキッド=東扇の外周沿いに捨てる'},
+        {from:4,to:5,text:'グリノーへ'},
+      ]},
+    { label:'サンダー×2', color:'#ffcc4d',
+      segs:[
+        {from:1,to:2,text:'②ツイスター直前に付与'},
+        {from:2,to:4,text:'(通常散開に合流)'},
+        {from:4,to:5,text:'グリノー安置の外周側で左右に分かれる'},
+      ]},
+  ],
+  action:'迷ったら今のフェーズの列を縦に見る → 自分の行のバーが今どこにいるべきかを示す',
+});
+
+// ===================== 描画・ページ送り =====================
+const stage = document.getElementById('stage');
+let cur = 0;
+
+function buildGanttHTML(p){
+  const nPhases = p.phases.length;
+  const colW = 100/nPhases;
+  const headerCells = p.phases.map(ph=>`<div class="gph">${ph.replace(/\n/g,'<br>')}</div>`).join('');
+  const rowsHTML = p.rows.map(r=>{
+    const segsHTML = r.segs.map(s=>{
+      const left = s.from*colW, width=(s.to-s.from)*colW;
+      return `<div class="gbar" style="left:${left}%;width:${width}%;background:${r.color}22;border:2px solid ${r.color};color:${r.color};">${s.text}</div>`;
+    }).join('');
+    return `<div class="grow"><div class="glabel" style="color:${r.color};border-color:${r.color};">${r.label}</div><div class="gtrack">${segsHTML}</div></div>`;
+  }).join('');
+  // フェーズ境界の縦点線(gtrack内に重ねる目印として、ヘッダー直下の全体に1本敷く)
+  const dividers = p.phases.map((_,i)=> i===0? '' : `<div class="gdiv" style="left:${i*colW}%;"></div>`).join('');
+  return `
+    <div class="ganttWrap">
+      <div class="gheaderRow"><div class="glabel gcorner"></div><div class="gheaderTrack">${headerCells}${dividers}</div></div>
+      ${rowsHTML}
+    </div>
+  `;
+}
+
+function buildSlideDom(p, idx){
+  const div = document.createElement('div');
+  div.className='slide';
+  if(p.bodyType==='gantt'){
+    div.innerHTML = `
+      <h1>${p.title}</h1>
+      <div class="sub">${p.sub}</div>
+      <div class="body" style="flex-direction:column;">
+        ${buildGanttHTML(p)}
+        <div class="action" style="margin-top:14px;"><div class="label">使い方</div><div class="big" style="font-size:20px;">${p.action}</div></div>
+      </div>
+    `;
+    stage.appendChild(div);
+    return div;
+  }
+  div.innerHTML = `
+    <h1>${p.title}</h1>
+    <div class="sub">${p.sub}</div>
+    <div class="body">
+      <div class="diagWrap"><svg viewBox="0 0 420 500" xmlns="${ns}"></svg></div>
+      <div class="infoCol">
+        ${p.infoHTML}
+        <div class="action"><div class="label">自分がこのデバフだったら</div><div class="big">${p.action}</div></div>
+      </div>
+    </div>
+  `;
+  stage.appendChild(div);
+  const svg = div.querySelector('svg');
+  p.build(svg);
+  return div;
+}
+
+const slideEls = pages.map((p,i)=>buildSlideDom(p,i));
+
+const dotsWrap = document.getElementById('pageDots');
+pages.forEach((_,i)=>{
+  const d=document.createElement('div');
+  d.className='dot'+(i===0?' active':'');
+  d.onclick=()=>goTo(i);
+  dotsWrap.appendChild(d);
+});
+const dotEls = [...dotsWrap.children];
+
+function goTo(i){
+  if(i<0) i=0;
+  if(i>=pages.length) i=pages.length-1;
+  slideEls[cur].classList.remove('active');
+  dotEls[cur].classList.remove('active');
+  cur=i;
+  slideEls[cur].classList.add('active');
+  dotEls[cur].classList.add('active');
+  document.getElementById('pageNum').textContent = (cur+1)+' / '+pages.length;
+}
+document.getElementById('prevBtn').onclick=()=>goTo(cur-1);
+document.getElementById('nextBtn').onclick=()=>goTo(cur+1);
+document.addEventListener('keydown', e=>{
+  if(e.key==='ArrowRight'||e.key===' ') goTo(cur+1);
+  else if(e.key==='ArrowLeft') goTo(cur-1);
+});
+stage.addEventListener('click', e=>{
+  const rect = stage.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  if(x > rect.width*0.7) goTo(cur+1);
+  else if(x < rect.width*0.3) goTo(cur-1);
+});
+
+// 16:9スケーリング(画面内にぴったり収める)
+function fitStage(){
+  const W=1280,H=720;
+  const scale = Math.min(window.innerWidth/W, window.innerHeight/H);
+  slideEls.forEach(s=>{ s.style.transform=`translate(-50%,-50%) scale(${scale})`; });
+}
+window.addEventListener('resize', fitStage);
+fitStage();
+goTo(0);
+</script>
+</body>
+</html>
