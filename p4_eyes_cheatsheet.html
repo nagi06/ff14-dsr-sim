@@ -7,9 +7,10 @@
 <!-- 2026-07-19 作成。PTマクロ(リリードール式)準拠: 赤線DPSスタート・近接青眼寄せ・ダイブ青眼集合。MT目線。 -->
 <style>
   :root{
-    --bg:#0f1420; --panel:#182036; --line:#3a4a70;
-    --accent:#5fb3ff; --warn:#ffcc4d; --good:#3ddc84; --bad:#ff5c6c;
-    --text:#e8edf7; --dim:#8ea0c4;
+    /* UI v2 パレット(2026-07-25 全ページ統一)。変数名は従来のまま値だけ差し替え。 */
+    --bg:#070a12; --panel:rgba(34,47,80,.78); --line:rgba(124,160,224,.20);
+    --accent:#7cc4ff; --accent-2:#a78bfa; --warn:#ffc857; --good:#4ade80; --bad:#ff6070;
+    --text:#e9eefc; --dim:#93a3c8;
     --red:#ff5c6c; --blue:#5fb3ff;
   }
   *{box-sizing:border-box;margin:0;padding:0;}
@@ -21,12 +22,16 @@
     gap:0.6vmin;padding:0.8vmin;}
   header{grid-column:1/4;display:flex;align-items:baseline;gap:1.5vmin;
     border-bottom:1px solid var(--line);padding-bottom:0.4vmin;}
-  header h1{font-size:2.2vmin;color:var(--accent);}
+  header h1{font-size:2.2vmin;font-weight:800;
+    background:linear-gradient(100deg,#fff 6%,var(--accent) 55%,var(--accent-2) 96%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;}
   header .sub{font-size:1.4vmin;color:var(--dim);}
   .col{display:flex;flex-direction:column;gap:0.6vmin;min-height:0;}
-  .box{background:var(--panel);border:1px solid var(--line);border-radius:0.8vmin;
+  .box{background:linear-gradient(180deg,rgba(34,47,80,.80),rgba(17,25,45,.72));
+    border:1px solid var(--line);border-radius:1.1vmin;
+    box-shadow:0 1.8vmin 4vmin -3vmin #000, inset 0 1px 0 rgba(255,255,255,.06);
     padding:0.9vmin 1.1vmin;flex:0 0 auto;}
-  .box h2{font-size:1.7vmin;color:var(--accent);margin-bottom:0.4vmin;}
+  .box h2{font-size:1.7vmin;color:var(--accent);font-weight:800;margin-bottom:0.5vmin;}
   .box p,.box li{font-size:1.5vmin;line-height:1.5;}
   .box ol,.box ul{padding-left:2.2vmin;}
   b{color:var(--warn);}
@@ -39,6 +44,12 @@
   td,th{border:1px solid var(--line);padding:0.35vmin 0.55vmin;text-align:left;line-height:1.4;}
   th{color:var(--dim);font-weight:normal;white-space:nowrap;}
   .mt{background:#243156;}
+
+  body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+    background:
+      radial-gradient(90vw 60vh at 12% -8%, rgba(66,108,232,.20), transparent 62%),
+      radial-gradient(75vw 55vh at 102% 4%, rgba(150,92,240,.15), transparent 60%);}
+  #sheet{position:relative;z-index:1;}
 </style>
 </head>
 <body>
