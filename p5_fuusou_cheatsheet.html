@@ -5,7 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>P5 至天の陣:風槍 カンペ</title>
 <!--
-  2026-07-20 新規作成。16:9スライド形式のカンペ(6ページ)。
+  2026-07-20 新規作成。16:9スライド形式のカンペ。
+  2026-07-25 先頭に「ページ1: 風槍の考え方」を追加(全8ページ)。デバフごとの詳細だけだと全体像が入らない
+  という声を受け、①毎回見る3つ ②覚え方の芯2本(役持ち=西/無職=東・グリノー足元が安置) ③自分の4拍子
+  に圧縮した導入ページを置いた。ここだけ bodyType:'concept' の専用レイアウト。
   出典: P5儀典トールダン_予習メモ.md「風槍マクロの解釈」節+「ユーザー回答による確定事項」節(この2つが正)。
   ARUTORA節は不使用。座標感覚はp5_fuusou_simulator.htmlのロジックを流用。
   スタイルはp4_eyes_cheatsheet.html / p3_dice_cheatsheet.htmlに準拠(ダークテーマ・単一HTML完結)。
@@ -78,7 +81,35 @@
   .dot.active{background:var(--accent);}
   #pageNum{color:var(--dim);font-size:13px;min-width:50px;text-align:center;}
 
-  /* gantt (page7) */
+  /* --- ページ1(考え方)専用レイアウト --- */
+  .cn{flex:1;display:flex;flex-direction:column;gap:10px;min-height:0;}
+  .cnRow{display:flex;gap:10px;}
+  .cnHead{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:700;letter-spacing:.10em;
+    color:var(--dim);margin-bottom:5px;}
+  .cnHead::before{content:'';width:3px;height:12px;border-radius:2px;
+    background:linear-gradient(180deg,var(--accent),var(--accent-2));}
+  .cnCard{flex:1;min-width:0;border-radius:14px;padding:10px 14px;
+    background:linear-gradient(180deg,rgba(34,47,80,.80),rgba(17,25,45,.72));border:1px solid var(--line);
+    box-shadow:0 14px 32px -26px #000, inset 0 1px 0 rgba(255,255,255,.06);}
+  .cnCard .q{font-size:16.5px;font-weight:800;line-height:1.4;}
+  .cnCard .a{font-size:13.5px;color:var(--dim);line-height:1.5;margin-top:4px;}
+  .cnNum{display:inline-flex;align-items:center;justify-content:center;width:21px;height:21px;border-radius:7px;
+    background:linear-gradient(140deg,var(--accent),var(--accent-2));color:#06101f;
+    font-size:12.5px;font-weight:900;margin-right:7px;vertical-align:2px;}
+  .cnCore{flex:1;min-width:0;display:flex;align-items:center;gap:12px;border-radius:14px;padding:11px 14px;
+    background:linear-gradient(180deg,rgba(34,47,80,.80),rgba(17,25,45,.72));border:1px solid var(--line);
+    box-shadow:0 14px 32px -26px #000, inset 0 1px 0 rgba(255,255,255,.06);}
+  .cnCore svg{width:124px;height:124px;flex:none;}
+  .cnCore .txt{min-width:0;}
+  .cnCore .t{font-size:18.5px;font-weight:800;color:var(--good);line-height:1.35;}
+  .cnCore .d{font-size:13.5px;line-height:1.6;margin-top:6px;}
+  .cnBeat{flex:1;min-width:0;text-align:center;border-radius:12px;padding:8px 10px;
+    background:rgba(255,255,255,.045);border:1px solid var(--line);}
+  .cnBeat .n{font-size:11.5px;font-weight:800;letter-spacing:.08em;color:var(--accent);}
+  .cnBeat .t{font-size:15.5px;font-weight:800;margin-top:2px;}
+  .cnBeat .d{font-size:12px;color:var(--dim);line-height:1.5;margin-top:3px;}
+
+  /* gantt (最終ページ) */
   .ganttWrap{flex:1;display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 18px;min-height:0;}
   .gheaderRow{display:flex;margin-bottom:6px;}
   .gcorner{visibility:hidden;}
@@ -177,9 +208,83 @@ const CX=210, CY=250, R=150;
 // ===================== ページ定義 =====================
 const pages = [];
 
+// ---------- P1: 考え方(まずこれだけ) ----------
+// 「7個を順番に覚える」と入らないので、①毎回見る3つ ②覚え方の芯2本 ③自分の4拍子 に圧縮した導入ページ。
+// 出典: PTマクロ + P5/とんかつP5.txt(解説動画。毎回同じ順で実況しており、それがそのまま台本になる)。
+pages.push({
+  bodyType:'concept',
+  title:'ページ1: 風槍の考え方(まずこれだけ)',
+  sub:'やっているのは「2回散らばって、最後に1か所に集まる」だけ',
+  action:'ドラゴンを北に → 自分の席へ → 8方向散りながらグリノー確認＆沼警戒 → 最後グリノーの足元(サンダーなら外・なければ内)',
+  watchHTML:`
+    <div class="cnCard">
+      <div class="q"><span class="cnNum">1</span>ドラゴンはどこ？</div>
+      <div class="a">降りた方向が<b>北(12時)</b>。この先の東西南北は<b>全部これ基準</b>で、実マーカーとの対応は毎回変わる。</div>
+    </div>
+    <div class="cnCard">
+      <div class="q"><span class="cnNum">2</span>自分に何が付いた？</div>
+      <div class="a"><span class="r">線</span> / <span class="y">青玉</span> / <span class="g">無職</span>(＋<span class="pu">サンダー</span>)。
+      これだけで<b>座る席が全部決まる</b>。</div>
+    </div>
+    <div class="cnCard">
+      <div class="q"><span class="cnNum">3</span>グリノー(斧)はどっち？</div>
+      <div class="a">南北ランダム。<b>捨ててはいけない方向</b>が決まる。緑・フレア・リキッドの行き先はこれ次第。</div>
+    </div>
+  `,
+  core1HTML:`
+    <div class="t">芯1: 役持ちは西、無職は東</div>
+    <div class="d">初期散開も8方向散開も沼も<b>全部これ</b>。東は人数が多いので、
+    線持ちは散会しやすいよう<b>西に寄ってあげる</b>。</div>
+  `,
+  core2HTML:`
+    <div class="t">芯2: グリノーの足元＝最後の安置</div>
+    <div class="d">だから<b>そこを汚さない</b>。緑=グリノーのいない側／フレア=西／リキッド=東。
+    3つとも<b>「グリノー側に捨てない」</b>の一言。</div>
+  `,
+  beatsHTML:`
+    <div class="cnBeat"><div class="n">1拍</div><div class="t">北を決める</div>
+      <div class="d">詠唱が終わったら<br>まずドラゴンを探す</div></div>
+    <div class="cnBeat"><div class="n">2拍</div><div class="t">自分の席へ</div>
+      <div class="d"><span class="r">線</span>=南の対角(外周ギリギリ)<br>
+      <span class="y">青玉</span>=11時にひとり／<span class="g">無職</span>=東に縦一列<br>→ ツイスター回避</div></div>
+    <div class="cnBeat"><div class="n">3拍</div><div class="t">8方向へ散る</div>
+      <div class="d">役持ち=西／無職=東<br>移動中に<b>グリノーの位置</b>確認＋沼警戒</div></div>
+    <div class="cnBeat"><div class="n">4拍</div><div class="t">グリノー足元へ</div>
+      <div class="d"><span class="pu">サンダー</span>持ち=外周側で左右<br>付いてなければ内周側</div></div>
+  `,
+  // 芯1: フィールドを西(役持ち)/東(無職)で二分した図
+  buildCore1(svg){
+    const c=62, R=44;
+    fanArea(svg, c, c, R, 180, 360, '#5fb3ff', null);
+    fanArea(svg, c, c, R, 0, 180, '#3ddc84', null);
+    E(svg,'circle',{cx:c,cy:c,r:R,fill:'none',stroke:'#3a4a70','stroke-width':1.5});
+    E(svg,'line',{x1:c,y1:c-R,x2:c,y2:c+R,stroke:'#8ea0c4','stroke-width':1,'stroke-dasharray':'4,3'});
+    E(svg,'text',{x:c-22,y:c+4,fill:'#5fb3ff','font-size':13,'font-weight':'bold','text-anchor':'middle'},'役');
+    E(svg,'text',{x:c+22,y:c+4,fill:'#3ddc84','font-size':13,'font-weight':'bold','text-anchor':'middle'},'無');
+    E(svg,'circle',{cx:c,cy:c-R-9,r:7,fill:'#2a1633',stroke:'#ff9dc7','stroke-width':1.6});
+    E(svg,'text',{x:c,y:c-R-6,fill:'#ff9dc7','font-size':7,'text-anchor':'middle'},'竜');
+    E(svg,'text',{x:c,y:c+R+16,fill:'#8ea0c4','font-size':10,'text-anchor':'middle'},'西=役持ち / 東=無職');
+  },
+  // 芯2: グリノー足元だけが安置 → そこ以外(東西)に捨てる図
+  buildCore2(svg){
+    const c=62, R=44;
+    E(svg,'circle',{cx:c,cy:c,r:R,fill:'#101625',stroke:'#3a4a70','stroke-width':1.5});
+    const gp = pol(c,c,180,30);
+    dashCircle(svg, gp.x, gp.y, 17, '#3ddc84');
+    E(svg,'circle',{cx:gp.x,cy:gp.y,r:8,fill:'#3a2233',stroke:'#ffcc4d','stroke-width':1.6});
+    E(svg,'text',{x:gp.x,y:gp.y+3,fill:'#ffcc4d','font-size':7.5,'text-anchor':'middle'},'斧');
+    E(svg,'text',{x:gp.x,y:gp.y+27,fill:'#3ddc84','font-size':9.5,'font-weight':'bold','text-anchor':'middle'},'ここが安置');
+    arrow(svg, c-6, c-6, c-R+2, c-14, '#ffcc4d', 2.2);
+    arrow(svg, c+6, c-6, c+R-2, c-14, '#ffcc4d', 2.2);
+    E(svg,'text',{x:c-R+4,y:c-20,fill:'#ffcc4d','font-size':9,'text-anchor':'middle'},'西へ');
+    E(svg,'text',{x:c+R-4,y:c-20,fill:'#ffcc4d','font-size':9,'text-anchor':'middle'},'東へ');
+    E(svg,'text',{x:c,y:10,fill:'#8ea0c4','font-size':9.5,'text-anchor':'middle'},'例: 斧が南のとき');
+  }
+});
+
 // ---------- P1: 全体の流れ+北決め ----------
 pages.push({
-  title:'ページ1: 北を決める＆全体の流れ',
+  title:'ページ2: 北を決める＆全体の流れ',
   sub:'詠唱終了時、ヴェズルフェルニル(ドラゴン)が降りた方向 = 「北」',
   action:'まずドラゴンを探す → その方向を12時として全部を読み替える',
   build(svg){
@@ -209,7 +314,7 @@ pages.push({
 
 // ---------- P2: 線×2(スパイラルピアス) ----------
 pages.push({
-  title:'ページ2: 線×2(スパイラルピアス)',
+  title:'ページ3: 線×2(スパイラルピアス)',
   sub:'北の騎士から対角(南側)へ伸びる直線 → 距離減衰',
   action:'線が付いたら → 外周ギリギリを南側へ全力ダッシュ',
   build(svg){
@@ -247,7 +352,7 @@ pages.push({
 
 // ---------- P3: 青玉×1(スカイワードリープ) ----------
 pages.push({
-  title:'ページ3: 青玉×1(スカイワードリープ)',
+  title:'ページ4: 青玉×1(スカイワードリープ)',
   sub:'対象位置を起点に巨大円が発生',
   action:'青玉が付いたら → 北西(11時)の数字マーカーより少し中央寄りへ単独で',
   build(svg){
@@ -275,7 +380,7 @@ pages.push({
 
 // ---------- P4: 無職5名+緑カータライズ ----------
 pages.push({
-  title:'ページ4: 無職5名＋緑カータライズ',
+  title:'ページ5: 無職5名＋緑カータライズ',
   sub:'東側に縦一列(北から T→D→H 優先)',
   action:'緑が付いたら → 中央経由でシャリベル側(グリノーがいない側)の外周へ全力',
   build(svg){
@@ -320,7 +425,7 @@ pages.push({
 
 // ---------- P5: 沼2種 ----------
 pages.push({
-  title:'ページ5: 沼2種(フレア／リキッド)',
+  title:'ページ6: 沼2種(フレア／リキッド)',
   sub:'フィールドを3扇に分割(ドラゴン北基準)',
   action:'対象になったら → 自分のエリア(西 or 東)の外周沿いに捨てて、最後はグリノーへ',
   build(svg){
@@ -352,7 +457,7 @@ pages.push({
 
 // ---------- P6: サンダー×2+最終集合 ----------
 pages.push({
-  title:'ページ6: サンダー×2＋最終集合',
+  title:'ページ7: サンダー×2＋最終集合',
   sub:'全員グリノー(斧持ち)のダイナモ安置へ',
   action:'サンダーが付いたら外周側、付いてなければ内周側でグリノーに集合',
   build(svg){
@@ -390,7 +495,7 @@ pages.push({
 
 // ---------- P7: タイムライン表(ガントチャート風) ----------
 pages.push({
-  title:'ページ7: タイムライン表(全デバフまとめ)',
+  title:'ページ8: タイムライン表(全デバフまとめ)',
   sub:'横軸=時間フェーズ／縦=デバフ・役割。バーの位置で「今どこにいるべきか」が一目でわかる',
   bodyType:'gantt',
   phases:['①北確認\n初期散開','②ツイスター\n+線+青玉着弾','③メルシー\n8方向散開','④沼捨て\n(フレア/リキッド)','⑤グリノー集合\n(ダイナモ)'],
@@ -478,6 +583,41 @@ function buildSlideDom(p, idx){
       </div>
     `;
     stage.appendChild(div);
+    return div;
+  }
+  if(p.bodyType==='concept'){
+    div.innerHTML = `
+      <h1>${p.title}</h1>
+      <div class="sub">${p.sub}</div>
+      <div class="body">
+        <div class="cn">
+          <div>
+            <div class="cnHead">毎回見るのは この3つだけ</div>
+            <div class="cnRow">${p.watchHTML}</div>
+          </div>
+          <div>
+            <div class="cnHead">覚え方の芯は 2本</div>
+            <div class="cnRow">
+              <div class="cnCore"><svg class="core1" viewBox="0 0 124 124" xmlns="${ns}"></svg>
+                <div class="txt">${p.core1HTML}</div></div>
+              <div class="cnCore"><svg class="core2" viewBox="0 0 124 124" xmlns="${ns}"></svg>
+                <div class="txt">${p.core2HTML}</div></div>
+            </div>
+          </div>
+          <div>
+            <div class="cnHead">自分がやること 4拍子</div>
+            <div class="cnRow">${p.beatsHTML}</div>
+          </div>
+          <div class="action" style="padding:9px 18px;">
+            <div class="label">実戦で唱える</div>
+            <div class="big" style="font-size:18px;">${p.action}</div>
+          </div>
+        </div>
+      </div>
+    `;
+    stage.appendChild(div);
+    p.buildCore1(div.querySelector('.core1'));
+    p.buildCore2(div.querySelector('.core2'));
     return div;
   }
   div.innerHTML = `
