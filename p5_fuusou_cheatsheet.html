@@ -319,28 +319,29 @@ pages.push({
   action:'線が付いたら → 外周ギリギリを南側へ全力ダッシュ',
   build(svg){
     baseField(svg, CX, CY, R, {markers:false});
-    // 北の騎士(発生源)
-    const kN = pol(CX,CY,0,40);
-    token(svg,kN.x,kN.y,'騎士','#c96bff');
+    // 北の両脇の騎士(外周・ドラゴンの左右)=線の発生源
+    const kL = pol(CX,CY,340,R+10), kR = pol(CX,CY,20,R+10);
     // 中央ダイブ危険円 + 青玉円(避ける対象として小さく表示)
     dashCircle(svg, CX, CY, 46, '#ff5c6c');
     labelText(svg,CX,CY+4,'中央ダイブ','#ff5c6c',10);
     const bluePos = pol(CX,CY,330,R-25);
     dashCircle(svg, bluePos.x, bluePos.y, 30, '#ffcc4d');
-    // 線2本(南西寄り/南東寄り、外周ギリギリ)
+    // 線2本: 各騎士から対角(真反対)へ → 中央付近で交差する
     const t1 = pol(CX,CY,200,R+18), t2 = pol(CX,CY,160,R+18);
-    arrow(svg, kN.x, kN.y, t1.x, t1.y, '#ff5c6c', 3.5);
-    arrow(svg, kN.x, kN.y, t2.x, t2.y, '#ff5c6c', 3.5);
+    arrow(svg, kR.x, kR.y, t1.x, t1.y, '#ff5c6c', 3.5);
+    arrow(svg, kL.x, kL.y, t2.x, t2.y, '#ff5c6c', 3.5);
+    token(svg,kL.x,kL.y,'騎','#c96bff');
+    token(svg,kR.x,kR.y,'騎','#c96bff');
     token(svg,t1.x,t1.y,'線',  '#ff5c6c', true);
     token(svg,t2.x,t2.y,'線',  '#ff5c6c', true);
     labelText(svg,t1.x-38,t1.y+6,'南西','#8ea0c4',12);
     labelText(svg,t2.x+38,t2.y+6,'南東','#8ea0c4',12);
-    labelText(svg,CX,CY-R-86,'距離減衰: なるべく遠く(外周)へ','#ff5c6c',13);
+    labelText(svg,CX,CY-R-86,'距離減衰: なるべく遠く(外周)へ。2本の線は交差する','#ff5c6c',13);
   },
   infoHTML:`
     <div class="card">
       <h2>スパイラルピアス(線)</h2>
-      <p><b>北の騎士の両脇</b>から、<b>ランダム2名</b>へ線が伸びる(距離減衰の直線範囲)。</p>
+      <p><b>ドラゴン両脇の外周の騎士</b>から、<b>ランダム2名</b>へ線が伸びる(距離減衰の直線範囲)。各自<b>対角(真反対)</b>へ引くので<b>2本の線は中央付近で交差</b>する。</p>
       <p>立ち位置は<b>外周ギリギリ</b>・数字マーカーの1つ隣。理由: <b>中央の南向きダイブ</b>と<b>青玉の巨大円</b>を避けるため。</p>
     </div>
     <div class="card">
@@ -465,16 +466,17 @@ pages.push({
     dashCircle(svg, cx, cy, 95, '#3ddc84', 'ダイナモ安置(グリノー周囲)');
     E(svg,'circle',{cx,cy,r:16,fill:'#3a2233',stroke:'#ff9d4d','stroke-width':2.5});
     labelText(svg,cx,cy+5,'斧','#ff9d4d',12);
-    // サンダー2名: 外周側で左右
-    token(svg,cx-70,cy-55,'雷','#ffcc4d', true);
-    token(svg,cx+70,cy-55,'雷','#ffcc4d', true);
-    labelText(svg,cx-70,cy-80,'外周・左','#ffcc4d',12);
-    labelText(svg,cx+70,cy-80,'外周・右','#ffcc4d',12);
-    // 非対象: 内周側に密集
+    // 非対象: 内周側(中央=トールダン側)に密集
     const others=[-62.5,-37.5,-12.5,12.5,37.5,62.5];
-    others.forEach((dx,i)=>{ token(svg,cx+dx,cy+38,'','#5fb3ff'); });
-    labelText(svg,cx,cy+72,'非サンダーは内周(グリノー寄り)に密集','#5fb3ff',13);
-    labelText(svg,cx,cy-115,'ドラゴン北は画面上方向のまま','#8ea0c4',11);
+    others.forEach((dx,i)=>{ token(svg,cx+dx,cy-38,'','#5fb3ff'); });
+    labelText(svg,cx,cy-62,'非サンダーは内周側(中央寄り)に密集','#5fb3ff',13);
+    // サンダー2名: フィールド外周側で左右
+    token(svg,cx-70,cy+55,'雷','#ffcc4d', true);
+    token(svg,cx+70,cy+55,'雷','#ffcc4d', true);
+    labelText(svg,cx-70,cy+80,'外周側・左','#ffcc4d',12);
+    labelText(svg,cx+70,cy+80,'外周側・右','#ffcc4d',12);
+    labelText(svg,cx,cy-115,'↑ 中央(トールダン)側 ※図はグリノー=南の例','#8ea0c4',11);
+    labelText(svg,cx,cy+112,'↓ フィールド外周側','#8ea0c4',11);
   },
   infoHTML:`
     <div class="card">

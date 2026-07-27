@@ -1003,6 +1003,28 @@ async function startRun(){
     `あなた=<b>${selectedRole}</b> / <b>${roleTagJP}</b>${myIsThunder? '(サンダーも付与)':''}`);
   document.getElementById('phaseLabel').textContent='北基準確定！デバフ抽選(線/青玉/サンダー)へ';
   setMsg('盤面はドラゴン=北に正規化して表示しています');
+
+  // 北の騎士2体(スパイラルピアス=線の発生源)を外周のドラゴン両脇に描画。
+  // ユーザー確定事項: 線は「外周の騎士(ドラゴン両脇)から伸びて交差する」。
+  const KNIGHT_R = 196;
+  const knightNE = polar(20, KNIGHT_R);  // ドラゴン右脇(北東寄り)
+  const knightNW = polar(340, KNIGHT_R); // ドラゴン左脇(北西寄り)
+  svg.appendChild(npcMark(knightNE.x, knightNE.y, '#c96bff', '騎'));
+  svg.appendChild(npcMark(knightNW.x, knightNW.y, '#c96bff', '騎'));
+  // 線(スパイラルピアス)のテザー描画/消去ヘルパー。対応は対角(交差):
+  // 騎(20°/北東側)→lineSW(200°)へ行く人 / 騎(340°/北西側)→lineSE(160°)へ行く人。
+  function drawLineTethers(){
+    svg.querySelectorAll('.tether').forEach(el=>el.remove());
+    const p1 = tokens[R.lineRoles[0]], p2 = tokens[R.lineRoles[1]];
+    if(!p1 || !p2) return;
+    const t1 = svgEl('line',{class:'tether', x1:knightNE.x, y1:knightNE.y, x2:p1.x, y2:p1.y,
+      stroke:'#ff6070','stroke-width':2.6, opacity:0.85, filter:'url(#softGlow)'});
+    const t2 = svgEl('line',{class:'tether', x1:knightNW.x, y1:knightNW.y, x2:p2.x, y2:p2.y,
+      stroke:'#ff6070','stroke-width':2.6, opacity:0.85, filter:'url(#softGlow)'});
+    svg.appendChild(t1); svg.appendChild(t2);
+  }
+  function clearLineTethers(){ svg.querySelectorAll('.tether').forEach(el=>el.remove()); }
+
   ORDER.forEach((r,i)=>{
     const x = (i-3.5)*30;
     drawToken(r, x, 160);
@@ -1012,6 +1034,7 @@ async function startRun(){
   // ---- 出題1: 初期散開 ----
   document.getElementById('phaseLabel').textContent='初期抽選: 線×2・青玉×1・サンダー×2が判明';
   setMsg('自分の初期散開位置を確認してください');
+  drawLineTethers(); // 抽選判明→騎士から線対象2名の現在位置へ赤いテザーを表示
   await wait(reviewMode ? 800 : 400);
 
   const scatter1Choices = [
@@ -1023,7 +1046,7 @@ async function startRun(){
     scatter1Choices.push({id:'mushoku'+i, x:150, y:-140+70*i, label:'無職'+(i+1)});
   }
   let myScatter1Id, myScatter1Explain;
-  if(myIsLine){ myScatter1Id=['lineSW','lineSE']; myScatter1Explain='線持ちは南側の対角へ最大距離(外周ギリギリ・どちらのスロットでもOK)'; }
+  if(myIsLine){ myScatter1Id=['lineSW','lineSE']; myScatter1Explain='線持ちは対角(騎士の真反対)へ最大距離。2本の線は交差する(どちらのスロットでもOK)'; }
   else if(myIsBlue){ myScatter1Id='blue'; myScatter1Explain='青玉持ちは北西の数字マーカー南寄りへ単独で'; }
   else{
     const idx=R.mushokuSlotIndex[selectedRole];
@@ -1044,6 +1067,12 @@ async function startRun(){
   applySeparation(MOVE_MS);
   await wait(MOVE_MS+300);
 
+  // 移動完了後、テザーを引き直す→2本が中央付近で交差するX字が見える
+  drawLineTethers();
+  await wait(reviewMode ? 500 : 300);
+
+  // 着弾と同時にテザーを消す
+  clearLineTethers();
   document.getElementById('phaseLabel').textContent='ツイスターダイブ+線+青玉円が同時着弾！回避したら中央へ';
   setMsg('ツイスターの範囲を避けつつ中央のトールダンへ');
   await wait(reviewMode ? 1200 : 600);
@@ -1121,10 +1150,16 @@ async function startRun(){
   await wait(MOVE_MS+400);
 
   // ---- 出題4: サンダー処理+エンプティディメンション ----
+  // 「外周側」= フィールド中央から見てグリノーの向こう側(|y|が大きくなる方向)。
+  // 「内周側」= 中央に近づく方向。グリノーがN/Sどちらでも正しくなるよう符号を切り替える
+  // (旧実装はgrinohP.y-70/grinohP.y-25の固定式で、グリノー=南のとき内外が逆になるバグがあった)。
+  const sgn = R.grinohSide==='N' ? -1 : 1;
+  const thunderOuterY = grinohP.y + sgn*70;
+  const thunderInnerY = grinohP.y - sgn*25;
   const thunderChoices = [
-    {id:'outerL', x:-70, y:grinohP.y-70, label:'外周・左'},
-    {id:'outerR', x:70, y:grinohP.y-70, label:'外周・右'},
-    {id:'inner', x:0, y:grinohP.y-25, label:'内周(グリノー寄り)'},
+    {id:'outerL', x:-70, y:thunderOuterY, label:'外周・左'},
+    {id:'outerR', x:70, y:thunderOuterY, label:'外周・右'},
+    {id:'inner', x:0, y:thunderInnerY, label:'内周(グリノー寄り)'},
   ];
   const myCorrect4 = myIsThunder ? ['outerL','outerR'] : 'inner';
   const explain4 = myIsThunder ? 'サンダー持ちは安置内の外周側で左右(V字)に分かれる(どちらでもOK・早い者勝ち)'
@@ -1137,8 +1172,8 @@ async function startRun(){
     const isThunder = R.thunderRoles.includes(r);
     const idxInGroup = R.thunderRoles.indexOf(r);
     let x,y;
-    if(isThunder){ x = idxInGroup===0? -70:70; y = grinohP.y-70; }
-    else { const nonThunder=ORDER.filter(rr=>!R.thunderRoles.includes(rr)); const j=nonThunder.indexOf(r); x=(j-2.5)*22; y=grinohP.y-25; }
+    if(isThunder){ x = idxInGroup===0? -70:70; y = thunderOuterY; }
+    else { const nonThunder=ORDER.filter(rr=>!R.thunderRoles.includes(rr)); const j=nonThunder.indexOf(r); x=(j-2.5)*22; y=thunderInnerY; }
     moveTokenAnimated(r, x, y, MOVE_MS);
   });
   applySeparation(MOVE_MS);

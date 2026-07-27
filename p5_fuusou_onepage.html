@@ -187,23 +187,25 @@ const CX=200, CY=210, R=145;
 (function(){
   const svg = document.getElementById('d1');
   baseField(svg, CX, CY, R);
-  // 北の騎士(線の発生源)
-  const kN = pol(CX,CY,0,38);
-  token(svg,kN.x,kN.y,'騎','#c96bff');
+  // 北の両脇の騎士(外周・ドラゴンの左右)=線の発生源
+  const kL = pol(CX,CY,340,R+8), kR = pol(CX,CY,20,R+8);
   // 中央ダイブ危険円
   dashCircle(svg, CX, CY, 42, '#ff5c6c');
   labelText(svg,CX,CY+3,'ダイブ','#ff5c6c',8.5);
   // 青玉円(捨て場所の目安)
   const bluePos = pol(CX,CY,330,R-24);
   dashCircle(svg, bluePos.x, bluePos.y, 46, '#ffcc4d');
-  // 線2本(南西寄り/南東寄り、外周ギリギリ=9時/7時)
+  // 線2本: 各騎士から対角(真反対)へ伸ばす → 2本は中央付近で交差する
   const t1 = pol(CX,CY,200,R+16), t2 = pol(CX,CY,160,R+16);
-  arrow(svg, kN.x, kN.y, t1.x, t1.y, '#ff5c6c', 2.5);
-  arrow(svg, kN.x, kN.y, t2.x, t2.y, '#ff5c6c', 2.5);
+  arrow(svg, kR.x, kR.y, t1.x, t1.y, '#ff5c6c', 2.5);
+  arrow(svg, kL.x, kL.y, t2.x, t2.y, '#ff5c6c', 2.5);
+  token(svg,kL.x,kL.y,'騎','#c96bff');
+  token(svg,kR.x,kR.y,'騎','#c96bff');
   token(svg,t1.x,t1.y,'線','#ff5c6c', true);
   token(svg,t2.x,t2.y,'線','#ff5c6c', true);
-  labelText(svg,t1.x-30,t1.y+2,'9時','#8ea0c4',10);
-  labelText(svg,t2.x+30,t2.y+2,'7時','#8ea0c4',10);
+  labelText(svg,t1.x-34,t1.y+2,'南西寄り','#8ea0c4',9.5);
+  labelText(svg,t2.x+34,t2.y+2,'南東寄り','#8ea0c4',9.5);
+  labelText(svg,CX,CY+72,'対角へ最大距離(線は交差)','#ff5c6c',9.5);
   // 青玉
   token(svg,bluePos.x,bluePos.y,'青玉','#ffcc4d', true);
   labelText(svg,bluePos.x,bluePos.y-56,'11時','#ffcc4d',10);
@@ -270,12 +272,12 @@ const CX=200, CY=210, R=145;
   dashCircle(svg, gy.x, gy.y, 62, '#3ddc84', 'ダイナモ安置');
   E(svg,'circle',{cx:gy.x,cy:gy.y,r:13,fill:'#3a2233',stroke:'#ff9d4d','stroke-width':2});
   labelText(svg,gy.x,gy.y+4,'斧','#ff9d4d',9.5);
-  token(svg,gy.x-46,gy.y-36,'雷','#ffcc4d', true);
-  token(svg,gy.x+46,gy.y-36,'雷','#ffcc4d', true);
-  labelText(svg,gy.x-46,gy.y-52,'外周・左','#ffcc4d',9);
-  labelText(svg,gy.x+46,gy.y-52,'外周・右','#ffcc4d',9);
-  [-24,-8,8,24].forEach(dx=>{ token(svg,gy.x+dx,gy.y+28,'','#5fb3ff'); });
-  labelText(svg,gy.x,gy.y+50,'非サンダーは内周に密集','#5fb3ff',9.5);
+  token(svg,gy.x-46,gy.y+36,'雷','#ffcc4d', true);
+  token(svg,gy.x+46,gy.y+36,'雷','#ffcc4d', true);
+  labelText(svg,gy.x-46,gy.y+56,'外周側・左','#ffcc4d',9);
+  labelText(svg,gy.x+46,gy.y+56,'外周側・右','#ffcc4d',9);
+  [-24,-8,8,24].forEach(dx=>{ token(svg,gy.x+dx,gy.y-28,'','#5fb3ff'); });
+  labelText(svg,gy.x,gy.y-46,'非サンダーは内周側(中央寄り)','#5fb3ff',9.5);
 })();
 </script>
 
