@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>P5 風槍 カンペ(1枚)</title>
+<!--
+  2026-07-20 新規作成。サブモニタ常時表示用の「1枚モノ」カンペ(ページ送りなし・16:9固定)。
+  形式はp3_dice_cheatsheet.htmlを参考にしつつ、スケーリング方式はp5_fuusou_cheatsheet.html(7ページ版)の
+  translate+scale(fitStage)を流用。内容は同ファイルの確定済み7ページから抽出しただけで新解釈は無し。
+  出典: P5儀典トールダン_予習メモ.md「風槍マクロの解釈」節+「ユーザー回答による確定事項」節。
+
+  重要: 全図「上=ドラゴン北」で統一(ヴェズルフェルニルが降りた方向)。実マーカーとの対応は毎回変わる。
+
+  2026-07-26 パレット統一(UI v2): p5_fuusou_cheatsheet.html(7ページ版)の<style>に合わせて
+  :root変数・背景(オーロラ)・ガラス調パネル・見出しグラデーションを移植。レイアウト(3面図+タイムライン)は
+  変更なし。SVG描画関数(baseField/token/labelText/arrow/dashCircle/fanArea)はv2側でも無改修のため、
+  内部のハードコード色(#101625等)はそのまま流用可能(v2本体と完全に同一関数)。
+-->
+<style>
+  :root{
+    /* UI v2 パレット(2026-07-25 全ページ統一。p5_fuusou_cheatsheet.htmlと同一値) */
+    --bg:#0a1020; --panel:rgba(34,47,80,.78); --panel2:rgba(40,54,90,.66); --line:rgba(124,160,224,.20);
+    --accent:#7cc4ff; --accent-2:#a78bfa; --good:#4ade80; --bad:#ff6070; --warn:#ffc857; --purple:#c96bff;
+    --text:#e9eefc; --dim:#93a3c8;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{width:100%;height:100%;background:#000;color:var(--text);
+    font-family:"Hiragino Sans","Yu Gothic",system-ui,sans-serif;overflow:hidden;}
+  #stage{position:fixed;inset:0;}
+  #sheet{
+    position:absolute;left:50%;top:50%;
+    transform-origin:center center;
+    width:1280px;height:720px;
+    background:
+      radial-gradient(700px 420px at 12% -6%, rgba(66,108,232,.22), transparent 62%),
+      radial-gradient(600px 380px at 102% 4%, rgba(150,92,240,.16), transparent 60%),
+      var(--bg);
+    display:flex;
+    flex-direction:column;
+    padding:16px 22px 14px;
+    border-radius:6px;
+  }
+  header{display:flex;align-items:center;gap:18px;margin-bottom:8px;}
+  header h1{font-size:24px;font-weight:800;white-space:nowrap;
+    background:linear-gradient(100deg,#fff 6%,var(--accent) 52%,var(--accent-2) 96%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;}
+  #northNote{
+    background:linear-gradient(135deg,rgba(42,22,51,.85),rgba(26,16,34,.78));
+    border:2px solid #ff9dc7;
+    border-radius:10px;
+    padding:6px 16px;
+    font-size:17px;
+    font-weight:bold;
+    color:#ff9dc7;
+    white-space:nowrap;
+    box-shadow:0 14px 32px -26px #000, inset 0 1px 0 rgba(255,255,255,.06);
+  }
+  header .sub{font-size:13px;color:var(--dim);line-height:1.4;}
+  .row{flex:1;display:flex;gap:14px;min-height:0;}
+  .diagBox{
+    flex:1;
+    background:linear-gradient(180deg,rgba(34,47,80,.80),rgba(17,25,45,.72));
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:8px 10px 6px;
+    display:flex;
+    flex-direction:column;
+    min-height:0;
+    min-width:0;
+    box-shadow:0 18px 40px -28px #000, inset 0 1px 0 rgba(255,255,255,.06);
+  }
+  .diagBox h2{font-size:15px;color:var(--accent);font-weight:800;text-align:center;margin-bottom:2px;}
+  .diagBox .cap{font-size:11.5px;color:var(--dim);text-align:center;margin-bottom:2px;line-height:1.35;}
+  .diagBox svg{flex:1;width:100%;min-height:0;}
+  b{color:var(--warn);}
+  .r{color:var(--bad);font-weight:bold;} .y{color:#ffd24d;font-weight:bold;}
+  .bl{color:#4da6ff;font-weight:bold;} .pu{color:var(--purple);font-weight:bold;} .g{color:var(--good);font-weight:bold;}
+  /* タイムラインバー */
+  #timeline{
+    margin-top:10px;
+    background:linear-gradient(180deg,rgba(34,47,80,.80),rgba(17,25,45,.72));
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:8px 18px;
+    display:flex;
+    align-items:center;
+    gap:0;
+    box-shadow:0 18px 40px -28px #000, inset 0 1px 0 rgba(255,255,255,.06);
+  }
+  .tlStep{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;}
+  .tlDot{width:14px;height:14px;border-radius:50%;background:var(--accent);border:2px solid #0a1020;z-index:1;}
+  .tlLabel{font-size:12.5px;font-weight:bold;color:var(--text);margin-top:4px;text-align:center;white-space:nowrap;}
+  .tlLine{position:absolute;top:6px;left:50%;width:100%;height:2px;background:var(--line);z-index:0;}
+  .tlStep:last-child .tlLine{display:none;}
+</style>
+</head>
+<body>
+<div id="stage"><div id="sheet">
+  <header>
+    <h1>P5 儀典トールダン「至天の陣:風槍」1枚カンペ</h1>
+    <div id="northNote">上 ＝ ドラゴン北</div>
+    <div class="sub">ヴェズルフェルニル(降りたドラゴン)の方向を北とみなす。実フィールドマーカー(A/1=<span class="r">赤</span> B/2=<span class="y">黄</span> C/3=<span class="bl">青</span> D/4=<span class="pu">紫</span>)との対応は毎回変わる。</div>
+  </header>
+
+  <div class="row">
+    <div class="diagBox">
+      <h2>①初期散開</h2>
+      <div class="cap">線×2=南の対角外周(9時/7時) ／ 青玉=11時数字マーカー南寄り ／ 無職5名=東側縦列(北から<b>T→D→H</b>)</div>
+      <svg id="d1" viewBox="0 0 400 460" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+    <div class="diagBox">
+      <h2>②アスカロンメルシー(8方向)</h2>
+      <div class="cap">無色最北=12時 ／ 青玉=11時 ／ 線=9時・7時 ／ 残り無職=東半分 ／ <span class="g">緑カータ</span>=シャリベル側外周へ</div>
+      <svg id="d2" viewBox="0 0 400 460" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+    <div class="diagBox">
+      <h2>③沼＋最終集合</h2>
+      <div class="cap"><span class="pu">フレア=西扇</span> ／ <span class="bl">リキッド=東扇</span> ／ グリノー扇=捨て禁止 ／ 安置=<span class="y">サンダー外周左右</span>・非対象内周</div>
+      <svg id="d3" viewBox="0 0 400 460" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+  </div>
+
+  <div id="timeline">
+    <div class="tlStep"><div class="tlLine"></div><div class="tlDot"></div><div class="tlLabel">①初期散開</div></div>
+    <div class="tlStep"><div class="tlLine"></div><div class="tlDot" style="background:var(--bad);"></div><div class="tlLabel">ツイスター回避</div></div>
+    <div class="tlStep"><div class="tlLine"></div><div class="tlDot" style="background:var(--good);"></div><div class="tlLabel">②メルシー8方向</div></div>
+    <div class="tlStep"><div class="tlLine"></div><div class="tlDot" style="background:var(--purple);"></div><div class="tlLabel">沼を捨てる</div></div>
+    <div class="tlStep"><div class="tlDot" style="background:var(--warn);"></div><div class="tlLabel">③グリノー集合</div></div>
+  </div>
+</div></div>
+
+<script>
+const ns='http://www.w3.org/2000/svg';
+function E(parent,t,attrs,txt){const e=document.createElementNS(ns,t);for(const k in attrs)e.setAttribute(k,attrs[k]);if(txt!=null)e.textContent=txt;parent.appendChild(e);return e;}
+function pol(cx,cy,angleDeg,r){const rad=angleDeg*Math.PI/180;return{x:cx+r*Math.sin(rad),y:cy-r*Math.cos(rad)};}
+const CLK = h => (h%12)*30;
+
+function baseField(svg, cx, cy, R){
+  E(svg,'circle',{cx,cy,r:R,fill:'#101625',stroke:'#3a4a70','stroke-width':2});
+  for(let h=0; h<12; h+=1.5){
+    const p = pol(cx,cy,CLK(h),R);
+    E(svg,'line',{x1:cx,y1:cy,x2:p.x,y2:p.y,stroke:'#202c48','stroke-width':1});
+  }
+  for(let h=0; h<12; h++){
+    const p = pol(cx,cy,CLK(h),R+14);
+    E(svg,'circle',{cx:p.x,cy:p.y,r:3.5,fill:'#3a4a70'});
+  }
+  E(svg,'circle',{cx,cy,r:4.5,fill:'#4a5a80'});
+  // ドラゴン北アイコン(常に真上・小さめ)
+  const dp = pol(cx,cy,0,R+28);
+  E(svg,'circle',{cx:dp.x,cy:dp.y,r:13,fill:'#2a1633',stroke:'#ff9dc7','stroke-width':2});
+  E(svg,'text',{x:dp.x,y:dp.y+4,fill:'#ff9dc7','font-size':9,'font-weight':'bold','text-anchor':'middle'},'竜');
+}
+function token(svg,x,y,label,col,hi){
+  E(svg,'circle',{cx:x,cy:y,r:12,fill:col||'#5fb3ff',stroke:hi?'#ffffff':'#0a0e18','stroke-width':hi?2.5:1.3});
+  E(svg,'text',{x,y:y+3.5,fill:'#08111f','font-size':9.5,'font-weight':'bold','text-anchor':'middle'},label);
+}
+function labelText(svg,x,y,txt,col,size){
+  E(svg,'text',{x,y,fill:col||'#e8edf7','font-size':size||11,'font-weight':'bold','text-anchor':'middle'},txt);
+}
+function arrow(svg,x1,y1,x2,y2,col,w){
+  w=w||2.5;
+  E(svg,'line',{x1,y1,x2,y2,stroke:col,'stroke-width':w});
+  const a=Math.atan2(y2-y1,x2-x1);
+  E(svg,'path',{d:`M${x2},${y2} L${x2-9*Math.cos(a-0.4)},${y2-9*Math.sin(a-0.4)} L${x2-9*Math.cos(a+0.4)},${y2-9*Math.sin(a+0.4)} Z`,fill:col});
+}
+function dashCircle(svg,cx,cy,r,col,label,labelDy){
+  E(svg,'circle',{cx,cy,r,fill:'none',stroke:col,'stroke-width':2,'stroke-dasharray':'5,4'});
+  if(label) E(svg,'text',{x:cx,y:cy+(labelDy!=null?labelDy:-r-6),fill:col,'font-size':10,'font-weight':'bold','text-anchor':'middle'},label);
+}
+function fanArea(svg,cx,cy,R,fromDeg,toDeg,col,label,labelR){
+  const p1=pol(cx,cy,fromDeg,R), p2=pol(cx,cy,toDeg,R);
+  const large = ((toDeg-fromDeg+360)%360)>180 ? 1:0;
+  const d=`M${cx},${cy} L${p1.x},${p1.y} A${R},${R} 0 ${large} 1 ${p2.x},${p2.y} Z`;
+  E(svg,'path',{d, fill:col, opacity:0.22});
+  if(label){
+    const mid=(fromDeg+toDeg)/2;
+    const lp=pol(cx,cy,mid,labelR||R*0.62);
+    E(svg,'text',{x:lp.x,y:lp.y,fill:col,'font-size':11,'font-weight':'bold','text-anchor':'middle'},label);
+  }
+}
+
+const CX=200, CY=210, R=145;
+
+// ===================== 図1: 初期散開 =====================
+(function(){
+  const svg = document.getElementById('d1');
+  baseField(svg, CX, CY, R);
+  // 北の騎士(線の発生源)
+  const kN = pol(CX,CY,0,38);
+  token(svg,kN.x,kN.y,'騎','#c96bff');
+  // 中央ダイブ危険円
+  dashCircle(svg, CX, CY, 42, '#ff5c6c');
+  labelText(svg,CX,CY+3,'ダイブ','#ff5c6c',8.5);
+  // 青玉円(捨て場所の目安)
+  const bluePos = pol(CX,CY,330,R-24);
+  dashCircle(svg, bluePos.x, bluePos.y, 46, '#ffcc4d');
+  // 線2本(南西寄り/南東寄り、外周ギリギリ=9時/7時)
+  const t1 = pol(CX,CY,200,R+16), t2 = pol(CX,CY,160,R+16);
+  arrow(svg, kN.x, kN.y, t1.x, t1.y, '#ff5c6c', 2.5);
+  arrow(svg, kN.x, kN.y, t2.x, t2.y, '#ff5c6c', 2.5);
+  token(svg,t1.x,t1.y,'線','#ff5c6c', true);
+  token(svg,t2.x,t2.y,'線','#ff5c6c', true);
+  labelText(svg,t1.x-30,t1.y+2,'9時','#8ea0c4',10);
+  labelText(svg,t2.x+30,t2.y+2,'7時','#8ea0c4',10);
+  // 青玉
+  token(svg,bluePos.x,bluePos.y,'青玉','#ffcc4d', true);
+  labelText(svg,bluePos.x,bluePos.y-56,'11時','#ffcc4d',10);
+  // 無職5名(東側縦列 T→D→H)
+  const roles=['T','D','D','D','H'];
+  const cols=['#4da6ff','#ff9d4d','#ff9d4d','#ff9d4d','#3ddc84'];
+  roles.forEach((r,i)=>{
+    const x = CX + R + 28;
+    const y = CY - 78 + i*39;
+    token(svg,x,y,r,cols[i], i===0);
+  });
+  labelText(svg, CX+R-4, CY-78-24, '北→南 T→D→H', '#8ea0c4', 10);
+})();
+
+// ===================== 図2: メルシー8方向 =====================
+(function(){
+  const svg = document.getElementById('d2');
+  baseField(svg, CX, CY, R);
+  const DIR = {N:0, NE1:30, NE:60, E:90, SE:120, SE2:150, S:180, SW2:210, SW:240, W:270, NW2:300, NW:330};
+  // 無色最北=12時
+  const nP = pol(CX,CY,DIR.N,R+8);
+  token(svg,nP.x,nP.y,'無','#5fb3ff', true);
+  labelText(svg,nP.x+30,nP.y+4,'12時','#8ea0c4',10);
+  // 青玉=11時
+  const bP = pol(CX,CY,DIR.NW,R+8);
+  token(svg,bP.x,bP.y,'青','#ffcc4d', true);
+  labelText(svg,bP.x-26,bP.y-4,'11時','#ffcc4d',10);
+  // 線=9時/7時
+  const l1 = pol(CX,CY,DIR.W,R+8), l2 = pol(CX,CY,DIR.SW,R+8);
+  token(svg,l1.x,l1.y,'線','#ff5c6c', true);
+  token(svg,l2.x,l2.y,'線','#ff5c6c', true);
+  labelText(svg,l1.x-30,l1.y,'9時','#8ea0c4',10);
+  labelText(svg,l2.x-24,l2.y+18,'7時','#8ea0c4',10);
+  // 残り無職=東半分
+  [DIR.NE1,DIR.NE,DIR.E].forEach((a,i)=>{
+    const p = pol(CX,CY,a,R+8);
+    token(svg,p.x,p.y,'無',i===0?'#5fb3ff':'#5fb3ff');
+  });
+  labelText(svg, pol(CX,CY,DIR.NE,R+34).x, pol(CX,CY,DIR.NE,R+34).y, '東半分(複数正解)', '#8ea0c4', 10);
+  // 緑カータ→シャリベル側外周への誘導(例)
+  const g0 = pol(CX,CY,90,R+30);
+  const dest = pol(CX,CY,180,R+2);
+  arrow(svg, CX, CY+30, dest.x, dest.y, '#3ddc84', 2.5);
+  E(svg,'circle',{cx:dest.x,cy:dest.y,r:13,fill:'#233a2a',stroke:'#3ddc84','stroke-width':2});
+  labelText(svg,dest.x,dest.y+4,'杖','#3ddc84',9.5);
+  labelText(svg,dest.x,dest.y+22,'緑→シャリベル側(例)','#3ddc84',9.5);
+  const grinoh = pol(CX,CY,0,R-26);
+  E(svg,'circle',{cx:grinoh.x,cy:grinoh.y,r:13,fill:'#3a2233',stroke:'#ff9d4d','stroke-width':2});
+  labelText(svg,grinoh.x,grinoh.y+4,'斧','#ff9d4d',9.5);
+  labelText(svg,grinoh.x,grinoh.y+22,'グリノー側=行くな','#ff9d4d',9);
+})();
+
+// ===================== 図3: 沼+最終集合 =====================
+(function(){
+  const svg = document.getElementById('d3');
+  baseField(svg, CX, CY, R);
+  fanArea(svg, CX, CY, R, 240, 360, '#c96bff', 'フレア=西扇', R*0.6);
+  fanArea(svg, CX, CY, R, 0, 120, '#5fb3ff', 'リキッド=東扇', R*0.6);
+  fanArea(svg, CX, CY, R, 120, 240, '#ff5c6c', 'グリノー扇\n捨て禁止', R*0.68);
+  const fp = pol(CX,CY,285,R-18); token(svg,fp.x,fp.y,'花','#c96bff');
+  const lp2 = pol(CX,CY,75,R-18); token(svg,lp2.x,lp2.y,'水','#5fb3ff');
+  // グリノー安置(ダイナモ)を南扇の中に描画
+  const gy = pol(CX,CY,180,R*0.55);
+  dashCircle(svg, gy.x, gy.y, 62, '#3ddc84', 'ダイナモ安置');
+  E(svg,'circle',{cx:gy.x,cy:gy.y,r:13,fill:'#3a2233',stroke:'#ff9d4d','stroke-width':2});
+  labelText(svg,gy.x,gy.y+4,'斧','#ff9d4d',9.5);
+  token(svg,gy.x-46,gy.y-36,'雷','#ffcc4d', true);
+  token(svg,gy.x+46,gy.y-36,'雷','#ffcc4d', true);
+  labelText(svg,gy.x-46,gy.y-52,'外周・左','#ffcc4d',9);
+  labelText(svg,gy.x+46,gy.y-52,'外周・右','#ffcc4d',9);
+  [-24,-8,8,24].forEach(dx=>{ token(svg,gy.x+dx,gy.y+28,'','#5fb3ff'); });
+  labelText(svg,gy.x,gy.y+50,'非サンダーは内周に密集','#5fb3ff',9.5);
+})();
+</script>
+
+<script>
+// 16:9スケーリング(画面内にぴったり収める。fuusouカンペのfitStage方式を流用)
+const sheet = document.getElementById('sheet');
+function fitStage(){
+  const W=1280,H=720;
+  const scale = Math.min(window.innerWidth/W, window.innerHeight/H);
+  sheet.style.transform = `translate(-50%,-50%) scale(${scale})`;
+}
+window.addEventListener('resize', fitStage);
+fitStage();
+</script>
+</body>
+</html>
