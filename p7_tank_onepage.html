@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>P7 最終 タンク立ち回り 図解(1枚)</title>
+<!--
+  2026-08-10 新規作成。P7最終フェーズのタンク立ち回り(MT/ST位置・スイッチ・スタンス)6面図。
+  元画像: Hosiume San「絶竜詩戦争 攻略を終えて」
+  (jp.finalfantasyxiv.com/lodestone/character/26041085/blog/5035977/)内の
+  Discordスクショ「◆最終P動き方の認識」5面図+「ギガフレア〜エクサフレア」2面図(440px幅と小さい)を
+  4倍拡大で判読し、SVGで拡大再作図したもの。
+  判読済み注記(パネル別):
+  1.開幕: 戦士暗黒両スタンスON/二人ともピッタリ北方向意識/シャークは緊急用という意識(原文ママ)/
+    詠唱中に必ず挑発+スタンスONOFF意識
+  2.エクサ一回目: ヘイト1〜2位安定したらSTスタンスOFF/必ず背面(C)のエクサに移動する(避け方は他資料参照)
+  3.エクサ〜アクモーン: MT真北,STは北東/エクサ一、三回目後は戦士真北・二回目は暗黒真北/AAはD1→D2/
+    エクサ一回目後はAA二発直後にSTスタンスON/アクモーン詠唱中に挑発+スタンスONOFF声かけ必須
+  4.アクモーン: 北西D1D3H1、北東D2D4H2、南T/Tは自己バフ必須/詠唱中にスタンス、挑発声かけ/
+    一発目が終わったらタゲサ内に寄る
+  5.アクモーン〜ギガフレア: MT真南、ST時計回り移動(南西)/アクモーン一、三回目後は暗黒MT・二回目後は戦士MT/
+    ギガフレア詠唱中に挑発+スタンスONOFF声かけ必須/AAはD3→D4
+  6.ギガフレア〜エクサ(別画像): MT時計回り/ST反時計回りで次エクサ位置へ(エクサ図解の「4発目後」と接続)
+  ※元画像右側のヘイト表(推移表)は判読不能のため省略。
+  ※訂正コメント(元スレ): 「一番下TH:C待機ってなってるけどHD:C待機です」
+  形式・UI v2パレットは既存1枚カンペ群を流用。6面のためグリッド2行×3列。
+-->
+<style>
+  :root{
+    --bg:#0a1020; --panel:rgba(34,47,80,.78); --panel2:rgba(40,54,90,.66); --line:rgba(124,160,224,.20);
+    --accent:#7cc4ff; --accent-2:#a78bfa; --good:#4ade80; --bad:#ff6070; --warn:#ffc857; --purple:#c96bff;
+    --text:#e9eefc; --dim:#93a3c8;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{width:100%;height:100%;background:#000;color:var(--text);
+    font-family:"Hiragino Sans","Yu Gothic",system-ui,sans-serif;overflow:hidden;}
+  #stage{position:fixed;inset:0;}
+  #sheet{
+    position:absolute;left:50%;top:50%;
+    transform-origin:center center;
+    width:1280px;height:720px;
+    background:
+      radial-gradient(700px 420px at 12% -6%, rgba(66,108,232,.22), transparent 62%),
+      radial-gradient(600px 380px at 102% 4%, rgba(150,92,240,.16), transparent 60%),
+      var(--bg);
+    display:flex;
+    flex-direction:column;
+    padding:14px 22px 14px;
+    border-radius:6px;
+  }
+  header{display:flex;align-items:center;gap:16px;margin-bottom:6px;}
+  header h1{font-size:22px;font-weight:800;white-space:nowrap;
+    background:linear-gradient(100deg,#fff 6%,var(--accent) 52%,var(--accent-2) 96%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;}
+  #ruleNote{
+    background:linear-gradient(135deg,rgba(42,22,51,.85),rgba(26,16,34,.78));
+    border:2px solid #ff9dc7;
+    border-radius:10px;
+    padding:5px 14px;
+    font-size:15px;
+    font-weight:bold;
+    color:#ff9dc7;
+    white-space:nowrap;
+    box-shadow:0 14px 32px -26px #000, inset 0 1px 0 rgba(255,255,255,.06);
+  }
+  header .sub{font-size:12px;color:var(--dim);line-height:1.35;}
+  #grid{flex:1;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:1fr 1fr;gap:10px;min-height:0;}
+  .diagBox{
+    background:linear-gradient(180deg,rgba(34,47,80,.80),rgba(17,25,45,.72));
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:6px 8px 4px;
+    display:flex;
+    flex-direction:column;
+    min-height:0;
+    min-width:0;
+    box-shadow:0 18px 40px -28px #000, inset 0 1px 0 rgba(255,255,255,.06);
+  }
+  .diagBox h2{font-size:13.5px;color:var(--accent);font-weight:800;text-align:center;margin-bottom:1px;}
+  .diagBox .cap{font-size:10.5px;color:var(--dim);text-align:center;margin-bottom:1px;line-height:1.3;}
+  .diagBox svg{flex:1;width:100%;min-height:0;}
+  b{color:var(--warn);}
+  .r{color:var(--bad);font-weight:bold;} .y{color:#ffd24d;font-weight:bold;}
+  .bl{color:#4da6ff;font-weight:bold;} .pu{color:var(--purple);font-weight:bold;} .g{color:var(--good);font-weight:bold;}
+  #credit{
+    position:absolute;right:24px;bottom:2px;
+    font-size:10px;color:var(--dim);opacity:.75;text-align:right;line-height:1.4;
+  }
+  #credit a{color:var(--dim);}
+</style>
+</head>
+<body>
+<div id="stage"><div id="sheet">
+  <header>
+    <h1>P7 最終「タンク立ち回り」図解(拡大版)</h1>
+    <div id="ruleNote">スイッチは挑発＋スタンスON/OFFのみ・声かけ毎回</div>
+    <div class="sub">上=A北(実マカ)。<span class="bl">MT</span>/<span class="pu">ST</span>=タンク、赤弧=ボスの向き。交代則: <b>エクサ1・3回目後=戦士が真北/2回目=暗黒</b>、<b>アクモーン1・3回目後=暗黒MT/2回目後=戦士MT</b>。<br>
+    元画像(Discordスクショ440px)を4倍拡大で判読しSVG再作図。右側のヘイト表は判読不能のため省略。※シャーク=緊急用(原文ママ)。</div>
+  </header>
+
+  <div id="grid">
+    <div class="diagBox">
+      <h2>①開幕</h2>
+      <div class="cap">戦士・暗黒とも<b>スタンスON</b>、2人とも<b>ピッタリ北方向</b>を意識。詠唱中に必ず挑発＋スタンスON/OFF意識。</div>
+      <svg id="d1" viewBox="0 0 400 320" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+    <div class="diagBox">
+      <h2>②エクサ1回目</h2>
+      <div class="cap">ヘイト1〜2位が安定したら<span class="pu">STスタンスOFF</span>。<b>必ず背面(C)のエクサに移動</b>(避け方はエクサ図解参照)。</div>
+      <svg id="d2" viewBox="0 0 400 320" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+    <div class="diagBox">
+      <h2>③エクサ→アクモーン</h2>
+      <div class="cap"><span class="bl">MT=真北</span>・<span class="pu">ST=北東</span>。AAは<b>D1→D2</b>。エクサ1回目後はAA2発直後にSTスタンスON。詠唱中に声かけ必須。</div>
+      <svg id="d3" viewBox="0 0 400 320" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+    <div class="diagBox">
+      <h2>④アクモーン</h2>
+      <div class="cap">北西=<b>D1D3H1</b>／北東=<b>D2D4H2</b>／南=<b>タンク2人</b>(自己バフ必須)。1発目が終わったらタゲサ内に寄る。</div>
+      <svg id="d4" viewBox="0 0 400 320" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+    <div class="diagBox">
+      <h2>⑤アクモーン→ギガフレア</h2>
+      <div class="cap"><span class="bl">MT=真南</span>・<span class="pu">STは時計回りで南西へ</span>。AAは<b>D3→D4</b>。ギガフレア詠唱中に挑発＋スタンスON/OFF声かけ必須。</div>
+      <svg id="d5" viewBox="0 0 400 320" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+    <div class="diagBox">
+      <h2>⑥ギガフレア→次のエクサ</h2>
+      <div class="cap">タゲサ周りからエクサが消えたら<span class="bl">MT=時計回り</span>／<span class="pu">ST=反時計回り</span>で次の位置へ(エクサ図解の「4発目後」と接続)。</div>
+      <svg id="d6" viewBox="0 0 400 320" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+  </div>
+
+  <div id="credit">図解: Hosiume San さん(Hades [Mana])「絶竜詩戦争 攻略を終えて」内の資料を拡大再作図<br>
+    <a href="https://jp.finalfantasyxiv.com/lodestone/character/26041085/blog/5035977/">jp.finalfantasyxiv.com/lodestone/character/26041085/blog/5035977/</a></div>
+</div></div>
+
+<script>
+const ns='http://www.w3.org/2000/svg';
+function E(parent,t,attrs,txt){const e=document.createElementNS(ns,t);for(const k in attrs)e.setAttribute(k,attrs[k]);if(txt!=null)e.textContent=txt;parent.appendChild(e);return e;}
+function pol(cx,cy,angleDeg,r){const rad=angleDeg*Math.PI/180;return{x:cx+r*Math.sin(rad),y:cy-r*Math.cos(rad)};}
+
+const CX=200, CY=163, R=118;
+
+function baseField(svg){
+  E(svg,'circle',{cx:CX,cy:CY,r:R,fill:'#101625',stroke:'#3a4a70','stroke-width':2});
+  E(svg,'circle',{cx:CX,cy:CY,r:3.5,fill:'#4a5a80'});
+  const MC=[['A','#ff5c5c',0],['1','#ff5c5c',45],['B','#ffd24d',90],['2','#ffd24d',135],
+            ['C','#4da6ff',180],['3','#4da6ff',225],['D','#c07aff',270],['4','#c07aff',315]];
+  MC.forEach(([id,col,a])=>{
+    const p=pol(CX,CY,a,R-13);
+    E(svg,'circle',{cx:p.x,cy:p.y,r:8,fill:'#141b2c',stroke:col,'stroke-width':1.6,opacity:0.85});
+    E(svg,'text',{x:p.x,y:p.y+3,fill:col,'font-size':9,'font-weight':'bold','text-anchor':'middle'},id);
+  });
+}
+// ボス(トールダン)+向き弧(赤)。facingDeg=正面方向
+function boss(svg,facingDeg){
+  const a1=facingDeg-70, a2=facingDeg+70, r=44;
+  const p1=pol(CX,CY,a1,r), p2=pol(CX,CY,a2,r);
+  E(svg,'path',{d:`M${p1.x},${p1.y} A${r},${r} 0 0 1 ${p2.x},${p2.y}`,fill:'none',stroke:'#d81f2a','stroke-width':5,opacity:0.9});
+  E(svg,'circle',{cx:CX,cy:CY,r:11,fill:'#2a1633',stroke:'#ffcc4d','stroke-width':2});
+  E(svg,'text',{x:CX,y:CY+3.5,fill:'#ffcc4d','font-size':9,'font-weight':'bold','text-anchor':'middle'},'王');
+}
+function tank(svg,x,y,label){
+  const col = label==='MT' ? '#4da6ff' : '#c96bff';
+  E(svg,'circle',{cx:x,cy:y,r:11,fill:col,stroke:'#fff','stroke-width':2});
+  E(svg,'text',{x,y:y+3.5,fill:'#08111f','font-size':8.5,'font-weight':'bold','text-anchor':'middle'},label);
+}
+function partyCluster(svg,x,y,label){
+  [[-14,-7],[0,-7],[14,-7],[-14,7],[0,7],[14,7]].forEach(([dx,dy],i)=>{
+    E(svg,'circle',{cx:x+dx,cy:y+dy,r:6,fill:i<2?'#3ddc84':'#ff9d4d',stroke:'#0a0e18','stroke-width':1});
+  });
+  if(label) E(svg,'text',{x,y:y+26,fill:'#93a3c8','font-size':9.5,'font-weight':'bold','text-anchor':'middle'},label);
+}
+function labelText(svg,x,y,txt,col,size){
+  E(svg,'text',{x,y,fill:col||'#e8edf7','font-size':size||10,'font-weight':'bold','text-anchor':'middle'},txt);
+}
+function arrow(svg,x1,y1,x2,y2,col,w){
+  w=w||3;
+  E(svg,'line',{x1,y1,x2,y2,stroke:col,'stroke-width':w});
+  const a=Math.atan2(y2-y1,x2-x1);
+  E(svg,'path',{d:`M${x2},${y2} L${x2-10*Math.cos(a-0.4)},${y2-10*Math.sin(a-0.4)} L${x2-10*Math.cos(a+0.4)},${y2-10*Math.sin(a+0.4)} Z`,fill:col});
+}
+// 円弧矢印(回り込み)
+function arcArrow(svg,fromDeg,toDeg,r,col){
+  const steps=16, cw = ((toDeg-fromDeg+360)%360)<=180;
+  let d='';
+  const n=steps;
+  for(let i=0;i<=n;i++){
+    const a = fromDeg + (((toDeg-fromDeg+540)%360)-180)*i/n;
+    const p=pol(CX,CY,a,r);
+    d += (i===0?`M${p.x},${p.y}`:` L${p.x},${p.y}`);
+  }
+  E(svg,'path',{d,fill:'none',stroke:col,'stroke-width':3});
+  const endA = toDeg, pe=pol(CX,CY,endA,r);
+  const tangent = endA + (cw?90:-90);
+  const tp = pol(pe.x,pe.y,tangent,1);
+  const ang=Math.atan2(tp.y-pe.y,tp.x-pe.x);
+  E(svg,'path',{d:`M${pe.x},${pe.y} L${pe.x-10*Math.cos(ang-0.45)},${pe.y-10*Math.sin(ang-0.45)} L${pe.x-10*Math.cos(ang+0.45)},${pe.y-10*Math.sin(ang+0.45)} Z`,fill:col});
+}
+function exaCircle(svg,x,y,r){
+  E(svg,'circle',{cx:x,cy:y,r,fill:'#ff9d4d',opacity:0.35,stroke:'#ff9d4d','stroke-width':1.5,'stroke-opacity':0.6});
+}
+
+// ① 開幕
+(function(){
+  const svg=document.getElementById('d1');
+  baseField(svg); boss(svg,0);
+  tank(svg, CX-13, CY-64, 'MT'); tank(svg, CX+13, CY-64, 'ST');
+  labelText(svg, CX, CY-84, '2人ともピッタリ北方向', '#ffc857', 10);
+  partyCluster(svg, CX, CY+72, '他7人は南');
+})();
+
+// ② エクサ1回目
+(function(){
+  const svg=document.getElementById('d2');
+  baseField(svg); boss(svg,0);
+  exaCircle(svg, pol(CX,CY,315,R*0.62).x, pol(CX,CY,315,R*0.62).y, 26);
+  exaCircle(svg, pol(CX,CY,45,R*0.62).x, pol(CX,CY,45,R*0.62).y, 26);
+  const s=pol(CX,CY,180,R*0.55);
+  exaCircle(svg, s.x, s.y, 26);
+  labelText(svg, s.x, s.y-32, '背面(C)のエクサへ', '#4ade80', 10.5);
+  partyCluster(svg, s.x, s.y+2);
+  arrow(svg, s.x-20, s.y, s.x-58, s.y, '#ffd24d', 2.5);
+  arrow(svg, s.x+20, s.y, s.x+58, s.y, '#ffd24d', 2.5);
+  arrow(svg, s.x, s.y+16, s.x, s.y+46, '#ffd24d', 2.5);
+})();
+
+// ③ エクサ→アクモーン
+(function(){
+  const svg=document.getElementById('d3');
+  baseField(svg); boss(svg,0);
+  arcArrow(svg, 235, 355, R*0.72, '#ffd24d');
+  arcArrow(svg, 125, 30, R*0.72, '#ffd24d');
+  tank(svg, pol(CX,CY,0,R*0.52).x, pol(CX,CY,0,R*0.52).y, 'MT');
+  tank(svg, pol(CX,CY,32,R*0.52).x, pol(CX,CY,32,R*0.52).y, 'ST');
+  labelText(svg, CX, CY-84, 'MT真北・ST北東', '#ffc857', 10.5);
+  partyCluster(svg, CX, CY+72, 'AAはD1→D2');
+})();
+
+// ④ アクモーン
+(function(){
+  const svg=document.getElementById('d4');
+  baseField(svg); boss(svg,180);
+  const nw=pol(CX,CY,315,R*0.6), ne=pol(CX,CY,45,R*0.6), s=pol(CX,CY,180,R*0.6);
+  exaCircle(svg, nw.x, nw.y, 27); exaCircle(svg, ne.x, ne.y, 27); exaCircle(svg, s.x, s.y, 27);
+  labelText(svg, nw.x, nw.y+3, 'D1D3H1', '#e9eefc', 9.5);
+  labelText(svg, ne.x, ne.y+3, 'D2D4H2', '#e9eefc', 9.5);
+  tank(svg, s.x-12, s.y, 'MT'); tank(svg, s.x+12, s.y, 'ST');
+  labelText(svg, s.x, s.y+24, '南=タンク(自己バフ)', '#ffc857', 9.5);
+})();
+
+// ⑤ アクモーン→ギガフレア
+(function(){
+  const svg=document.getElementById('d5');
+  baseField(svg); boss(svg,180);
+  tank(svg, pol(CX,CY,180,R*0.52).x, pol(CX,CY,180,R*0.52).y, 'MT');
+  const st0=pol(CX,CY,180,R*0.75);
+  arcArrow(svg, 185, 228, R*0.75, '#c96bff');
+  tank(svg, pol(CX,CY,225,R*0.62).x, pol(CX,CY,225,R*0.62).y, 'ST');
+  labelText(svg, CX, CY+R*0.52+22, 'MT真南・ST時計回りで南西', '#ffc857', 10);
+  partyCluster(svg, CX, CY-72, 'AAはD3→D4');
+})();
+
+// ⑥ ギガフレア→次のエクサ
+(function(){
+  const svg=document.getElementById('d6');
+  baseField(svg); boss(svg,180);
+  arcArrow(svg, 200, 80, R*0.72, '#4da6ff');
+  arcArrow(svg, 160, 280, R*0.72, '#c96bff');
+  labelText(svg, pol(CX,CY,90,R*0.72).x-4, pol(CX,CY,90,R*0.72).y-14, 'MT時計回り', '#4da6ff', 10);
+  labelText(svg, pol(CX,CY,270,R*0.72).x+4, pol(CX,CY,270,R*0.72).y-14, 'ST反時計回り', '#c96bff', 10);
+  partyCluster(svg, pol(CX,CY,150,R*0.55).x, pol(CX,CY,150,R*0.55).y, '');
+  labelText(svg, CX, CY+R-6, 'エクサが消えたら移動開始', '#4ade80', 10);
+})();
+</script>
+
+<script>
+const sheet = document.getElementById('sheet');
+function fitStage(){
+  const W=1280,H=720;
+  const scale = Math.min(window.innerWidth/W, window.innerHeight/H);
+  sheet.style.transform = `translate(-50%,-50%) scale(${scale})`;
+}
+window.addEventListener('resize', fitStage);
+fitStage();
+</script>
+</body>
+</html>
