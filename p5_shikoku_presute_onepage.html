@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>P5 死刻 プレステ散開カンペ(1枚)</title>
+<!--
+  2026-08-09 新規作成。死刻の床避け後〜ノックバックまでの「プレステ散開」だけに絞った1枚モノ。
+  形式・スケーリング(fitStage)・UI v2パレットは p5_shikoku_gaze_onepage.html を流用。
+  出典: Hosiume San「絶竜詩戦争 至天の陣:死刻 解法例」
+  (jp.finalfantasyxiv.com/lodestone/character/26041085/blog/5023548/)
+  = PTマクロの「こまぞう式改」(宣告固定・無職整列方式)の元ネタ級記事。7ページ版カンペと整合。
+  ポイント:
+  - 宣告2・3の固定位置は中央の環状の床模様(真心ライン)の切り欠き → 拡大図(インセット)で表現
+    (位置ゲー対応: マカの角・床模様レベルの立ち位置は拡大図を付ける、というユーザー方針)
+  - 宣告1・4はグリノー北で東西散会して○誘導(○は宣告組の最遠2人)
+  - 無職は南寄り横一列。×は左(西)の無職が北優先 / ▲■は宣告の同マークの対角へ
+  - 確定後「マカ・自分・グリノー一直線」→視線安置を向いたら動かない→白床は爆発前に踏む
+  用語: 真心ライン=床の安全模様 / マカ=マーカー
+-->
+<style>
+  :root{
+    /* UI v2 パレット(2026-07-25 全ページ統一) */
+    --bg:#0a1020; --panel:rgba(34,47,80,.78); --panel2:rgba(40,54,90,.66); --line:rgba(124,160,224,.20);
+    --accent:#7cc4ff; --accent-2:#a78bfa; --good:#4ade80; --bad:#ff6070; --warn:#ffc857; --purple:#c96bff;
+    --text:#e9eefc; --dim:#93a3c8;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{width:100%;height:100%;background:#000;color:var(--text);
+    font-family:"Hiragino Sans","Yu Gothic",system-ui,sans-serif;overflow:hidden;}
+  #stage{position:fixed;inset:0;}
+  #sheet{
+    position:absolute;left:50%;top:50%;
+    transform-origin:center center;
+    width:1280px;height:720px;
+    background:
+      radial-gradient(700px 420px at 12% -6%, rgba(66,108,232,.22), transparent 62%),
+      radial-gradient(600px 380px at 102% 4%, rgba(150,92,240,.16), transparent 60%),
+      var(--bg);
+    display:flex;
+    flex-direction:column;
+    padding:16px 22px 14px;
+    border-radius:6px;
+  }
+  header{display:flex;align-items:center;gap:18px;margin-bottom:8px;}
+  header h1{font-size:24px;font-weight:800;white-space:nowrap;
+    background:linear-gradient(100deg,#fff 6%,var(--accent) 52%,var(--accent-2) 96%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;}
+  #ruleNote{
+    background:linear-gradient(135deg,rgba(42,22,51,.85),rgba(26,16,34,.78));
+    border:2px solid #ff9dc7;
+    border-radius:10px;
+    padding:6px 16px;
+    font-size:17px;
+    font-weight:bold;
+    color:#ff9dc7;
+    white-space:nowrap;
+    box-shadow:0 14px 32px -26px #000, inset 0 1px 0 rgba(255,255,255,.06);
+  }
+  header .sub{font-size:13px;color:var(--dim);line-height:1.4;}
+  .row{flex:1;display:flex;gap:14px;min-height:0;}
+  .diagBox{
+    flex:1;
+    background:linear-gradient(180deg,rgba(34,47,80,.80),rgba(17,25,45,.72));
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:8px 10px 6px;
+    display:flex;
+    flex-direction:column;
+    min-height:0;
+    min-width:0;
+    box-shadow:0 18px 40px -28px #000, inset 0 1px 0 rgba(255,255,255,.06);
+  }
+  .diagBox h2{font-size:15px;color:var(--accent);font-weight:800;text-align:center;margin-bottom:2px;}
+  .diagBox .cap{font-size:11.5px;color:var(--dim);text-align:center;margin-bottom:2px;line-height:1.35;}
+  .diagBox svg{flex:1;width:100%;min-height:0;}
+  b{color:var(--warn);}
+  .r{color:var(--bad);font-weight:bold;} .y{color:#ffd24d;font-weight:bold;}
+  .bl{color:#4da6ff;font-weight:bold;} .pu{color:var(--purple);font-weight:bold;} .g{color:var(--good);font-weight:bold;}
+  .pk{color:#ff9dc7;font-weight:bold;}
+  #timeline{
+    margin-top:10px;
+    background:linear-gradient(180deg,rgba(34,47,80,.80),rgba(17,25,45,.72));
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:8px 18px;
+    display:flex;
+    align-items:center;
+    gap:0;
+    box-shadow:0 18px 40px -28px #000, inset 0 1px 0 rgba(255,255,255,.06);
+  }
+  .tlStep{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;}
+  .tlDot{width:14px;height:14px;border-radius:50%;background:var(--accent);border:2px solid #0a1020;z-index:1;}
+  .tlLabel{font-size:12.5px;font-weight:bold;color:var(--text);margin-top:4px;text-align:center;white-space:nowrap;line-height:1.3;}
+  .tlLabel small{display:block;font-size:10.5px;font-weight:normal;color:var(--dim);}
+  .tlLine{position:absolute;top:6px;left:50%;width:100%;height:2px;background:var(--line);z-index:0;}
+  .tlStep:last-child .tlLine{display:none;}
+  #credit{
+    position:absolute;right:24px;bottom:2px;
+    font-size:10px;color:var(--dim);opacity:.75;text-align:right;line-height:1.4;
+  }
+  #credit a{color:var(--dim);}
+</style>
+</head>
+<body>
+<div id="stage"><div id="sheet">
+  <header>
+    <h1>P5 死刻「プレステ散開」1枚カンペ〈宣告固定式〉</h1>
+    <div id="ruleNote">動いて調整するのは無職だけ</div>
+    <div class="sub">上=<b>ゲリック北</b>(こまぞう式改)。宣告4人は床の真心ライン基準で<b>先に位置固定</b>、無職4人だけがマカ付与後に動く。<br>
+    ○=宣告組の最遠2人(死1・死4)に確定 / 宣告側に×は付かない。</div>
+  </header>
+
+  <div class="row">
+    <div class="diagBox">
+      <h2>①プレステ前散開(宣告=固定位置)</h2>
+      <div class="cap">死1・死4=<b>東西</b>に離れて○誘導 ／ <span class="r">死2=北西・死3=北東の切り欠き(拡大図)</span> ／ 無職=南寄り横一列(順不同OK)</div>
+      <svg id="d1" viewBox="0 0 400 460" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+    <div class="diagBox">
+      <h2>②マカ付与→無職だけ動く</h2>
+      <div class="cap"><span class="g">○=中央へ寄る</span> ／ 死2死3の▲■=その場固定 ／ <b>×=左(西)の無職が北・右が南</b> ／ 無職▲■=宣告の同マークの対角へ</div>
+      <svg id="d2" viewBox="0 0 400 460" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+    <div class="diagBox">
+      <h2>③一直線→視線→白床</h2>
+      <div class="cap"><b>マカ・自分・グリノーが一直線</b>になる立ち位置 → 視線安置を向いたら動かない → 宣告は<span class="pk">白床を爆発前に踏む</span></div>
+      <svg id="d3" viewBox="0 0 400 460" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+  </div>
+
+  <div id="timeline">
+    <div class="tlStep"><div class="tlLine"></div><div class="tlDot"></div><div class="tlLabel">床避け完了<small>宣告は自分の固定位置へ直行</small></div></div>
+    <div class="tlStep"><div class="tlLine"></div><div class="tlDot" style="background:var(--warn);"></div><div class="tlLabel">死1死4が東西で○誘導<small>死2死3=切り欠き/無職=南で横一列</small></div></div>
+    <div class="tlStep"><div class="tlLine"></div><div class="tlDot" style="background:var(--purple);"></div><div class="tlLabel">マカ付与→無職だけ移動<small>×左が北・▲■は宣告の対角</small></div></div>
+    <div class="tlStep"><div class="tlLine"></div><div class="tlDot" style="background:var(--good);"></div><div class="tlLabel">マカ・自分・グリノー一直線<small>視線安置を向いたら動かない</small></div></div>
+    <div class="tlStep"><div class="tlDot" style="background:var(--bad);"></div><div class="tlLabel">ノックバック→鎖切り<small>宣告は白床を爆発前に踏む(見つけにくい)</small></div></div>
+  </div>
+  <div id="credit">処理法: Hosiume San さん(Hades [Mana])「絶竜詩戦争 至天の陣:死刻 解法例」を参考<br>
+    <a href="https://jp.finalfantasyxiv.com/lodestone/character/26041085/blog/5023548/">jp.finalfantasyxiv.com/lodestone/character/26041085/blog/5023548/</a></div>
+</div></div>
+
+<script>
+const ns='http://www.w3.org/2000/svg';
+function E(parent,t,attrs,txt){const e=document.createElementNS(ns,t);for(const k in attrs)e.setAttribute(k,attrs[k]);if(txt!=null)e.textContent=txt;parent.appendChild(e);return e;}
+function pol(cx,cy,angleDeg,r){const rad=angleDeg*Math.PI/180;return{x:cx+r*Math.sin(rad),y:cy-r*Math.cos(rad)};}
+
+function baseField(svg, cx, cy, R){
+  E(svg,'circle',{cx,cy,r:R,fill:'#101625',stroke:'#3a4a70','stroke-width':2});
+  for(let a=0; a<360; a+=45){
+    const p = pol(cx,cy,a,R);
+    E(svg,'line',{x1:cx,y1:cy,x2:p.x,y2:p.y,stroke:'#202c48','stroke-width':1});
+  }
+  for(let a=0; a<360; a+=45){
+    const p = pol(cx,cy,a,R+14);
+    E(svg,'circle',{cx:p.x,cy:p.y,r:4,fill:'#3a4a70'});
+  }
+  // 中央の環状真心ライン(簡略)
+  E(svg,'circle',{cx,cy,r:R*0.28,fill:'none',stroke:'#2c3a5e','stroke-width':6,opacity:0.9});
+  E(svg,'circle',{cx,cy,r:4.5,fill:'#4a5a80'});
+  // ゲリック北アイコン(斧)
+  const dp = pol(cx,cy,0,R+34);
+  E(svg,'circle',{cx:dp.x,cy:dp.y,r:14,fill:'#3a2233',stroke:'#ffcc4d','stroke-width':2.5});
+  E(svg,'text',{x:dp.x,y:dp.y+4,fill:'#ffcc4d','font-size':10,'font-weight':'bold','text-anchor':'middle'},'斧');
+}
+function token(svg,x,y,label,col,hi){
+  E(svg,'circle',{cx:x,cy:y,r:13,fill:col||'#5fb3ff',stroke:hi?'#ffffff':'#0a0e18','stroke-width':hi?2.5:1.3});
+  E(svg,'text',{x,y:y+4,fill:'#08111f','font-size':10,'font-weight':'bold','text-anchor':'middle'},label);
+}
+function labelText(svg,x,y,txt,col,size){
+  E(svg,'text',{x,y,fill:col||'#e8edf7','font-size':size||11,'font-weight':'bold','text-anchor':'middle'},txt);
+}
+function arrow(svg,x1,y1,x2,y2,col,w){
+  w=w||2.5;
+  E(svg,'line',{x1,y1,x2,y2,stroke:col,'stroke-width':w});
+  const a=Math.atan2(y2-y1,x2-x1);
+  E(svg,'path',{d:`M${x2},${y2} L${x2-9*Math.cos(a-0.4)},${y2-9*Math.sin(a-0.4)} L${x2-9*Math.cos(a+0.4)},${y2-9*Math.sin(a+0.4)} Z`,fill:col});
+}
+function dashCircle(svg,cx,cy,r,col,label,labelDy){
+  E(svg,'circle',{cx,cy,r,fill:'none',stroke:col,'stroke-width':2,'stroke-dasharray':'5,4'});
+  if(label) E(svg,'text',{x:cx,y:cy+(labelDy!=null?labelDy:-r-6),fill:col,'font-size':10,'font-weight':'bold','text-anchor':'middle'},label);
+}
+// 真心ラインの切り欠き(ウェッジ)を環状ラインの上に描く
+function notch(svg,cx,cy,angle,r,size,col){
+  const p = pol(cx,cy,angle,r);
+  const a1 = pol(p.x,p.y,angle-140,size), a2 = pol(p.x,p.y,angle+140,size);
+  const tip = pol(p.x,p.y,angle,size*0.9);
+  E(svg,'path',{d:`M${a1.x},${a1.y} L${tip.x},${tip.y} L${a2.x},${a2.y} Z`,fill:'none',stroke:col,'stroke-width':2});
+}
+
+// ===================== 図1: プレステ前散開 =====================
+(function(){
+  const svg = document.getElementById('d1');
+  const CX=150, CY=180, R=118;
+  baseField(svg, CX, CY, R);
+  // 切り欠き位置(北西・北東の内周リング上)
+  notch(svg, CX, CY, 315, R*0.28, 9, '#ff6070');
+  notch(svg, CX, CY, 45, R*0.28, 9, '#ff6070');
+  // 宣告(固定)
+  const s2 = pol(CX,CY,315,R*0.40), s3 = pol(CX,CY,45,R*0.40);
+  token(svg,s2.x,s2.y,'死2','#ff5c6c', true);
+  token(svg,s3.x,s3.y,'死3','#ff5c6c', true);
+  const s1 = pol(CX,CY,270,R*0.52), s4 = pol(CX,CY,90,R*0.52);
+  token(svg,s1.x,s1.y,'死1','#ff5c6c', true);
+  token(svg,s4.x,s4.y,'死4','#ff5c6c', true);
+  labelText(svg,s1.x,s1.y+24,'○誘導','#4ade80',10);
+  labelText(svg,s4.x,s4.y+24,'○誘導','#4ade80',10);
+  // 無職横一列(南寄り)
+  [-51,-17,17,51].forEach((dx,i)=>{
+    token(svg,CX+dx,CY+R*0.52,'無'+(i+1),'#5fb3ff');
+  });
+  labelText(svg,CX,CY+R*0.52+26,'南寄りで横一列(順不同OK)','#5fb3ff',10);
+  // 拡大図インセット(右下)
+  const IX=316, IY=360, IR=76;
+  // 引き出し線
+  E(svg,'line',{x1:CX+R*0.28*0.7,y1:CY+R*0.28*0.5,x2:IX-IR*0.6,y2:IY-IR*0.6,stroke:'#93a3c8','stroke-width':1.2,'stroke-dasharray':'4,3'});
+  E(svg,'circle',{cx:IX,cy:IY,r:IR,fill:'#0d1526',stroke:'#93a3c8','stroke-width':1.5});
+  // 環状真心ライン(拡大)
+  E(svg,'circle',{cx:IX,cy:IY,r:IR*0.62,fill:'none',stroke:'#2c3a5e','stroke-width':13});
+  // 切り欠き4つ(斜め4方向)…北側2つを強調
+  [45,135,225,315].forEach(a=>{
+    notch(svg, IX, IY, a, IR*0.62, 13, a===45||a===315 ? '#ff6070' : '#4a5a80');
+  });
+  const i2 = pol(IX,IY,315,IR*0.62), i3 = pol(IX,IY,45,IR*0.62);
+  token(svg,i2.x,i2.y,'死2','#ff5c6c', true);
+  token(svg,i3.x,i3.y,'死3','#ff5c6c', true);
+  labelText(svg,IX,IY-IR-8,'拡大: 中央の環状真心ライン','#93a3c8',10.5);
+  labelText(svg,IX,IY+4,'切り欠きが目印','#e9eefc',10.5);
+  labelText(svg,IX,IY+16,'北側2つに立つ','#ff9aa5',10);
+})();
+
+// ===================== 図2: マカ付与→無職だけ動く =====================
+(function(){
+  const svg = document.getElementById('d2');
+  const CX=200, CY=215, R=140;
+  baseField(svg, CX, CY, R);
+  // 宣告(固定)…例: 死2=▲ 死3=■
+  const s2 = pol(CX,CY,315,R*0.40), s3 = pol(CX,CY,45,R*0.40);
+  token(svg,s2.x,s2.y,'死2','#ff5c6c', true);
+  labelText(svg,s2.x-22,s2.y-14,'▲','#4ade80',15);
+  token(svg,s3.x,s3.y,'死3','#ff5c6c', true);
+  labelText(svg,s3.x+22,s3.y-14,'■','#ff9dc7',15);
+  const s1 = pol(CX,CY,270,R*0.52), s4 = pol(CX,CY,90,R*0.52);
+  token(svg,s1.x,s1.y,'死1','#ff5c6c', true);
+  labelText(svg,s1.x-22,s1.y-14,'○','#ffd24d',15);
+  token(svg,s4.x,s4.y,'死4','#ff5c6c', true);
+  labelText(svg,s4.x+22,s4.y-14,'○','#ffd24d',15);
+  // ○は中央へ寄る
+  arrow(svg,s1.x+16,s1.y,CX-18,CY,'#ffd24d',2);
+  arrow(svg,s4.x-16,s4.y,CX+18,CY,'#ffd24d',2);
+  labelText(svg,CX,CY-14,'○=中央へ','#ffd24d',10);
+  // 無職横一列(例: ×▲■×)
+  const marks=['×','▲','■','×'];
+  const mcols=['#e9eefc','#4ade80','#ff9dc7','#e9eefc'];
+  const xs=[-51,-17,17,51];
+  xs.forEach((dx,i)=>{
+    const x=CX+dx, y=CY+R*0.52;
+    token(svg,x,y,'無','#5fb3ff');
+    labelText(svg,x,y+26,marks[i],mcols[i],14);
+  });
+  // 移動矢印: ×左→北 / ×右→南 / ▲→死2の対角(南東) / ■→死3の対角(南西)
+  const nPos=pol(CX,CY,0,R*0.52), sPos=pol(CX,CY,180,R*0.52);
+  const sePos=pol(CX,CY,135,R*0.40), swPos=pol(CX,CY,225,R*0.40);
+  arrow(svg,CX-51,CY+R*0.52-16,nPos.x-6,nPos.y+14,'#e9eefc',2);
+  arrow(svg,CX+51,CY+R*0.52-14,sPos.x+12,sPos.y+4,'#e9eefc',2);
+  arrow(svg,CX-17,CY+R*0.52-16,sePos.x-8,sePos.y+12,'#4ade80',2);
+  arrow(svg,CX+17,CY+R*0.52-16,swPos.x+10,swPos.y+12,'#ff9dc7',2);
+  labelText(svg,nPos.x+30,nPos.y+4,'×左=北','#e9eefc',10);
+  labelText(svg,sPos.x+34,sPos.y+4,'×右=南','#e9eefc',10);
+  labelText(svg,sePos.x+26,sePos.y-12,'▲対角','#4ade80',10);
+  labelText(svg,swPos.x-26,swPos.y-12,'■対角','#ff9dc7',10);
+})();
+
+// ===================== 図3: 一直線→視線→白床 =====================
+(function(){
+  const svg = document.getElementById('d3');
+  const CX=200, CY=215, R=140;
+  baseField(svg, CX, CY, R);
+  // グリノー(ノックバック元)=中央
+  E(svg,'circle',{cx:CX,cy:CY,r:13,fill:'#3a2233',stroke:'#ff9d4d','stroke-width':2.5});
+  labelText(svg,CX,CY+4,'グ','#ff9d4d',10);
+  // 自分(例: 北西担当)とマカへの一直線
+  const me = pol(CX,CY,315,R*0.40);
+  const mk = pol(CX,CY,315,R+14);
+  E(svg,'line',{x1:CX,y1:CY,x2:mk.x,y2:mk.y,stroke:'#4ade80','stroke-width':2,'stroke-dasharray':'6,4'});
+  token(svg,me.x,me.y,'自','#5fb3ff', true);
+  E(svg,'circle',{cx:mk.x,cy:mk.y,r:7,fill:'none',stroke:'#4ade80','stroke-width':2.5});
+  labelText(svg,mk.x+8,mk.y-12,'マカ','#4ade80',10);
+  labelText(svg,CX+52,CY+40,'マカ・自分・グリノーが','#4ade80',10.5);
+  labelText(svg,CX+52,CY+53,'一直線=飛び先が乗る','#4ade80',10.5);
+  // 視線(例: 南東)
+  const g1 = pol(CX,CY,135,R+16);
+  E(svg,'circle',{cx:g1.x,cy:g1.y,r:13,fill:'#2a1633',stroke:'#ff9dc7','stroke-width':2.5});
+  E(svg,'text',{x:g1.x,y:g1.y+4,fill:'#ff9dc7','font-size':9,'font-weight':'bold','text-anchor':'middle'},'眼');
+  labelText(svg,g1.x-14,g1.y+28,'視線安置を向いたら','#ffc857',9.5);
+  labelText(svg,g1.x-14,g1.y+39,'動かない','#ffc857',10.5);
+  // 白床(サルヴェーションウィング)=無職の百雷跡4か所
+  const wings=[[270,R+14],[315,R*0.55],[45,R*0.55],[90,R+14]];
+  wings.forEach(([a,r])=>{
+    const p = pol(CX,CY,a,r);
+    E(svg,'circle',{cx:p.x,cy:p.y,r:12,fill:'#ffffff',opacity:0.16,stroke:'#ffffff','stroke-width':2});
+  });
+  labelText(svg,CX,CY+R+40,'白丸=白床(サルヴェーションウィング)','#e9eefc',10.5);
+  labelText(svg,CX,CY+R+53,'宣告は鎖が千切れて爆発する前に踏む','#ff9aa5',10.5);
+})();
+</script>
+
+<script>
+// 16:9スケーリング(画面内にぴったり収める)
+const sheet = document.getElementById('sheet');
+function fitStage(){
+  const W=1280,H=720;
+  const scale = Math.min(window.innerWidth/W, window.innerHeight/H);
+  sheet.style.transform = `translate(-50%,-50%) scale(${scale})`;
+}
+window.addEventListener('resize', fitStage);
+fitStage();
+</script>
+</body>
+</html>
