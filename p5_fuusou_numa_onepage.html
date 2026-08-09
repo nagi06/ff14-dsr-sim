@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>P5 風槍 リキッド・フレア捨て 図解(1枚)</title>
+<!--
+  2026-08-10 新規作成。風槍のリキッド(5連追尾)・フレア(4連床)の捨て方3面図。
+  元画像: Hosiume San「絶竜詩戦争 攻略を終えて」
+  (jp.finalfantasyxiv.com/lodestone/character/26041085/blog/5035977/)内の
+  Discordスクショ(347px幅と小さく文字が潰れていた)を4倍拡大で判読し、SVGで拡大再作図したもの。
+  読み取れた注記:
+  - NG: 東西〜南側にいる人に誘導がつくと南側で行き詰まりを起こす可能性
+  - 正1: 東西〜南側の人は北上するようにしてAoEを捨てる / カータはフレアがつくので西に回って北上
+  - 正2: 東西より北側でメルシー受けた人は南下するように捨てていく
+  - 捕捉(同記事内Discordログ): リキッドは着弾してもすぐDoTが付くわけではない→AoEの際まで引きつけて避ける、
+    フレアは着弾位置確定から着弾まで猶予あり、カータ対象はスプリントで中央突っ切り(外周経由はメルシー事故)
+  盤面はスライド準拠: 上=ドラゴン北、グリノー(ダイナモ持ち)=北・シャリベル=南の例。
+  フレア=西側・リキッド=東側は予習メモ/PTマクロと一致。
+  形式・スケーリング(fitStage)・UI v2パレットは p5_fuusou_onepage.html を流用。
+-->
+<style>
+  :root{
+    /* UI v2 パレット(2026-07-25 全ページ統一) */
+    --bg:#0a1020; --panel:rgba(34,47,80,.78); --panel2:rgba(40,54,90,.66); --line:rgba(124,160,224,.20);
+    --accent:#7cc4ff; --accent-2:#a78bfa; --good:#4ade80; --bad:#ff6070; --warn:#ffc857; --purple:#c96bff;
+    --text:#e9eefc; --dim:#93a3c8;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{width:100%;height:100%;background:#000;color:var(--text);
+    font-family:"Hiragino Sans","Yu Gothic",system-ui,sans-serif;overflow:hidden;}
+  #stage{position:fixed;inset:0;}
+  #sheet{
+    position:absolute;left:50%;top:50%;
+    transform-origin:center center;
+    width:1280px;height:720px;
+    background:
+      radial-gradient(700px 420px at 12% -6%, rgba(66,108,232,.22), transparent 62%),
+      radial-gradient(600px 380px at 102% 4%, rgba(150,92,240,.16), transparent 60%),
+      var(--bg);
+    display:flex;
+    flex-direction:column;
+    padding:16px 22px 14px;
+    border-radius:6px;
+  }
+  header{display:flex;align-items:center;gap:18px;margin-bottom:8px;}
+  header h1{font-size:24px;font-weight:800;white-space:nowrap;
+    background:linear-gradient(100deg,#fff 6%,var(--accent) 52%,var(--accent-2) 96%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;}
+  #ruleNote{
+    background:linear-gradient(135deg,rgba(42,22,51,.85),rgba(26,16,34,.78));
+    border:2px solid #ff9dc7;
+    border-radius:10px;
+    padding:6px 16px;
+    font-size:17px;
+    font-weight:bold;
+    color:#ff9dc7;
+    white-space:nowrap;
+    box-shadow:0 14px 32px -26px #000, inset 0 1px 0 rgba(255,255,255,.06);
+  }
+  header .sub{font-size:13px;color:var(--dim);line-height:1.4;}
+  .row{flex:1;display:flex;gap:14px;min-height:0;}
+  .diagBox{
+    flex:1;
+    background:linear-gradient(180deg,rgba(34,47,80,.80),rgba(17,25,45,.72));
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:8px 10px 6px;
+    display:flex;
+    flex-direction:column;
+    min-height:0;
+    min-width:0;
+    box-shadow:0 18px 40px -28px #000, inset 0 1px 0 rgba(255,255,255,.06);
+  }
+  .diagBox.ng{border:1px solid rgba(255,96,112,.45);}
+  .diagBox h2{font-size:15px;color:var(--accent);font-weight:800;text-align:center;margin-bottom:2px;}
+  .diagBox.ng h2{color:var(--bad);}
+  .diagBox .cap{font-size:11.5px;color:var(--dim);text-align:center;margin-bottom:2px;line-height:1.35;}
+  .diagBox svg{flex:1;width:100%;min-height:0;}
+  b{color:var(--warn);}
+  .r{color:var(--bad);font-weight:bold;} .y{color:#ffd24d;font-weight:bold;}
+  .bl{color:#4da6ff;font-weight:bold;} .pu{color:var(--purple);font-weight:bold;} .g{color:var(--good);font-weight:bold;}
+  .or{color:#ff9d4d;font-weight:bold;}
+  #notes{
+    margin-top:10px;
+    background:linear-gradient(180deg,rgba(34,47,80,.80),rgba(17,25,45,.72));
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:8px 18px;
+    font-size:12.5px;
+    line-height:1.55;
+    color:var(--text);
+    box-shadow:0 18px 40px -28px #000, inset 0 1px 0 rgba(255,255,255,.06);
+  }
+  #credit{
+    position:absolute;right:24px;bottom:2px;
+    font-size:10px;color:var(--dim);opacity:.75;text-align:right;line-height:1.4;
+  }
+  #credit a{color:var(--dim);}
+</style>
+</head>
+<body>
+<div id="stage"><div id="sheet">
+  <header>
+    <h1>P5 風槍「リキッド・フレア捨て」図解(拡大版)</h1>
+    <div id="ruleNote">南で受けたら北上・北で受けたら南下</div>
+    <div class="sub">上=<b>ドラゴン北</b>。<span class="or">橙=フレア誘導(西側)</span> ／ <span class="r">赤=リキッド誘導(東側)</span> ／ <span class="bl">青◎=ダイナモ持ち(グリノー)</span>。<br>
+    図はグリノー=北・シャリベル=南の例。元画像(Discordスクショ)が小さいためSVGで拡大再作図。</div>
+  </header>
+
+  <div class="row">
+    <div class="diagBox ng">
+      <h2>①NGパターン</h2>
+      <div class="cap">東西〜<b>南側</b>にいる人に誘導がつくと、そのまま捨てて<span class="r">南側で行き詰まる</span>可能性(トレイルが中央・南に散らかる)。</div>
+      <svg id="d1" viewBox="0 0 400 460" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+    <div class="diagBox">
+      <h2>②南側で受けた → 北上して捨てる</h2>
+      <div class="cap">東西〜南側の人は<span class="g">北上するように</span>AoEを捨てる ／ <span class="g">カータはフレアがつくので西に回って北上</span>。</div>
+      <svg id="d2" viewBox="0 0 400 460" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+    <div class="diagBox">
+      <h2>③北側で受けた → 南下して捨てる</h2>
+      <div class="cap">東西より<b>北側</b>でメルシーを受けた人は<span class="g">南下するように</span>捨てていく。</div>
+      <svg id="d3" viewBox="0 0 400 460" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+  </div>
+
+  <div id="notes">
+    <b>捕捉</b>:
+    <span class="r">リキッド</span>は着弾してもすぐDoTが付くわけではない → <b>AoEの際(きわ)まで引きつけてから避ける</b>とスペースを節約できる ／
+    <span class="or">フレア</span>は着弾位置確定から着弾まで結構猶予あり ／
+    <span class="g">カータ対象はスプリントで中央を突っ切って捨てに行く</span>(外周経由はメルシーで他の人を轢く)。
+  </div>
+  <div id="credit">図解: Hosiume San さん(Hades [Mana])「絶竜詩戦争 攻略を終えて」内の資料を拡大再作図<br>
+    <a href="https://jp.finalfantasyxiv.com/lodestone/character/26041085/blog/5035977/">jp.finalfantasyxiv.com/lodestone/character/26041085/blog/5035977/</a></div>
+</div></div>
+
+<script>
+const ns='http://www.w3.org/2000/svg';
+function E(parent,t,attrs,txt){const e=document.createElementNS(ns,t);for(const k in attrs)e.setAttribute(k,attrs[k]);if(txt!=null)e.textContent=txt;parent.appendChild(e);return e;}
+function pol(cx,cy,angleDeg,r){const rad=angleDeg*Math.PI/180;return{x:cx+r*Math.sin(rad),y:cy-r*Math.cos(rad)};}
+
+const CX=200, CY=225, R=145;
+
+function baseField(svg){
+  E(svg,'circle',{cx:CX,cy:CY,r:R,fill:'#101625',stroke:'#3a4a70','stroke-width':2});
+  for(let a=0; a<360; a+=45){
+    const p = pol(CX,CY,a,R);
+    E(svg,'line',{x1:CX,y1:CY,x2:p.x,y2:p.y,stroke:'#202c48','stroke-width':1});
+  }
+  E(svg,'circle',{cx:CX,cy:CY,r:4.5,fill:'#4a5a80'});
+  // フィールドマーカー(ゲーム色: A/1=赤 B/2=黄 C/3=青 D/4=紫)
+  const MC=[['A','#ff5c5c',0],['1','#ff5c5c',45],['B','#ffd24d',90],['2','#ffd24d',135],
+            ['C','#4da6ff',180],['3','#4da6ff',225],['D','#c07aff',270],['4','#c07aff',315]];
+  MC.forEach(([id,col,a])=>{
+    const p=pol(CX,CY,a,R-16);
+    E(svg,'circle',{cx:p.x,cy:p.y,r:9,fill:'#141b2c',stroke:col,'stroke-width':1.8,opacity:0.85});
+    E(svg,'text',{x:p.x,y:p.y+3.5,fill:col,'font-size':10,'font-weight':'bold','text-anchor':'middle'},id);
+  });
+  // ドラゴン北アイコン
+  const dp = pol(CX,CY,0,R+30);
+  E(svg,'circle',{cx:dp.x,cy:dp.y,r:12,fill:'#2a1633',stroke:'#ff9dc7','stroke-width':2});
+  E(svg,'text',{x:dp.x,y:dp.y+4,fill:'#ff9dc7','font-size':9,'font-weight':'bold','text-anchor':'middle'},'竜');
+  // グリノー(ダイナモ持ち)=北内側、シャリベル=南内側
+  const g = pol(CX,CY,0,R*0.62);
+  E(svg,'circle',{cx:g.x,cy:g.y,r:16,fill:'none',stroke:'#3b6cff','stroke-width':5});
+  E(svg,'circle',{cx:g.x,cy:g.y,r:9,fill:'#3a2233',stroke:'#ff9d4d','stroke-width':2});
+  E(svg,'text',{x:g.x,y:g.y+3.5,fill:'#ff9d4d','font-size':8,'font-weight':'bold','text-anchor':'middle'},'斧');
+  const s = pol(CX,CY,180,R*0.78);
+  E(svg,'circle',{cx:s.x,cy:s.y,r:9,fill:'#233a2a',stroke:'#3ddc84','stroke-width':2});
+  E(svg,'text',{x:s.x,y:s.y+3.5,fill:'#3ddc84','font-size':8,'font-weight':'bold','text-anchor':'middle'},'杖');
+}
+function blob(svg,x,y,r,col){
+  E(svg,'circle',{cx:x,cy:y,r,fill:col,opacity:0.30,stroke:col,'stroke-width':1,'stroke-opacity':0.45});
+}
+function trail(svg,pts,col,r0){
+  pts.forEach((p,i)=>{ blob(svg,p.x,p.y,(r0||30)-i*2,col); });
+}
+function arrow(svg,x1,y1,x2,y2,col,w){
+  w=w||3.5;
+  E(svg,'line',{x1,y1,x2,y2,stroke:col,'stroke-width':w});
+  const a=Math.atan2(y2-y1,x2-x1);
+  E(svg,'path',{d:`M${x2},${y2} L${x2-12*Math.cos(a-0.4)},${y2-12*Math.sin(a-0.4)} L${x2-12*Math.cos(a+0.4)},${y2-12*Math.sin(a+0.4)} Z`,fill:col});
+}
+function labelText(svg,x,y,txt,col,size){
+  E(svg,'text',{x,y,fill:col||'#e8edf7','font-size':size||11,'font-weight':'bold','text-anchor':'middle'},txt);
+}
+const FLARE='#ff9d4d', LIQ='#ff4545', PATH='#4d8cff';
+
+// ===================== 図1: NGパターン =====================
+(function(){
+  const svg = document.getElementById('d1');
+  baseField(svg);
+  // フレアが中央〜南西に散らかる
+  trail(svg,[pol(CX,CY,250,R*0.55), pol(CX,CY,232,R*0.75), pol(CX,CY,208,R*0.62),
+             {x:CX-16,y:CY+28}, {x:CX-34,y:CY-4}], FLARE, 34);
+  // リキッドが中央東〜南東に散らかる
+  trail(svg,[pol(CX,CY,58,R*0.5), pol(CX,CY,84,R*0.48), pol(CX,CY,112,R*0.6), pol(CX,CY,132,R*0.78)], LIQ, 30);
+  // カータ(緑)が南で詰む
+  const c = pol(CX,CY,182,R*0.5);
+  E(svg,'circle',{cx:c.x,cy:c.y,r:8,fill:'#3ddc84'});
+  labelText(svg,c.x,c.y+22,'カータの通り道が塞がる','#3ddc84',10);
+  labelText(svg,CX,CY+R+40,'中央・南に捨てると逃げ場と通路が消える','#ff6070',11.5);
+})();
+
+// ===================== 図2: 南側で受けた→北上 =====================
+(function(){
+  const svg = document.getElementById('d2');
+  baseField(svg);
+  // フレア: 南西→西→北西へ北上
+  trail(svg,[pol(CX,CY,222,R*0.85), pol(CX,CY,244,R*0.87), pol(CX,CY,266,R*0.84), pol(CX,CY,288,R*0.76)], FLARE, 31);
+  arrow(svg, pol(CX,CY,228,R*0.85).x, pol(CX,CY,228,R*0.85).y, pol(CX,CY,268,R*0.84).x, pol(CX,CY,268,R*0.84).y, PATH);
+  arrow(svg, pol(CX,CY,272,R*0.82).x, pol(CX,CY,272,R*0.82).y, pol(CX,CY,318,R*0.55).x, pol(CX,CY,318,R*0.55).y, PATH);
+  // リキッド: 南東→東→北東へ北上
+  trail(svg,[pol(CX,CY,134,R*0.82), pol(CX,CY,112,R*0.8), pol(CX,CY,90,R*0.76)], LIQ, 28);
+  arrow(svg, pol(CX,CY,128,R*0.82).x, pol(CX,CY,128,R*0.82).y, pol(CX,CY,92,R*0.78).x, pol(CX,CY,92,R*0.78).y, PATH);
+  arrow(svg, pol(CX,CY,86,R*0.74).x, pol(CX,CY,86,R*0.74).y, pol(CX,CY,42,R*0.55).x, pol(CX,CY,42,R*0.55).y, PATH);
+  labelText(svg, pol(CX,CY,250,R*0.55).x, pol(CX,CY,250,R*0.55).y, '北上', PATH, 13);
+  labelText(svg, pol(CX,CY,108,R*0.52).x, pol(CX,CY,108,R*0.52).y, '北上', PATH, 13);
+  labelText(svg,CX,CY+R+40,'外周沿いに北へ流して最後はグリノーの輪へ','#4ade80',11.5);
+})();
+
+// ===================== 図3: 北側で受けた→南下 =====================
+(function(){
+  const svg = document.getElementById('d3');
+  baseField(svg);
+  // リキッド: 北東→東→中央側へ南下
+  trail(svg,[pol(CX,CY,46,R*0.8), pol(CX,CY,68,R*0.8), pol(CX,CY,90,R*0.76)], LIQ, 30);
+  arrow(svg, pol(CX,CY,50,R*0.8).x, pol(CX,CY,50,R*0.8).y, pol(CX,CY,88,R*0.78).x, pol(CX,CY,88,R*0.78).y, PATH);
+  arrow(svg, pol(CX,CY,94,R*0.74).x, pol(CX,CY,94,R*0.74).y, CX+26, CY+16, PATH);
+  // フレア: 北西→西→南西へ南下
+  trail(svg,[pol(CX,CY,286,R*0.8), pol(CX,CY,264,R*0.82), pol(CX,CY,242,R*0.8), pol(CX,CY,224,R*0.72)], FLARE, 31);
+  arrow(svg, pol(CX,CY,282,R*0.8).x, pol(CX,CY,282,R*0.8).y, pol(CX,CY,242,R*0.82).x, pol(CX,CY,242,R*0.82).y, PATH);
+  arrow(svg, pol(CX,CY,238,R*0.8).x, pol(CX,CY,238,R*0.8).y, pol(CX,CY,196,R*0.5).x, pol(CX,CY,196,R*0.5).y, PATH);
+  labelText(svg, pol(CX,CY,68,R*0.5).x, pol(CX,CY,68,R*0.5).y, '南下', PATH, 13);
+  labelText(svg, pol(CX,CY,262,R*0.55).x, pol(CX,CY,262,R*0.55).y, '南下', PATH, 13);
+  labelText(svg,CX,CY+R+40,'北で受けたら南へ流す(向きが逆なだけで理屈は同じ)','#4ade80',11.5);
+})();
+</script>
+
+<script>
+// 16:9スケーリング(画面内にぴったり収める)
+const sheet = document.getElementById('sheet');
+function fitStage(){
+  const W=1280,H=720;
+  const scale = Math.min(window.innerWidth/W, window.innerHeight/H);
+  sheet.style.transform = `translate(-50%,-50%) scale(${scale})`;
+}
+window.addEventListener('resize', fitStage);
+fitStage();
+</script>
+</body>
+</html>
