@@ -175,9 +175,9 @@ function markerA(svg,x,y){
   squareField(svg, CX, CY, H);
   markerA(svg, CX, CY-H+18);
   labelText(svg, CX-H+8, CY-H+16, '円の外=即死', '#6fd2ff', 9.5, 'start');
-  // 竜(北の外)
-  dragon(svg, CX-80, 48, 'ニーズ', '#2a1015', '#ff6070', 15);
-  dragon(svg, CX+80, 48, 'フレース', '#102030', '#9dd8ff', 15);
+  // 竜: 西=ニーズ / 東=フレース(向かい合い。カータライズで北へ移動する前)
+  dragon(svg, 27, CY-20, 'ニーズ', '#2a1015', '#ff6070', 14);
+  dragon(svg, 373, CY-20, 'フレース', '#102030', '#9dd8ff', 14);
   labelText(svg, CX, 24, '口の2×2判断は1回目と同じ(①自分→②相手)', '#ffc857', 10);
   // タンク位置: MT=西 / ST=東
   token(svg, CX-H+26, CY, 'MT', '#4da6ff', true, 13);

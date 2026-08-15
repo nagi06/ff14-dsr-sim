@@ -98,7 +98,7 @@
   <div class="row">
     <div class="diagBox">
       <h2>①開幕配置と役割</h2>
-      <div class="cap">MT=北西でニーズ、ST=北東でフレースを取る。開幕薬+バーストはニーズへ。DPSヒラのペアは南3箇所(調整役=<b>H2 D2 D3</b>)。</div>
+      <div class="cap">竜は<b>西=ニーズ/東=フレース</b>で向かい合う。タンクは2人とも<b>北中央「T」</b>待機。開幕薬+バーストはニーズへ。ペアは南3箇所(調整役=<b>H2 D2 D3</b>)。</div>
       <svg id="d1" viewBox="0 0 400 460" xmlns="http://www.w3.org/2000/svg"></svg>
     </div>
     <div class="diagBox">
@@ -157,8 +157,9 @@ function squareField(svg, cx, cy, half){
   E(svg,'circle',{cx,cy,r:3.5,fill:'#4a5a80'});
 }
 // 竜アイコン(北の外側)
-function dragon(svg,x,y,label,col,stroke){
-  E(svg,'circle',{cx:x,cy:y,r:16,fill:col,stroke,'stroke-width':2.5});
+function dragon(svg,x,y,label,col,stroke,r){
+  r=r||16;
+  E(svg,'circle',{cx:x,cy:y,r,fill:col,stroke,'stroke-width':2.5});
   E(svg,'text',{x,y:y+4,fill:stroke,'font-size':10,'font-weight':'bold','text-anchor':'middle'},label);
 }
 
@@ -168,17 +169,20 @@ function dragon(svg,x,y,label,col,stroke){
   const CX=200, CY=248, H=150;
   squareField(svg, CX, CY, H);
   labelText(svg, CX-H+8, CY-H+16, '円の外=即死(ドーナツ)', '#6fd2ff', 9.5, 'start');
-  // 竜: ニーズ=北西(赤) / フレース=北東(氷)
-  dragon(svg, CX-80, 52, 'ニーズ', '#2a1015', '#ff6070');
-  dragon(svg, CX+80, 52, 'フレース', '#102030', '#9dd8ff');
-  labelText(svg, CX-80, 24, '邪竜(炎) MT担当', '#ff6070', 10);
-  labelText(svg, CX+80, 24, '聖竜(氷) ST担当', '#9dd8ff', 10);
-  // タンク位置(北側)
-  token(svg, CX-58, CY-H+34, 'MT', '#4da6ff', true, 13);
-  token(svg, CX+58, CY-H+34, 'ST', '#8fa8ff', false, 13);
-  // ヘイト線
-  arrow(svg, CX-58, CY-H+22, CX-76, 72, '#ff6070', 2);
-  arrow(svg, CX+58, CY-H+22, CX+76, 72, '#9dd8ff', 2);
+  // 竜: ニーズ=西端 / フレース=東端(フィールドを挟んで向かい合う)
+  dragon(svg, 27, CY-30, 'ニーズ', '#2a1015', '#ff6070', 15);
+  dragon(svg, 373, CY-30, 'フレース', '#102030', '#9dd8ff', 15);
+  labelText(svg, 27, CY-58, '邪竜(炎)', '#ff6070', 9.5);
+  labelText(svg, 27, CY-2, 'MT担当', '#ff6070', 9.5);
+  labelText(svg, 373, CY-58, '聖竜(氷)', '#9dd8ff', 9.5);
+  labelText(svg, 373, CY-2, 'ST担当', '#9dd8ff', 9.5);
+  // タンク位置: 2人とも北中央「T」で待機
+  token(svg, CX-24, CY-H+30, 'MT', '#4da6ff', true, 13);
+  token(svg, CX+24, CY-H+30, 'ST', '#8fa8ff', false, 13);
+  labelText(svg, CX, CY-H-12, '集合=北中央「T」', '#7cc4ff', 10.5);
+  // ヘイト線(向かい合う竜へ)
+  arrow(svg, CX-38, CY-H+36, 48, CY-36, '#ff6070', 2);
+  arrow(svg, CX+38, CY-H+36, 352, CY-36, '#9dd8ff', 2);
   labelText(svg, CX, CY-H+60, '両ヘイト持ち=乱撃で事故', '#ff6070', 10);
   // DPSヒラのペア(南3箇所・文脈用に薄く)
   token(svg, CX-11, CY+20, 'D1', '#7f8db0'); token(svg, CX+11, CY+20, 'D2', '#7f8db0');
@@ -249,12 +253,12 @@ function dragon(svg,x,y,label,col,stroke){
   (function(){
     const CX=118, CY=136, H=88;
     squareField(svg, CX, CY, H);
-    dragon(svg, CX-46, CY-H-14, 'ニ', '#2a1015', '#ff6070');
-    dragon(svg, CX+46, CY-H-14, 'フ', '#102030', '#9dd8ff');
-    dashCircle(svg, CX-38, CY-H+30, 40, '#ff6070');
-    token(svg, CX-38, CY-H+30, 'MT', '#4da6ff', true, 12);
-    token(svg, CX+52, CY-H+30, 'ST', '#8fa8ff', false, 11);
-    arrow(svg, CX+40, CY-H+30, CX-22, CY-H+30, '#4ade80', 2);
+    dragon(svg, CX-H+8, CY-24, 'ニ', '#2a1015', '#ff6070', 11);
+    dragon(svg, CX+H-8, CY-24, 'フ', '#102030', '#9dd8ff', 11);
+    dashCircle(svg, CX-26, CY-H+30, 38, '#ff6070');
+    token(svg, CX-26, CY-H+30, 'MT', '#4da6ff', true, 12);
+    token(svg, CX+56, CY-H+30, 'ST', '#8fa8ff', false, 11);
+    arrow(svg, CX+44, CY-H+30, CX-8, CY-H+30, '#4ade80', 2);
     labelText(svg, CX, CY+46, '巨大円に味方を入れない', '#ff6070', 9.5);
     labelText(svg, CX, CY+62, '(南のペア・線からも距離)', '#93a3c8', 9);
   })();
@@ -264,10 +268,10 @@ function dragon(svg,x,y,label,col,stroke){
   (function(){
     const CX=306, CY=136, H=88;
     squareField(svg, CX, CY, H);
-    dragon(svg, CX-46, CY-H-14, 'ニ', '#2a1015', '#ff6070');
-    dragon(svg, CX+46, CY-H-14, 'フ', '#102030', '#9dd8ff');
-    arrow(svg, CX-40, CY-H+6, CX-8, CY-8, '#ff6070', 2);
-    arrow(svg, CX+40, CY-H+6, CX+8, CY-8, '#9dd8ff', 2);
+    dragon(svg, CX-H+8, CY-24, 'ニ', '#2a1015', '#ff6070', 11);
+    dragon(svg, CX+H-8, CY-24, 'フ', '#102030', '#9dd8ff', 11);
+    arrow(svg, CX-H+22, CY-18, CX-16, CY-4, '#ff6070', 2);
+    arrow(svg, CX+H-22, CY-18, CX+16, CY-4, '#9dd8ff', 2);
     dashCircle(svg, CX, CY, 26, '#ffc857');
     token(svg, CX-8, CY, 'MT', '#4da6ff', true, 12);
     token(svg, CX+8, CY+8, 'ST', '#8fa8ff', false, 11);
