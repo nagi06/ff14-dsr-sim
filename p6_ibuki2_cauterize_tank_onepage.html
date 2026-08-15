@@ -99,7 +99,7 @@
   <div class="row">
     <div class="diagBox">
       <h2>①息吹2回目(脳死配置)</h2>
-      <div class="cap">口の2×2判断は1回目と同じ。<b>単受け=4マカから少し東西ずれ／重ね=ど真ん中</b>。DPSヒラは線1本受けでデバフをわざと残す(相殺禁止)。</div>
+      <div class="cap">口の2×2判断は1回目と同じ。<b>単受け=MT:4マカ/ST:2マカ(対角)・重ね=ど真ん中</b>(ふうcだよ確定)。DPSヒラは線1本受けでデバフをわざと残す。</div>
       <svg id="d1" viewBox="0 0 400 460" xmlns="http://www.w3.org/2000/svg"></svg>
     </div>
     <div class="diagBox">
@@ -174,25 +174,29 @@ function markerA(svg,x,y){
   const CX=200, CY=240, H=148;
   squareField(svg, CX, CY, H);
   markerA(svg, CX, CY-H+18);
-  labelText(svg, CX-H+8, CY-H+16, '円の外=即死', '#6fd2ff', 9.5, 'start');
+  labelText(svg, CX-H+8, CY+H-34, '円の外=即死', '#6fd2ff', 9, 'start');
   // 竜: 西=ニーズ / 東=フレース(向かい合い。カータライズで北へ移動する前)
   dragon(svg, 27, CY-20, 'ニーズ', '#2a1015', '#ff6070', 14);
   dragon(svg, 373, CY-20, 'フレース', '#102030', '#9dd8ff', 14);
   labelText(svg, CX, 24, '口の2×2判断は1回目と同じ(①自分→②相手)', '#ffc857', 10);
-  // タンク位置: MT=西 / ST=東
-  token(svg, CX-H+26, CY, 'MT', '#4da6ff', true, 13);
-  token(svg, CX+H-26, CY, 'ST', '#8fa8ff', true, 13);
-  // 単受け位置(4マカから東西ずれ) / 重ね=中央
+  // マーカー: 4=紫(北西) / 2=黄(南東)
+  E(svg,'rect',{x:CX-H+8,y:CY-H+8,width:16,height:16,rx:4,fill:'rgba(201,107,255,.18)',stroke:'#c96bff','stroke-width':2});
+  E(svg,'text',{x:CX-H+16,y:CY-H+20,fill:'#c96bff','font-size':10,'font-weight':'bold','text-anchor':'middle'},'4');
+  E(svg,'rect',{x:CX+H-24,y:CY+H-24,width:16,height:16,rx:4,fill:'rgba(255,210,77,.18)',stroke:'#ffd24d','stroke-width':2});
+  E(svg,'text',{x:CX+H-16,y:CY+H-12,fill:'#ffd24d','font-size':10,'font-weight':'bold','text-anchor':'middle'},'2');
+  // タンク位置: MT=4マカ(北西) / ST=2マカ(南東)の対角(ふうcだよ確定)
+  token(svg, CX-H+36, CY-H+40, 'MT', '#4da6ff', true, 13);
+  token(svg, CX+H-36, CY+H-44, 'ST', '#8fa8ff', true, 13);
+  labelText(svg, CX-H+36, CY-H+64, '=単受け位置', '#93a3c8', 9);
+  labelText(svg, CX+H-36, CY+H-64, '=単受け位置', '#93a3c8', 9);
+  // 重ね=中央(真心タイル)
   dashCircle(svg, CX, CY, 20, '#ffc857');
-  labelText(svg, CX, CY-28, '重ね=ど真ん中', '#ffc857', 9.5);
-  labelText(svg, CX-H+26, CY+26, '単受けは', '#93a3c8', 9);
-  labelText(svg, CX-H+26, CY+40, '4マカ基準で', '#93a3c8', 9);
-  labelText(svg, CX-H+26, CY+54, '東西にずれる', '#93a3c8', 9);
-  // DPSヒラ(線1本受け・薄く)
-  token(svg, CX+52, CY-H+44, 'H1', '#7f8db0'); token(svg, CX+84, CY-H+52, 'D4', '#7f8db0');
-  token(svg, CX+16, CY-52, 'D2', '#7f8db0');
-  token(svg, CX-44, CY+44, 'D1', '#7f8db0');
-  token(svg, CX-58, CY+H-38, 'D3', '#7f8db0'); token(svg, CX+34, CY+H-30, 'H2', '#7f8db0');
+  labelText(svg, CX, CY-28, '重ね=ど真ん中(真心タイル)', '#ffc857', 9.5);
+  // DPSヒラ(線1本受け・薄く。ふうcだよ脳死配置準拠)
+  token(svg, CX-28, CY-H+18, 'H1', '#7f8db0'); token(svg, CX+60, CY-H+18, 'D4', '#7f8db0');
+  token(svg, CX+20, CY-56, 'D2', '#7f8db0');
+  token(svg, CX-24, CY+52, 'D1', '#7f8db0');
+  token(svg, CX-62, CY+H-18, 'D3', '#7f8db0'); token(svg, CX+26, CY+H-18, 'H2', '#7f8db0');
   labelText(svg, CX, CY+H-10, 'DPSヒラ=線1本だけ受けてデバフ残し(相殺禁止)', '#93a3c8', 9.5);
   // 軽減タイミング注意
   E(svg,'rect',{x:24,y:CY+H+14,width:352,height:52,rx:10,fill:'rgba(17,25,45,.92)',stroke:'#ffc857','stroke-width':2});

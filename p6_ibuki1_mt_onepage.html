@@ -98,7 +98,7 @@
   <div class="row">
     <div class="diagBox">
       <h2>①開幕配置と役割</h2>
-      <div class="cap">竜は<b>西=ニーズ/東=フレース</b>で向かい合う。タンクは2人とも<b>北中央「T」</b>待機。開幕薬+バーストはニーズへ。ペアは南3箇所(調整役=<b>H2 D2 D3</b>)。</div>
+      <div class="cap">竜は<b>西=ニーズ/東=フレース</b>で向かい合う。タンクは<b>MT=4マカ/ST=1マカ</b>で待機(ふうcだよ確定)。開幕薬+バーストはニーズへ。調整役=<b>H2 D2 D3</b>。</div>
       <svg id="d1" viewBox="0 0 400 460" xmlns="http://www.w3.org/2000/svg"></svg>
     </div>
     <div class="diagBox">
@@ -108,7 +108,7 @@
     </div>
     <div class="diagBox">
       <h2>③受け方と着弾後</h2>
-      <div class="cap">単受け=<b>北・その場</b>で他を巻き込まない ／ 両光り=<b>ど真ん中でSTと重ね</b>(光/闇デバフはオーブ重ねで相殺)。</div>
+      <div class="cap">単受け=<b>自分のマーカーから動かない</b>(MT=4/ST=1) ／ 両光り=<b>ど真ん中でSTと重ね</b>(光/闇デバフはオーブ重ねで相殺)。</div>
       <svg id="d3" viewBox="0 0 400 460" xmlns="http://www.w3.org/2000/svg"></svg>
     </div>
   </div>
@@ -168,7 +168,7 @@ function dragon(svg,x,y,label,col,stroke,r){
   const svg = document.getElementById('d1');
   const CX=200, CY=248, H=150;
   squareField(svg, CX, CY, H);
-  labelText(svg, CX-H+8, CY-H+16, '円の外=即死(ドーナツ)', '#6fd2ff', 9.5, 'start');
+  labelText(svg, CX-H+8, CY+H-8, '円の外=即死(ドーナツ)', '#6fd2ff', 9, 'start');
   // 竜: ニーズ=西端 / フレース=東端(フィールドを挟んで向かい合う)
   dragon(svg, 27, CY-30, 'ニーズ', '#2a1015', '#ff6070', 15);
   dragon(svg, 373, CY-30, 'フレース', '#102030', '#9dd8ff', 15);
@@ -176,19 +176,24 @@ function dragon(svg,x,y,label,col,stroke,r){
   labelText(svg, 27, CY-2, 'MT担当', '#ff6070', 9.5);
   labelText(svg, 373, CY-58, '聖竜(氷)', '#9dd8ff', 9.5);
   labelText(svg, 373, CY-2, 'ST担当', '#9dd8ff', 9.5);
-  // タンク位置: 2人とも北中央「T」で待機
-  token(svg, CX-24, CY-H+30, 'MT', '#4da6ff', true, 13);
-  token(svg, CX+24, CY-H+30, 'ST', '#8fa8ff', false, 13);
-  labelText(svg, CX, CY-H-12, '集合=北中央「T」', '#7cc4ff', 10.5);
-  // ヘイト線(向かい合う竜へ)
-  arrow(svg, CX-38, CY-H+36, 48, CY-36, '#ff6070', 2);
-  arrow(svg, CX+38, CY-H+36, 352, CY-36, '#9dd8ff', 2);
-  labelText(svg, CX, CY-H+60, '両ヘイト持ち=乱撃で事故', '#ff6070', 10);
+  // マーカー: 4=紫(北西) / 1=赤(北東)
+  E(svg,'rect',{x:CX-H+8,y:CY-H+8,width:16,height:16,rx:4,fill:'rgba(201,107,255,.18)',stroke:'#c96bff','stroke-width':2});
+  E(svg,'text',{x:CX-H+16,y:CY-H+20,fill:'#c96bff','font-size':10,'font-weight':'bold','text-anchor':'middle'},'4');
+  E(svg,'rect',{x:CX+H-24,y:CY-H+8,width:16,height:16,rx:4,fill:'rgba(255,96,112,.18)',stroke:'#ff6070','stroke-width':2});
+  E(svg,'text',{x:CX+H-16,y:CY-H+20,fill:'#ff6070','font-size':10,'font-weight':'bold','text-anchor':'middle'},'1');
+  // タンク位置: MT=4マカ / ST=1マカ(ふうcだよ確定。ここがそのまま単受け位置)
+  token(svg, CX-H+34, CY-H+42, 'MT', '#4da6ff', true, 13);
+  token(svg, CX+H-34, CY-H+42, 'ST', '#8fa8ff', false, 13);
+  labelText(svg, CX, CY-H+22, '待機=そのまま単受け位置', '#7cc4ff', 10.5);
+  // 両光りのときだけ中央へ
+  dashCircle(svg, CX, CY-14, 20, '#ffc857');
+  labelText(svg, CX, CY-44, '両光りだけ中央へ', '#ffc857', 9.5);
+  labelText(svg, CX, CY+64, '両ヘイト持ち=乱撃で事故', '#ff6070', 10);
   // DPSヒラのペア(南3箇所・文脈用に薄く)
-  token(svg, CX-11, CY+20, 'D1', '#7f8db0'); token(svg, CX+11, CY+20, 'D2', '#7f8db0');
-  token(svg, CX-86, CY+92, 'H1', '#7f8db0'); token(svg, CX-64, CY+92, 'D3', '#7f8db0');
-  token(svg, CX+64, CY+92, 'D4', '#7f8db0'); token(svg, CX+86, CY+92, 'H2', '#7f8db0');
-  labelText(svg, CX, CY+122, 'ペア南3箇所(氷炎の線を重ねて相殺)', '#93a3c8', 9.5);
+  token(svg, CX-11, CY+34, 'D1', '#7f8db0'); token(svg, CX+11, CY+34, 'D2', '#7f8db0');
+  token(svg, CX-56, CY+H-16, 'H1', '#7f8db0'); token(svg, CX-34, CY+H-16, 'D3', '#7f8db0');
+  token(svg, CX+34, CY+H-16, 'H2', '#7f8db0'); token(svg, CX+56, CY+H-16, 'D4', '#7f8db0');
+  labelText(svg, CX, CY+H-38, 'ペア: D1D2=中央南 / H1D3=C西隣 / H2D4=C東隣', '#93a3c8', 9);
   labelText(svg, CX, CY+138, '線のつき方②なら同線ペアの調整役が交換', '#93a3c8', 9.5);
   // 開幕バースト
   labelText(svg, CX, CY+H+26, '開幕: 薬+バーストはニーズへ(MT組=H1 D1 D3)', '#ffc857', 10.5);
@@ -212,7 +217,7 @@ function dragon(svg,x,y,label,col,stroke,r){
   arrow(svg, 110, 34, 58, 92, '#93a3c8', 2);
   labelText(svg, 52, 66, '暗い', '#93a3c8', 11);
   card(8, 96, 176, 128, '【単受け】約15万', '#ff6070', [
-    'その場(北)で1人受け',
+    '4マカから動かず1人受け',
     '巨大円=他を巻き込まない',
     '強バフ2枚+STのバフ',
     '無敵は使わない!'
@@ -225,9 +230,9 @@ function dragon(svg,x,y,label,col,stroke,r){
   arrow(svg, 268, 136, 240, 190, '#93a3c8', 2);
   labelText(svg, 228, 168, '暗い', '#93a3c8', 11);
   card(140, 194, 176, 110, '【バフ投げ】', '#7cc4ff', [
-    'STが単受けする側',
+    'STが1マカで単受け',
     'STへ投げバフ必須',
-    '投げたら離れる',
+    '自分は4マカで待機',
     '(STの円に入らない)'
   ]);
   // フレースも光り → 中央重ね
@@ -243,7 +248,8 @@ function dragon(svg,x,y,label,col,stroke,r){
   labelText(svg, 96, 258, '光ってる竜は', '#93a3c8', 10);
   labelText(svg, 96, 274, '中央越しの扇のみ', '#93a3c8', 10);
   labelText(svg, 96, 290, '(タンク対象なし)', '#93a3c8', 10);
-  labelText(svg, 200, 450, '迷ったら: 自分の口が暗い=自分に来る、で固定', '#4ade80', 11.5);
+  labelText(svg, 200, 442, '※両方暗い=MT4マカ/ST1マカで同時単受け。自己バフ厚め', '#ff6070', 10.5);
+  labelText(svg, 200, 458, '迷ったら: 自分の口が暗い=自分に来る、で固定', '#4ade80', 11);
 })();
 
 // ===================== 図3: 受け方2態+着弾後 =====================
@@ -255,12 +261,14 @@ function dragon(svg,x,y,label,col,stroke,r){
     squareField(svg, CX, CY, H);
     dragon(svg, CX-H+8, CY-24, 'ニ', '#2a1015', '#ff6070', 11);
     dragon(svg, CX+H-8, CY-24, 'フ', '#102030', '#9dd8ff', 11);
-    dashCircle(svg, CX-26, CY-H+30, 38, '#ff6070');
-    token(svg, CX-26, CY-H+30, 'MT', '#4da6ff', true, 12);
-    token(svg, CX+56, CY-H+30, 'ST', '#8fa8ff', false, 11);
-    arrow(svg, CX+44, CY-H+30, CX-8, CY-H+30, '#4ade80', 2);
-    labelText(svg, CX, CY+46, '巨大円に味方を入れない', '#ff6070', 9.5);
-    labelText(svg, CX, CY+62, '(南のペア・線からも距離)', '#93a3c8', 9);
+    dashCircle(svg, CX-H+34, CY-H+34, 36, '#ff6070');
+    token(svg, CX-H+34, CY-H+34, 'MT', '#4da6ff', true, 12);
+    token(svg, CX+H-30, CY-H+34, 'ST', '#8fa8ff', false, 11);
+    arrow(svg, CX+H-44, CY-H+34, CX-H+56, CY-H+34, '#4ade80', 2);
+    labelText(svg, CX-H+34, CY-H+58, '4マカ', '#c96bff', 9.5);
+    labelText(svg, CX+H-30, CY-H+58, '1マカ', '#ff6070', 9.5);
+    labelText(svg, CX, CY+46, '自マカから動かず受ける', '#ff6070', 9.5);
+    labelText(svg, CX, CY+62, '(巨大円に味方を入れない)', '#93a3c8', 9);
   })();
   labelText(svg, 118, 16, '単受け(ニーズ暗い)', '#ff6070', 12);
   labelText(svg, 306, 16, '中央重ね(両方光り)', '#ffc857', 12);
