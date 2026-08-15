@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>P6 息吹1回目 MTカンペ(1枚)</title>
+<!--
+  2026-08-08 新規作成。二天竜(P6)冒頭「聖竜/邪竜の息吹 1回目(おこめ式)」のMT視点1枚モノ。
+  形式・スケーリング・パレットは p5_fuusou_onepage.html を流用(UI v2)。
+  出典: P6二天竜_予習メモ.md(PTマクロ+みんとっと文字起こし+ARUTORA/kanatan/英語ソース)。
+  フィールドは正方形+息吹中はフレースのドーナツで円形に制限される想定で描画。上=北(A)。
+  数値メモ: 単受け約15万(みんとっと)。無敵はカータライズ(終盤・先頭約24万)用に温存が標準。
+-->
+<style>
+  :root{
+    --bg:#0a1020; --panel:rgba(34,47,80,.78); --panel2:rgba(40,54,90,.66); --line:rgba(124,160,224,.20);
+    --accent:#7cc4ff; --accent-2:#a78bfa; --good:#4ade80; --bad:#ff6070; --warn:#ffc857; --purple:#c96bff;
+    --text:#e9eefc; --dim:#93a3c8;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{width:100%;height:100%;background:#000;color:var(--text);
+    font-family:"Hiragino Sans","Yu Gothic",system-ui,sans-serif;overflow:hidden;}
+  #stage{position:fixed;inset:0;}
+  #sheet{
+    position:absolute;left:50%;top:50%;
+    transform-origin:center center;
+    width:1280px;height:720px;
+    background:
+      radial-gradient(700px 420px at 12% -6%, rgba(66,108,232,.22), transparent 62%),
+      radial-gradient(600px 380px at 102% 4%, rgba(150,92,240,.16), transparent 60%),
+      var(--bg);
+    display:flex;
+    flex-direction:column;
+    padding:16px 22px 14px;
+    border-radius:6px;
+  }
+  header{display:flex;align-items:center;gap:18px;margin-bottom:8px;}
+  header h1{font-size:24px;font-weight:800;white-space:nowrap;
+    background:linear-gradient(100deg,#fff 6%,var(--accent) 52%,var(--accent-2) 96%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;}
+  #northNote{
+    background:linear-gradient(135deg,rgba(42,22,51,.85),rgba(26,16,34,.78));
+    border:2px solid #ff9dc7;
+    border-radius:10px;
+    padding:6px 16px;
+    font-size:17px;
+    font-weight:bold;
+    color:#ff9dc7;
+    white-space:nowrap;
+    box-shadow:0 14px 32px -26px #000, inset 0 1px 0 rgba(255,255,255,.06);
+  }
+  header .sub{font-size:13px;color:var(--dim);line-height:1.4;}
+  .row{flex:1;display:flex;gap:14px;min-height:0;}
+  .diagBox{
+    flex:1;
+    background:linear-gradient(180deg,rgba(34,47,80,.80),rgba(17,25,45,.72));
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:8px 10px 6px;
+    display:flex;
+    flex-direction:column;
+    min-height:0;
+    min-width:0;
+    box-shadow:0 18px 40px -28px #000, inset 0 1px 0 rgba(255,255,255,.06);
+  }
+  .diagBox h2{font-size:15px;color:var(--accent);font-weight:800;text-align:center;margin-bottom:2px;}
+  .diagBox .cap{font-size:11.5px;color:var(--dim);text-align:center;margin-bottom:2px;line-height:1.35;}
+  .diagBox svg{flex:1;width:100%;min-height:0;}
+  b{color:var(--warn);}
+  .r{color:var(--bad);font-weight:bold;} .y{color:#ffd24d;font-weight:bold;}
+  .bl{color:#4da6ff;font-weight:bold;} .pu{color:var(--purple);font-weight:bold;} .g{color:var(--good);font-weight:bold;}
+  #timeline{
+    margin-top:10px;
+    background:linear-gradient(180deg,rgba(34,47,80,.80),rgba(17,25,45,.72));
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:8px 18px;
+    display:flex;
+    align-items:center;
+    gap:0;
+    box-shadow:0 18px 40px -28px #000, inset 0 1px 0 rgba(255,255,255,.06);
+  }
+  .tlStep{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;}
+  .tlDot{width:14px;height:14px;border-radius:50%;background:var(--accent);border:2px solid #0a1020;z-index:1;}
+  .tlLabel{font-size:12.5px;font-weight:bold;color:var(--text);margin-top:4px;text-align:center;white-space:nowrap;}
+  .tlLine{position:absolute;top:6px;left:50%;width:100%;height:2px;background:var(--line);z-index:0;}
+  .tlStep:last-child .tlLine{display:none;}
+</style>
+</head>
+<body>
+<div id="stage"><div id="sheet">
+  <header>
+    <h1>P6 二天竜「息吹1回目」MTカンペ(おこめ式)</h1>
+    <div id="northNote">上 ＝ 北(A)</div>
+    <div class="sub"><b>MT=ニーズ(西)/ST=フレース(東) 固定・両方のヘイト1位は事故</b>。口の光りは相互コール推奨。<br>単受け約15万・<span class="r">無敵はカータライズ用に温存</span>。息吹中は外周ドーナツで円形に制限。</div>
+  </header>
+
+  <div class="row">
+    <div class="diagBox">
+      <h2>①開幕配置と役割</h2>
+      <div class="cap">MT=北西でニーズ、ST=北東でフレースを取る。開幕薬+バーストはニーズへ。DPSヒラのペアは南3箇所(調整役=<b>H2 D2 D3</b>)。</div>
+      <svg id="d1" viewBox="0 0 400 460" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+    <div class="diagBox">
+      <h2>②口の光り判断(見る順固定)</h2>
+      <div class="cap">詠唱が始まったら <b>①ニーズ(自分)の口 → ②フレースの口</b> の順。光ってる竜はタンクに攻撃しない(線への扇のみ)。</div>
+      <svg id="d2" viewBox="0 0 400 460" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+    <div class="diagBox">
+      <h2>③受け方と着弾後</h2>
+      <div class="cap">単受け=<b>北・その場</b>で他を巻き込まない ／ 両光り=<b>ど真ん中でSTと重ね</b>(光/闇デバフはオーブ重ねで相殺)。</div>
+      <svg id="d3" viewBox="0 0 400 460" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+  </div>
+
+  <div id="timeline">
+    <div class="tlStep"><div class="tlLine"></div><div class="tlDot"></div><div class="tlLabel">開幕:別竜ヘイト</div></div>
+    <div class="tlStep"><div class="tlLine"></div><div class="tlDot" style="background:var(--warn);"></div><div class="tlLabel">詠唱:口①→②確認</div></div>
+    <div class="tlStep"><div class="tlLine"></div><div class="tlDot" style="background:var(--bad);"></div><div class="tlLabel">着弾:単受け/重ね</div></div>
+    <div class="tlStep"><div class="tlLine"></div><div class="tlDot" style="background:var(--purple);"></div><div class="tlLabel">滅殺初回(DPS)=散開</div></div>
+    <div class="tlStep"><div class="tlLine"></div><div class="tlDot" style="background:var(--accent);"></div><div class="tlLabel">アク・アファー(HP差3%)</div></div>
+    <div class="tlStep"><div class="tlDot" style="background:var(--good);"></div><div class="tlLabel">HW1後:滅殺①受け取り</div></div>
+  </div>
+</div></div>
+
+<script>
+const ns='http://www.w3.org/2000/svg';
+function E(parent,t,attrs,txt){const e=document.createElementNS(ns,t);for(const k in attrs)e.setAttribute(k,attrs[k]);if(txt!=null)e.textContent=txt;parent.appendChild(e);return e;}
+function token(svg,x,y,label,col,hi,r){
+  r=r||12;
+  E(svg,'circle',{cx:x,cy:y,r,fill:col||'#5fb3ff',stroke:hi?'#ffffff':'#0a0e18','stroke-width':hi?2.5:1.3});
+  E(svg,'text',{x,y:y+3.5,fill:'#08111f','font-size':9.5,'font-weight':'bold','text-anchor':'middle'},label);
+}
+function labelText(svg,x,y,txt,col,size,anchor){
+  E(svg,'text',{x,y,fill:col||'#e8edf7','font-size':size||11,'font-weight':'bold','text-anchor':anchor||'middle'},txt);
+}
+function arrow(svg,x1,y1,x2,y2,col,w){
+  w=w||2.5;
+  E(svg,'line',{x1,y1,x2,y2,stroke:col,'stroke-width':w});
+  const a=Math.atan2(y2-y1,x2-x1);
+  E(svg,'path',{d:`M${x2},${y2} L${x2-9*Math.cos(a-0.4)},${y2-9*Math.sin(a-0.4)} L${x2-9*Math.cos(a+0.4)},${y2-9*Math.sin(a+0.4)} Z`,fill:col});
+}
+function dashCircle(svg,cx,cy,r,col,label,labelDy){
+  E(svg,'circle',{cx,cy,r,fill:'none',stroke:col,'stroke-width':2,'stroke-dasharray':'5,4'});
+  if(label) E(svg,'text',{x:cx,y:cy+(labelDy!=null?labelDy:-r-6),fill:col,'font-size':10,'font-weight':'bold','text-anchor':'middle'},label);
+}
+// 正方形フィールド+息吹中の円形制限(ドーナツ)
+function squareField(svg, cx, cy, half){
+  E(svg,'rect',{x:cx-half,y:cy-half,width:half*2,height:half*2,rx:8,fill:'#101625',stroke:'#3a4a70','stroke-width':2});
+  const step=half/3;
+  for(let i=1;i<6;i++){
+    E(svg,'line',{x1:cx-half+i*step,y1:cy-half,x2:cx-half+i*step,y2:cy+half,stroke:'#202c48','stroke-width':1});
+    E(svg,'line',{x1:cx-half,y1:cy-half+i*step,x2:cx+half,y2:cy-half+i*step,stroke:'#202c48','stroke-width':1});
+  }
+  // ドーナツ(スワリングブリザード)境界: 円の外=即死
+  E(svg,'circle',{cx,cy,r:half-4,fill:'none',stroke:'#6fd2ff','stroke-width':2,'stroke-dasharray':'6,5',opacity:.75});
+  E(svg,'circle',{cx,cy,r:3.5,fill:'#4a5a80'});
+}
+// 竜アイコン(北の外側)
+function dragon(svg,x,y,label,col,stroke){
+  E(svg,'circle',{cx:x,cy:y,r:16,fill:col,stroke,'stroke-width':2.5});
+  E(svg,'text',{x,y:y+4,fill:stroke,'font-size':10,'font-weight':'bold','text-anchor':'middle'},label);
+}
+
+// ===================== 図1: 開幕配置 =====================
+(function(){
+  const svg = document.getElementById('d1');
+  const CX=200, CY=248, H=150;
+  squareField(svg, CX, CY, H);
+  labelText(svg, CX-H+8, CY-H+16, '円の外=即死(ドーナツ)', '#6fd2ff', 9.5, 'start');
+  // 竜: ニーズ=北西(赤) / フレース=北東(氷)
+  dragon(svg, CX-80, 52, 'ニーズ', '#2a1015', '#ff6070');
+  dragon(svg, CX+80, 52, 'フレース', '#102030', '#9dd8ff');
+  labelText(svg, CX-80, 24, '邪竜(炎) MT担当', '#ff6070', 10);
+  labelText(svg, CX+80, 24, '聖竜(氷) ST担当', '#9dd8ff', 10);
+  // タンク位置(北側)
+  token(svg, CX-58, CY-H+34, 'MT', '#4da6ff', true, 13);
+  token(svg, CX+58, CY-H+34, 'ST', '#8fa8ff', false, 13);
+  // ヘイト線
+  arrow(svg, CX-58, CY-H+22, CX-76, 72, '#ff6070', 2);
+  arrow(svg, CX+58, CY-H+22, CX+76, 72, '#9dd8ff', 2);
+  labelText(svg, CX, CY-H+60, '両ヘイト持ち=乱撃で事故', '#ff6070', 10);
+  // DPSヒラのペア(南3箇所・文脈用に薄く)
+  token(svg, CX-11, CY+20, 'D1', '#7f8db0'); token(svg, CX+11, CY+20, 'D2', '#7f8db0');
+  token(svg, CX-86, CY+92, 'H1', '#7f8db0'); token(svg, CX-64, CY+92, 'D3', '#7f8db0');
+  token(svg, CX+64, CY+92, 'D4', '#7f8db0'); token(svg, CX+86, CY+92, 'H2', '#7f8db0');
+  labelText(svg, CX, CY+122, 'ペア南3箇所(氷炎の線を重ねて相殺)', '#93a3c8', 9.5);
+  labelText(svg, CX, CY+138, '線のつき方②なら同線ペアの調整役が交換', '#93a3c8', 9.5);
+  // 開幕バースト
+  labelText(svg, CX, CY+H+26, '開幕: 薬+バーストはニーズへ(MT組=H1 D1 D3)', '#ffc857', 10.5);
+  labelText(svg, CX, CY+H+44, 'HP差3%チェックが後で来る=削りは均等意識', '#93a3c8', 9.5);
+})();
+
+// ===================== 図2: 判断フロー =====================
+(function(){
+  const svg = document.getElementById('d2');
+  function node(x,y,w,h,txt,col){
+    E(svg,'rect',{x,y,width:w,height:h,rx:9,fill:'rgba(17,25,45,.9)',stroke:col,'stroke-width':2});
+    labelText(svg, x+w/2, y+h/2+4, txt, col, 12.5);
+  }
+  function card(x,y,w,h,title,col,lines){
+    E(svg,'rect',{x,y,width:w,height:h,rx:10,fill:'rgba(17,25,45,.92)',stroke:col,'stroke-width':2.5});
+    labelText(svg, x+w/2, y+20, title, col, 13.5);
+    lines.forEach((t,i)=> labelText(svg, x+w/2, y+40+i*16, t, '#e9eefc', 10.5));
+  }
+  node(110, 14, 180, 40, '① ニーズの口は?', '#ff6070');
+  // 左: 光ってない → 単受け
+  arrow(svg, 110, 34, 58, 92, '#93a3c8', 2);
+  labelText(svg, 52, 66, '暗い', '#93a3c8', 11);
+  card(8, 96, 176, 128, '【単受け】約15万', '#ff6070', [
+    'その場(北)で1人受け',
+    '巨大円=他を巻き込まない',
+    '強バフ2枚+STのバフ',
+    '無敵は使わない!'
+  ]);
+  // 右: 光ってる → フレース確認
+  arrow(svg, 290, 34, 322, 92, '#93a3c8', 2);
+  labelText(svg, 330, 66, '光ってる', '#ffc857', 11);
+  node(216, 96, 176, 40, '② フレースの口は?', '#9dd8ff');
+  // フレース暗い → バフ投げ
+  arrow(svg, 268, 136, 240, 190, '#93a3c8', 2);
+  labelText(svg, 228, 168, '暗い', '#93a3c8', 11);
+  card(140, 194, 176, 110, '【バフ投げ】', '#7cc4ff', [
+    'STが単受けする側',
+    'STへ投げバフ必須',
+    '投げたら離れる',
+    '(STの円に入らない)'
+  ]);
+  // フレースも光り → 中央重ね
+  arrow(svg, 348, 136, 348, 316, '#93a3c8', 2);
+  labelText(svg, 366, 230, '光ってる', '#ffc857', 11);
+  card(120, 320, 272, 110, '【中央重ね】ど真ん中でSTと2人', '#ffc857', [
+    '各竜からオーブ → 2人で頭割り',
+    '光/闇の継続ダメージデバフが付く',
+    '→ 互いのオーブを重ねることでのみ相殺',
+    '痛いので両者バフ'
+  ]);
+  // 補足
+  labelText(svg, 96, 258, '光ってる竜は', '#93a3c8', 10);
+  labelText(svg, 96, 274, '中央越しの扇のみ', '#93a3c8', 10);
+  labelText(svg, 96, 290, '(タンク対象なし)', '#93a3c8', 10);
+  labelText(svg, 200, 450, '迷ったら: 自分の口が暗い=自分に来る、で固定', '#4ade80', 11.5);
+})();
+
+// ===================== 図3: 受け方2態+着弾後 =====================
+(function(){
+  const svg = document.getElementById('d3');
+  // 上段: 単受け
+  (function(){
+    const CX=118, CY=136, H=88;
+    squareField(svg, CX, CY, H);
+    dragon(svg, CX-46, CY-H-14, 'ニ', '#2a1015', '#ff6070');
+    dragon(svg, CX+46, CY-H-14, 'フ', '#102030', '#9dd8ff');
+    dashCircle(svg, CX-38, CY-H+30, 40, '#ff6070');
+    token(svg, CX-38, CY-H+30, 'MT', '#4da6ff', true, 12);
+    token(svg, CX+52, CY-H+30, 'ST', '#8fa8ff', false, 11);
+    arrow(svg, CX+40, CY-H+30, CX-22, CY-H+30, '#4ade80', 2);
+    labelText(svg, CX, CY+46, '巨大円に味方を入れない', '#ff6070', 9.5);
+    labelText(svg, CX, CY+62, '(南のペア・線からも距離)', '#93a3c8', 9);
+  })();
+  labelText(svg, 118, 16, '単受け(ニーズ暗い)', '#ff6070', 12);
+  labelText(svg, 306, 16, '中央重ね(両方光り)', '#ffc857', 12);
+  // 上段右: 中央重ね
+  (function(){
+    const CX=306, CY=136, H=88;
+    squareField(svg, CX, CY, H);
+    dragon(svg, CX-46, CY-H-14, 'ニ', '#2a1015', '#ff6070');
+    dragon(svg, CX+46, CY-H-14, 'フ', '#102030', '#9dd8ff');
+    arrow(svg, CX-40, CY-H+6, CX-8, CY-8, '#ff6070', 2);
+    arrow(svg, CX+40, CY-H+6, CX+8, CY-8, '#9dd8ff', 2);
+    dashCircle(svg, CX, CY, 26, '#ffc857');
+    token(svg, CX-8, CY, 'MT', '#4da6ff', true, 12);
+    token(svg, CX+8, CY+8, 'ST', '#8fa8ff', false, 11);
+    labelText(svg, CX, CY+52, 'ど真ん中で密着', '#ffc857', 9.5);
+    labelText(svg, CX, CY+68, 'オーブ2個を2人で重ね受け', '#93a3c8', 9);
+  })();
+  // 下段: 着弾後チェックリスト
+  const listY = 246;
+  E(svg,'rect',{x:14,y:listY,width:372,height:196,rx:12,fill:'rgba(17,25,45,.92)',stroke:'rgba(124,160,224,.35)','stroke-width':1.5});
+  labelText(svg, 200, listY+24, '着弾後のMT TODO', '#7cc4ff', 13.5);
+  const items = [
+    ['1.', '滅殺初回がDPSに付く → 自分は受け渡し範囲に入らない', '#c96bff'],
+    ['2.', 'ニーズを削る(HP差3%: 紫線=ニーズ高すぎ→もっと削る)', '#e9eefc'],
+    ['3.', 'アク・アファー=LP頭割り。2組は重ならない', '#e9eefc'],
+    ['4.', 'HW1: プルーム誘導(頭上げ=遠い2名/下げ=近い2名=タンク)', '#e9eefc'],
+    ['5.', 'HW1後: 滅殺①をDPSから受け取る(野良=中央/固定=数字マカ)', '#4ade80'],
+  ];
+  items.forEach((it,i)=>{
+    labelText(svg, 30, listY+52+i*27, it[0], '#ffc857', 11, 'start');
+    labelText(svg, 52, listY+52+i*27, it[1], it[2], 10.5, 'start');
+  });
+})();
+</script>
+
+<script>
+const sheet = document.getElementById('sheet');
+function fitStage(){
+  const W=1280,H=720;
+  const scale = Math.min(window.innerWidth/W, window.innerHeight/H);
+  sheet.style.transform = `translate(-50%,-50%) scale(${scale})`;
+}
+window.addEventListener('resize', fitStage);
+fitStage();
+</script>
+</body>
+</html>

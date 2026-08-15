@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>P6 息吹2+カータライズ タンクカンペ(1枚)</title>
+<!--
+  2026-08-08 新規作成。二天竜(P6)終盤「息吹2回目(脳死配置)〜カータライズ〜タッチダウン」のタンク視点1枚モノ。
+  形式・スケーリング・パレットは p6_ibuki1_mt_onepage.html / p5_fuusou_onepage.html を流用(UI v2)。
+  出典: P6二天竜_予習メモ.md(PTマクロ+みんとっと+ARUTORA/kanatan/Tuufless/The Balance)。
+  数値メモ: カータライズ先頭約24万(Tuufless・単独ソース)+DoT約1.8万/tick(無敵貫通)。
+  両タンク無敵が英語圏標準。軽減案(みんとっと/The Balance)=息吹2詠唱バー後半に大防御→14秒持続でカータライズまで。
+  カータライズのMT/ST左右分担はマクロ未指定 → PTですり合わせ(図中に注記)。
+-->
+<style>
+  :root{
+    --bg:#0a1020; --panel:rgba(34,47,80,.78); --panel2:rgba(40,54,90,.66); --line:rgba(124,160,224,.20);
+    --accent:#7cc4ff; --accent-2:#a78bfa; --good:#4ade80; --bad:#ff6070; --warn:#ffc857; --purple:#c96bff;
+    --text:#e9eefc; --dim:#93a3c8;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{width:100%;height:100%;background:#000;color:var(--text);
+    font-family:"Hiragino Sans","Yu Gothic",system-ui,sans-serif;overflow:hidden;}
+  #stage{position:fixed;inset:0;}
+  #sheet{
+    position:absolute;left:50%;top:50%;
+    transform-origin:center center;
+    width:1280px;height:720px;
+    background:
+      radial-gradient(700px 420px at 12% -6%, rgba(66,108,232,.22), transparent 62%),
+      radial-gradient(600px 380px at 102% 4%, rgba(150,92,240,.16), transparent 60%),
+      var(--bg);
+    display:flex;
+    flex-direction:column;
+    padding:16px 22px 14px;
+    border-radius:6px;
+  }
+  header{display:flex;align-items:center;gap:18px;margin-bottom:8px;}
+  header h1{font-size:23px;font-weight:800;white-space:nowrap;
+    background:linear-gradient(100deg,#fff 6%,var(--accent) 52%,var(--accent-2) 96%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;}
+  #northNote{
+    background:linear-gradient(135deg,rgba(42,22,51,.85),rgba(26,16,34,.78));
+    border:2px solid #ff9dc7;
+    border-radius:10px;
+    padding:6px 16px;
+    font-size:17px;
+    font-weight:bold;
+    color:#ff9dc7;
+    white-space:nowrap;
+    box-shadow:0 14px 32px -26px #000, inset 0 1px 0 rgba(255,255,255,.06);
+  }
+  header .sub{font-size:12.5px;color:var(--dim);line-height:1.45;}
+  .row{flex:1;display:flex;gap:14px;min-height:0;}
+  .diagBox{
+    flex:1;
+    background:linear-gradient(180deg,rgba(34,47,80,.80),rgba(17,25,45,.72));
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:8px 10px 6px;
+    display:flex;
+    flex-direction:column;
+    min-height:0;
+    min-width:0;
+    box-shadow:0 18px 40px -28px #000, inset 0 1px 0 rgba(255,255,255,.06);
+  }
+  .diagBox h2{font-size:15px;color:var(--accent);font-weight:800;text-align:center;margin-bottom:2px;}
+  .diagBox .cap{font-size:11.5px;color:var(--dim);text-align:center;margin-bottom:2px;line-height:1.35;}
+  .diagBox svg{flex:1;width:100%;min-height:0;}
+  b{color:var(--warn);}
+  .r{color:var(--bad);font-weight:bold;} .y{color:#ffd24d;font-weight:bold;}
+  .bl{color:#4da6ff;font-weight:bold;} .pu{color:var(--purple);font-weight:bold;} .g{color:var(--good);font-weight:bold;}
+  #timeline{
+    margin-top:10px;
+    background:linear-gradient(180deg,rgba(34,47,80,.80),rgba(17,25,45,.72));
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:8px 18px;
+    display:flex;
+    align-items:center;
+    gap:0;
+    box-shadow:0 18px 40px -28px #000, inset 0 1px 0 rgba(255,255,255,.06);
+  }
+  .tlStep{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;}
+  .tlDot{width:14px;height:14px;border-radius:50%;background:var(--accent);border:2px solid #0a1020;z-index:1;}
+  .tlLabel{font-size:12.5px;font-weight:bold;color:var(--text);margin-top:4px;text-align:center;white-space:nowrap;}
+  .tlLine{position:absolute;top:6px;left:50%;width:100%;height:2px;background:var(--line);z-index:0;}
+  .tlStep:last-child .tlLine{display:none;}
+</style>
+</head>
+<body>
+<div id="stage"><div id="sheet">
+  <header>
+    <h1>P6 二天竜「息吹2回目＋カータライズ」タンクカンペ</h1>
+    <div id="northNote">上 ＝ 北(A)</div>
+    <div class="sub"><b>タンクは線を取らない=属性デバフ無し=カータライズを相殺できない</b> → <span class="r">両タンク無敵が標準(先頭約24万)</span>。<br>無敵でも<b>DoT約1.8万/tickは貫通</b>=ヒラ回復必須。軽減で受けるなら<b>息吹2詠唱バー後半に大防御</b>(約14秒でカータまで持続)。</div>
+  </header>
+
+  <div class="row">
+    <div class="diagBox">
+      <h2>①息吹2回目(脳死配置)</h2>
+      <div class="cap">口の2×2判断は1回目と同じ。<b>単受け=4マカから少し東西ずれ／重ね=ど真ん中</b>。DPSヒラは線1本受けでデバフをわざと残す(相殺禁止)。</div>
+      <svg id="d1" viewBox="0 0 400 460" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+    <div class="diagBox">
+      <h2>②カータライズ(列分け)</h2>
+      <div class="cap">二天が北+<b>東西ランダム</b>に並び各半面を縦断。<b>先頭=タンク(無敵)</b>。後続は逆属性: <span class="bl">氷結→ニーズ(炎)列</span>／<span class="r">ヒート→フレース(氷)列</span>。</div>
+      <svg id="d2" viewBox="0 0 400 460" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+    <div class="diagBox">
+      <h2>③タッチダウン〜時間切れ</h2>
+      <div class="cap">ニーズ=中央／フレース=南壁の距離減衰 → <b>全員北集合</b>(四隅まで不要)。滅殺④はAマカで近接→D3の2人だけ。</div>
+      <svg id="d3" viewBox="0 0 400 460" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+  </div>
+
+  <div id="timeline">
+    <div class="tlStep"><div class="tlLine"></div><div class="tlDot" style="background:var(--warn);"></div><div class="tlLabel">息吹2詠唱:口確認+遅め軽減</div></div>
+    <div class="tlStep"><div class="tlLine"></div><div class="tlDot" style="background:var(--bad);"></div><div class="tlLabel">着弾:単受け/重ね</div></div>
+    <div class="tlStep"><div class="tlLine"></div><div class="tlDot" style="background:var(--bad);"></div><div class="tlLabel">カータライズ:無敵で先頭</div></div>
+    <div class="tlStep"><div class="tlLine"></div><div class="tlDot" style="background:var(--accent);"></div><div class="tlLabel">タッチダウン:北集合</div></div>
+    <div class="tlStep"><div class="tlLine"></div><div class="tlDot" style="background:var(--purple);"></div><div class="tlLabel">滅殺④ 近接→D3(Aマカ)</div></div>
+    <div class="tlStep"><div class="tlDot" style="background:var(--good);"></div><div class="tlLabel">時間切れ:中央ニーズから</div></div>
+  </div>
+</div></div>
+
+<script>
+const ns='http://www.w3.org/2000/svg';
+function E(parent,t,attrs,txt){const e=document.createElementNS(ns,t);for(const k in attrs)e.setAttribute(k,attrs[k]);if(txt!=null)e.textContent=txt;parent.appendChild(e);return e;}
+function token(svg,x,y,label,col,hi,r){
+  r=r||12;
+  E(svg,'circle',{cx:x,cy:y,r,fill:col||'#5fb3ff',stroke:hi?'#ffffff':'#0a0e18','stroke-width':hi?2.5:1.3});
+  E(svg,'text',{x,y:y+3.5,fill:'#08111f','font-size':9.5,'font-weight':'bold','text-anchor':'middle'},label);
+}
+function labelText(svg,x,y,txt,col,size,anchor){
+  E(svg,'text',{x,y,fill:col||'#e8edf7','font-size':size||11,'font-weight':'bold','text-anchor':anchor||'middle'},txt);
+}
+function arrow(svg,x1,y1,x2,y2,col,w){
+  w=w||2.5;
+  E(svg,'line',{x1,y1,x2,y2,stroke:col,'stroke-width':w});
+  const a=Math.atan2(y2-y1,x2-x1);
+  E(svg,'path',{d:`M${x2},${y2} L${x2-9*Math.cos(a-0.4)},${y2-9*Math.sin(a-0.4)} L${x2-9*Math.cos(a+0.4)},${y2-9*Math.sin(a+0.4)} Z`,fill:col});
+}
+function dashCircle(svg,cx,cy,r,col,label,labelDy){
+  E(svg,'circle',{cx,cy,r,fill:'none',stroke:col,'stroke-width':2,'stroke-dasharray':'5,4'});
+  if(label) E(svg,'text',{x:cx,y:cy+(labelDy!=null?labelDy:-r-6),fill:col,'font-size':10,'font-weight':'bold','text-anchor':'middle'},label);
+}
+function squareField(svg, cx, cy, half, noDonut){
+  E(svg,'rect',{x:cx-half,y:cy-half,width:half*2,height:half*2,rx:8,fill:'#101625',stroke:'#3a4a70','stroke-width':2});
+  const step=half/3;
+  for(let i=1;i<6;i++){
+    E(svg,'line',{x1:cx-half+i*step,y1:cy-half,x2:cx-half+i*step,y2:cy+half,stroke:'#202c48','stroke-width':1});
+    E(svg,'line',{x1:cx-half,y1:cy-half+i*step,x2:cx+half,y2:cy-half+i*step,stroke:'#202c48','stroke-width':1});
+  }
+  if(!noDonut){
+    E(svg,'circle',{cx,cy,r:half-4,fill:'none',stroke:'#6fd2ff','stroke-width':2,'stroke-dasharray':'6,5',opacity:.75});
+  }
+  E(svg,'circle',{cx,cy,r:3.5,fill:'#4a5a80'});
+}
+function dragon(svg,x,y,label,col,stroke,r){
+  r=r||16;
+  E(svg,'circle',{cx:x,cy:y,r,fill:col,stroke,'stroke-width':2.5});
+  E(svg,'text',{x,y:y+4,fill:stroke,'font-size':10,'font-weight':'bold','text-anchor':'middle'},label);
+}
+// マーカー(A=赤)
+function markerA(svg,x,y){
+  E(svg,'rect',{x:x-9,y:y-9,width:18,height:18,rx:4,fill:'rgba(255,96,112,.18)',stroke:'#ff6070','stroke-width':2});
+  E(svg,'text',{x,y:y+4,fill:'#ff6070','font-size':11,'font-weight':'bold','text-anchor':'middle'},'A');
+}
+
+// ===================== 図1: 息吹2配置 =====================
+(function(){
+  const svg = document.getElementById('d1');
+  const CX=200, CY=240, H=148;
+  squareField(svg, CX, CY, H);
+  markerA(svg, CX, CY-H+18);
+  labelText(svg, CX-H+8, CY-H+16, '円の外=即死', '#6fd2ff', 9.5, 'start');
+  // 竜(北の外)
+  dragon(svg, CX-80, 48, 'ニーズ', '#2a1015', '#ff6070', 15);
+  dragon(svg, CX+80, 48, 'フレース', '#102030', '#9dd8ff', 15);
+  labelText(svg, CX, 24, '口の2×2判断は1回目と同じ(①自分→②相手)', '#ffc857', 10);
+  // タンク位置: MT=西 / ST=東
+  token(svg, CX-H+26, CY, 'MT', '#4da6ff', true, 13);
+  token(svg, CX+H-26, CY, 'ST', '#8fa8ff', true, 13);
+  // 単受け位置(4マカから東西ずれ) / 重ね=中央
+  dashCircle(svg, CX, CY, 20, '#ffc857');
+  labelText(svg, CX, CY-28, '重ね=ど真ん中', '#ffc857', 9.5);
+  labelText(svg, CX-H+26, CY+26, '単受けは', '#93a3c8', 9);
+  labelText(svg, CX-H+26, CY+40, '4マカ基準で', '#93a3c8', 9);
+  labelText(svg, CX-H+26, CY+54, '東西にずれる', '#93a3c8', 9);
+  // DPSヒラ(線1本受け・薄く)
+  token(svg, CX+52, CY-H+44, 'H1', '#7f8db0'); token(svg, CX+84, CY-H+52, 'D4', '#7f8db0');
+  token(svg, CX+16, CY-52, 'D2', '#7f8db0');
+  token(svg, CX-44, CY+44, 'D1', '#7f8db0');
+  token(svg, CX-58, CY+H-38, 'D3', '#7f8db0'); token(svg, CX+34, CY+H-30, 'H2', '#7f8db0');
+  labelText(svg, CX, CY+H-10, 'DPSヒラ=線1本だけ受けてデバフ残し(相殺禁止)', '#93a3c8', 9.5);
+  // 軽減タイミング注意
+  E(svg,'rect',{x:24,y:CY+H+14,width:352,height:52,rx:10,fill:'rgba(17,25,45,.92)',stroke:'#ffc857','stroke-width':2});
+  labelText(svg, CX, CY+H+34, '軽減で受ける派: 詠唱バー後半に30%級を使う', '#ffc857', 11);
+  labelText(svg, CX, CY+H+52, '(効果約15〜20秒 → 14秒後のカータライズまで持続させる)', '#93a3c8', 9.5);
+})();
+
+// ===================== 図2: カータライズ列分け =====================
+(function(){
+  const svg = document.getElementById('d2');
+  const CX=200, CY=230, H=140;
+  squareField(svg, CX, CY, H, true);
+  // 竜: 北に東西並び(ランダム! 例: ニーズ=西)
+  dragon(svg, CX-70, 52, 'ニーズ', '#2a1015', '#ff6070', 15);
+  dragon(svg, CX+70, 52, 'フレース', '#102030', '#9dd8ff', 15);
+  labelText(svg, CX, 24, '竜の並びは東西ランダム(図は一例)・タンクは位置固定', '#ffc857', 10.5);
+  // 縦断レーン
+  E(svg,'rect',{x:CX-70-40,y:CY-H,width:80,height:H*2,fill:'#ff6070',opacity:.14});
+  E(svg,'rect',{x:CX+70-40,y:CY-H,width:80,height:H*2,fill:'#6fd2ff',opacity:.14});
+  arrow(svg, CX-70, CY-H+6, CX-70, CY+H-8, '#ff6070', 3);
+  arrow(svg, CX+70, CY-H+6, CX+70, CY+H-8, '#9dd8ff', 3);
+  // 先頭タンク: マクロ「MT ST」= MT=左(西)列 / ST=右(東)列 の位置固定(竜には追従しない)
+  token(svg, CX-70, CY-H+30, 'MT', '#4da6ff', true, 13);
+  token(svg, CX+70, CY-H+30, 'ST', '#8fa8ff', true, 13);
+  labelText(svg, CX-70, CY-H+56, '先頭=無敵', '#ffc857', 10);
+  labelText(svg, CX+70, CY-H+56, '先頭=無敵', '#ffc857', 10);
+  // 後続(逆属性)
+  [0,1,2].forEach(i=>{ token(svg, CX-70, CY-24+i*34, '氷', '#6fd2ff'); });
+  [0,1,2].forEach(i=>{ token(svg, CX+70, CY-24+i*34, '炎', '#ff8a8a'); });
+  labelText(svg, CX-70, CY+H-16, '氷結持ちが並ぶ', '#6fd2ff', 9.5);
+  labelText(svg, CX+70, CY+H-16, 'ヒート持ちが並ぶ', '#ff8a8a', 9.5);
+  labelText(svg, CX, CY+H+18, 'マクロ: MT=左(西)列/ST=右(東)列で固定。竜の並びは気にしなくてOK', '#7cc4ff', 9.5);
+  // 注意ボックス
+  E(svg,'rect',{x:20,y:CY+H+30,width:360,height:74,rx:10,fill:'rgba(17,25,45,.92)',stroke:'#ff6070','stroke-width':2});
+  labelText(svg, CX, CY+H+50, '着弾前にデバフが自然発動する', '#ff6070', 11);
+  labelText(svg, CX, CY+H+68, 'ヒート=発動後の行動は即死(オートアタック含む・タゲ外し)', '#e9eefc', 9.8);
+  labelText(svg, CX, CY+H+86, '氷結=勝手に凍るだけ ／ 暗黒:タゲ不可時間=ウォーキング注意', '#93a3c8', 9.5);
+})();
+
+// ===================== 図3: タッチダウン〜時間切れ =====================
+(function(){
+  const svg = document.getElementById('d3');
+  const CX=200, CY=212, H=132;
+  squareField(svg, CX, CY, H, true);
+  markerA(svg, CX, CY-H+18);
+  // ニーズ=中央 / フレース=南壁 距離減衰
+  dragon(svg, CX, CY, 'ニ', '#2a1015', '#ff6070', 14);
+  dashCircle(svg, CX, CY, 46, '#ff6070');
+  dashCircle(svg, CX, CY, 78, '#ff6070');
+  dragon(svg, CX, CY+H-6, 'フ', '#102030', '#9dd8ff', 14);
+  dashCircle(svg, CX, CY+H-6, 46, '#9dd8ff');
+  labelText(svg, CX+96, CY+H-24, '南壁', '#9dd8ff', 9.5);
+  // 北集合
+  arrow(svg, CX-40, CY-40, CX-52, CY-H+40, '#4ade80', 2.5);
+  arrow(svg, CX+40, CY-40, CX+52, CY-H+40, '#4ade80', 2.5);
+  const others=[['MT',-104],['ST',-80],['H1',-56],['H2',56],['D2',80]];
+  others.forEach(o=>{ token(svg, CX+o[1], CY-H+34, o[0], '#7f8db0'); });
+  // 滅殺④ Aマカで2人だけ
+  token(svg, CX-8, CY-H+78, '近', '#c96bff', true);
+  token(svg, CX+14, CY-H+78, 'D3', '#c96bff', true);
+  dashCircle(svg, CX+3, CY-H+78, 26, '#c96bff');
+  labelText(svg, CX, CY-H+118, '滅殺④: Aマカで近接→D3の2人だけ', '#c96bff', 10);
+  labelText(svg, CX, CY-H+134, '他は巻き込まれない距離へ(熱傷=最大HP半減)', '#93a3c8', 9);
+  labelText(svg, CX, CY-52, '減衰は痛くない=四隅まで不要', '#93a3c8', 9.5);
+  // 時間切れボックス
+  E(svg,'rect',{x:20,y:CY+H+16,width:360,height:88,rx:10,fill:'rgba(17,25,45,.92)',stroke:'#4ade80','stroke-width':2});
+  labelText(svg, CX, CY+H+36, '時間切れ「最後の咆哮」まで', '#4ade80', 11.5);
+  labelText(svg, CX, CY+H+54, '中央のニーズから倒す(誓いDoTは撃破で消える)', '#e9eefc', 10);
+  labelText(svg, CX, CY+H+70, 'タンクのカータDoTは相殺不可 → ヒラ回復もらう', '#ffc857', 9.8);
+  labelText(svg, CX, CY+H+86, '移行: オルタナ約4.3万+ペインDoT。DoTが切れてからバリア', '#93a3c8', 9.5);
+})();
+</script>
+
+<script>
+const sheet = document.getElementById('sheet');
+function fitStage(){
+  const W=1280,H=720;
+  const scale = Math.min(window.innerWidth/W, window.innerHeight/H);
+  sheet.style.transform = `translate(-50%,-50%) scale(${scale})`;
+}
+window.addEventListener('resize', fitStage);
+fitStage();
+</script>
+</body>
+</html>
