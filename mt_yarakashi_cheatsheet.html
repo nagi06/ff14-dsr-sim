@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>MTやらかし防止カンペ</title>
+<!--
+  2026-08-16 新規作成。ユーザー(MT戦士)の自己申告「わかっているけどやらかす」ポイント専用の3ページカンペ。
+  タブレット表示・フェーズ間にボタン/タップ/矢印キーでページ切替する運用。
+  内容はユーザーの申告文が正。数値・位置は各予習メモ/確定カンペと整合済み:
+  - P3スパイン/イルーシブ: カンペ_スパイン_イルーシブ.html と同一ルール(スパイン=B側/イルーシブ=D側/向きは全員D)
+  - P5: P5儀典トールダン_予習メモ.md(線=西9時7時、沼=シャリベル基準、プレステ=ゲリック北)
+  - P6: P6二天竜_予習メモ.md(MT=4マカ、滅殺①②=中央、リプ/シェイク/ホルムの割当)
+-->
+<style>
+  :root{
+    --bg:#0a1020; --line:rgba(124,160,224,.20);
+    --accent:#7cc4ff; --accent-2:#a78bfa; --good:#4ade80; --bad:#ff6070; --warn:#ffc857; --purple:#c96bff;
+    --text:#e9eefc; --dim:#93a3c8;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{width:100%;height:100%;background:#000;color:var(--text);
+    font-family:"Hiragino Sans","Yu Gothic",system-ui,sans-serif;overflow:hidden;
+    -webkit-user-select:none;user-select:none;touch-action:manipulation;}
+  #stage{position:fixed;inset:0;}
+  #sheet{
+    position:absolute;left:50%;top:50%;
+    transform-origin:center center;
+    width:1280px;height:720px;
+    background:
+      radial-gradient(700px 420px at 12% -6%, rgba(66,108,232,.22), transparent 62%),
+      radial-gradient(600px 380px at 102% 4%, rgba(150,92,240,.16), transparent 60%),
+      var(--bg);
+    display:flex;flex-direction:column;
+    padding:18px 26px 12px;
+    border-radius:6px;
+  }
+  header{display:flex;align-items:baseline;gap:16px;margin-bottom:10px;}
+  header h1{font-size:26px;font-weight:800;white-space:nowrap;
+    background:linear-gradient(100deg,#fff 6%,var(--accent) 52%,var(--accent-2) 96%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;}
+  header .pageTitle{font-size:20px;font-weight:800;color:var(--warn);}
+  .page{flex:1;display:none;flex-direction:column;gap:12px;min-height:0;}
+  .page.active{display:flex;}
+  .card{
+    flex:1;display:flex;align-items:center;gap:20px;min-height:0;
+    background:linear-gradient(180deg,rgba(34,47,80,.80),rgba(17,25,45,.72));
+    border:1px solid var(--line);border-left:6px solid var(--accent);
+    border-radius:14px;padding:10px 22px;
+    box-shadow:0 18px 40px -28px #000, inset 0 1px 0 rgba(255,255,255,.06);
+  }
+  .card.bad{border-left-color:var(--bad);}
+  .card.warn{border-left-color:var(--warn);}
+  .card.good{border-left-color:var(--good);}
+  .card.purple{border-left-color:var(--purple);}
+  .card .tag{flex:none;width:150px;font-size:17px;font-weight:800;color:var(--dim);line-height:1.4;}
+  .card .body{flex:1;font-size:24px;font-weight:800;line-height:1.5;}
+  .card .body small{display:block;font-size:15px;font-weight:600;color:var(--dim);margin-top:2px;line-height:1.45;}
+  b{color:var(--warn);}
+  .r{color:var(--bad);} .bl{color:#4da6ff;} .g{color:var(--good);} .pu{color:var(--purple);} .ice{color:#9dd8ff;}
+  /* ナビ(タブレット向け大ボタン) */
+  #nav{flex:none;display:flex;gap:10px;margin-top:12px;height:64px;}
+  #nav button{
+    flex:1;height:100%;font-size:22px;font-weight:800;color:var(--text);
+    background:linear-gradient(180deg,rgba(40,54,90,.9),rgba(24,33,58,.9));
+    border:2px solid var(--line);border-radius:14px;cursor:pointer;
+    font-family:inherit;
+  }
+  #nav button.arrow{flex:.6;font-size:28px;color:var(--accent);}
+  #nav button.tab.on{border-color:var(--warn);color:var(--warn);
+    background:linear-gradient(180deg,rgba(74,58,20,.9),rgba(40,33,14,.9));}
+  #nav button:active{transform:scale(.97);}
+</style>
+</head>
+<body>
+<div id="stage"><div id="sheet">
+  <header>
+    <h1>MTやらかし防止</h1>
+    <div class="pageTitle" id="pageTitle"></div>
+  </header>
+
+  <!-- ============ Page 1: P2聖杖 + P3サイコロ ============ -->
+  <div class="page" id="pg0">
+    <div class="card bad">
+      <div class="tag">P2 聖杖前半<br>視線</div>
+      <div class="body">視線は<span class="r">キャラの正面90°</span>判定。<b>眼と正対しない</b>
+        <small>カメラの向きじゃなく「体の向き」。迷ったら眼に対して真横を向く。焦って歩き出さない。</small>
+      </div>
+    </div>
+    <div class="card purple">
+      <div class="tag">P3 サイコロ<br>スパイン/イルーシブ</div>
+      <div class="body"><span class="bl">スパイン↑ = Bマカ側</span> ／ <span class="r">イルーシブ↓ = Dマカ側</span>。<b>向きはどっちもD(北)</b>
+        <small>矢印=塔が飛ぶ方向(↑前=D側へ / ↓後ろ=B側へ)。足元には出ない。</small>
+      </div>
+    </div>
+    <div class="card warn">
+      <div class="tag">P3 サイコロ2</div>
+      <div class="body">2がついたら踏むのは<b>「3」の塔</b>
+        <small>流れ: 頭割り① → 塔出し(2回目ジャンプ) → 頭割り② → 3番の塔へ。</small>
+      </div>
+    </div>
+    <div class="card good">
+      <div class="tag">P3 サイコロ1</div>
+      <div class="body">2の塔を踏みに行くときは<b>誘導を確実に</b>
+        <small>雑に走らない。位置を確定させてから塔に入る。</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ Page 2: P5風槍 + 死刻 ============ -->
+  <div class="page" id="pg1">
+    <div class="card bad">
+      <div class="tag">P5 風槍<br>北の確定</div>
+      <div class="body"><b>北=ヴェズルフェルニル(降りたドラゴン)</b>。最初に確定したら<span class="r">見失うな</span>
+        <small>マーカーとの対応は毎回変わる。「敵を北とする」は盤面ごと回すイメージで固定。</small>
+      </div>
+    </div>
+    <div class="card">
+      <div class="tag">P5 風槍<br>線</div>
+      <div class="body">線がついたら散開は<b>西(9時/7時)</b>
+        <small>対角へ最大距離で伸ばす。外周ギリギリ。</small>
+      </div>
+    </div>
+    <div class="card warn">
+      <div class="tag">P5 風槍<br>沼</div>
+      <div class="body">足元フレア・爆発がついたら<b>シャリベル(杖)のほうへ</b>
+        <small>だから常にシャリベルの位置を把握しておく。グリノー(斧)側の扇は捨て禁止。</small>
+      </div>
+    </div>
+    <div class="card purple">
+      <div class="tag">P5 死刻<br>プレステ散開</div>
+      <div class="body">必ず<b>北(ゲリック)を見て</b>視線判断 → <span class="r">内側の円のさらに内側</span>へ
+        <small>方向も確実に。位置が浅いと事故る。ゲリック北固定カメラのまま判断。</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ Page 3: P6二天 ============ -->
+  <div class="page" id="pg2">
+    <div class="card">
+      <div class="tag">P6 息吹<br>タンク位置</div>
+      <div class="body">1回目: <b>MT=4マカから動かない</b>(ST=1マカ) ／ 2回目: <b>MT=4マカ・ST=2マカ対角</b>
+        <small>どちらも両方の口が光ったときだけ、ど真ん中でSTと重ねて相殺。</small>
+      </div>
+    </div>
+    <div class="card bad">
+      <div class="tag">P6 滅殺</div>
+      <div class="body">①HW1後に<b>中央で受ける</b> → ②邪念の炎の処理後、<span class="r">中央でSTへ渡す(忘れ=ワイプ)</span>
+        <small>受け渡しは2人きり。①②③=中央/④=Aマカ。紫デバフと見間違えない。</small>
+      </div>
+    </div>
+    <div class="card warn">
+      <div class="tag">P6 アク・モーン</div>
+      <div class="body">滅殺DoT+回復低下を抱えて受ける<span class="r">最痛区間</span>。<b>軽減を全力で寄せる</b>
+        <small>四隅の頭割り×4連。跡地の即死床を踏まない。足並みを揃えて移動。</small>
+      </div>
+    </div>
+    <div class="card good">
+      <div class="tag">P6 バフ回し<br>(戦士)</div>
+      <div class="body">アク・アファー=<b>リプライザル</b> ／ アク・モーン=<b>シェイクオフ</b> ／ カータライズ=<span class="g">ホルムギャング</span>
+        <small>ホルムはカータ固定。息吹の単受けはバフ受け(原初+STの投げバフ)で無敵温存。</small>
+      </div>
+    </div>
+  </div>
+
+  <div id="nav">
+    <button class="arrow" id="prevBtn">◀</button>
+    <button class="tab" data-pg="0">P2聖杖・P3サイコロ</button>
+    <button class="tab" data-pg="1">P5 風槍・死刻</button>
+    <button class="tab" data-pg="2">P6 二天</button>
+    <button class="arrow" id="nextBtn">▶</button>
+  </div>
+</div></div>
+
+<script>
+const PAGES = 3;
+const TITLES = ['① P2聖杖・P3サイコロ', '② P5 風槍・死刻', '③ P6 二天竜'];
+let cur = 0;
+function show(n){
+  cur = (n + PAGES) % PAGES;
+  for(let i=0;i<PAGES;i++){
+    document.getElementById('pg'+i).classList.toggle('active', i===cur);
+  }
+  document.querySelectorAll('#nav .tab').forEach((b,i)=>b.classList.toggle('on', i===cur));
+  document.getElementById('pageTitle').textContent = TITLES[cur];
+}
+document.getElementById('prevBtn').addEventListener('click', ()=>show(cur-1));
+document.getElementById('nextBtn').addEventListener('click', ()=>show(cur+1));
+document.querySelectorAll('#nav .tab').forEach(b=>{
+  b.addEventListener('click', ()=>show(parseInt(b.dataset.pg,10)));
+});
+window.addEventListener('keydown', e=>{
+  if(e.key==='ArrowRight'||e.key==='ArrowDown'||e.key===' ') show(cur+1);
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp') show(cur-1);
+});
+show(0);
+
+const sheet = document.getElementById('sheet');
+function fitStage(){
+  const W=1280,H=720;
+  const scale = Math.min(window.innerWidth/W, window.innerHeight/H);
+  sheet.style.transform = `translate(-50%,-50%) scale(${scale})`;
+}
+window.addEventListener('resize', fitStage);
+fitStage();
+</script>
+</body>
+</html>
