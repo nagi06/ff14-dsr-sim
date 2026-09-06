@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>P6 ホーリーウィング1・2 安置カンペ(1枚)</title>
+<!--
+  2026-09-06 新規作成。二天竜(P6)「ホーリーウィング1回目・2回目」の安置1枚モノ(タンク視点寄り)。
+  形式・スケーリング・パレットは p6_ibuki2_cauterize_tank_onepage.html を流用(UI v2)。
+  出典: P6二天竜_予習メモ.md(みんとっと文字起こし+ARUTORA/kanatan/Tuufless)、ふうcだよP6-11(HW安置内 MT:北西/ST:南東・滅殺中央)。
+  盤面の左右(フレースが東か西か・ニーズが北か南か)はランダム → 図は一例、「相対」で覚える前提で注記。
+  HW1: ニーズ=北or南の外周から半面直線(カータライズ) × フレース=東or西から光った翼側の半面 → 安置1/4。
+  HW2: フレースは同じ。ニーズがホットテイル(中央直線)/ホットウィング(両サイド) → 安置半面の外周列 or 中央列。
+  プルーム: 頭下げ=最も近い2名 / 頭上げ=最も遠い2名 → タンク2名がベイト。距離はフレースのタゲサ中心基準。
+-->
+<style>
+  :root{
+    --bg:#0a1020; --panel:rgba(34,47,80,.78); --panel2:rgba(40,54,90,.66); --line:rgba(124,160,224,.20);
+    --accent:#7cc4ff; --accent-2:#a78bfa; --good:#4ade80; --bad:#ff6070; --warn:#ffc857; --purple:#c96bff;
+    --text:#e9eefc; --dim:#93a3c8;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{width:100%;height:100%;background:#000;color:var(--text);
+    font-family:"Hiragino Sans","Yu Gothic",system-ui,sans-serif;overflow:hidden;}
+  #stage{position:fixed;inset:0;}
+  #sheet{
+    position:absolute;left:50%;top:50%;
+    transform-origin:center center;
+    width:1280px;height:720px;
+    background:
+      radial-gradient(700px 420px at 12% -6%, rgba(66,108,232,.22), transparent 62%),
+      radial-gradient(600px 380px at 102% 4%, rgba(150,92,240,.16), transparent 60%),
+      var(--bg);
+    display:flex;
+    flex-direction:column;
+    padding:16px 22px 14px;
+    border-radius:6px;
+  }
+  header{display:flex;align-items:center;gap:18px;margin-bottom:8px;}
+  header h1{font-size:23px;font-weight:800;white-space:nowrap;
+    background:linear-gradient(100deg,#fff 6%,var(--accent) 52%,var(--accent-2) 96%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;}
+  #northNote{
+    background:linear-gradient(135deg,rgba(42,22,51,.85),rgba(26,16,34,.78));
+    border:2px solid #ff9dc7;
+    border-radius:10px;
+    padding:6px 16px;
+    font-size:17px;
+    font-weight:bold;
+    color:#ff9dc7;
+    white-space:nowrap;
+    box-shadow:0 14px 32px -26px #000, inset 0 1px 0 rgba(255,255,255,.06);
+  }
+  header .sub{font-size:12.5px;color:var(--dim);line-height:1.45;}
+  .row{flex:1;display:flex;gap:14px;min-height:0;}
+  .diagBox{
+    flex:1;
+    background:linear-gradient(180deg,rgba(34,47,80,.80),rgba(17,25,45,.72));
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:8px 10px 6px;
+    display:flex;
+    flex-direction:column;
+    min-height:0;
+    min-width:0;
+    box-shadow:0 18px 40px -28px #000, inset 0 1px 0 rgba(255,255,255,.06);
+  }
+  .diagBox h2{font-size:15px;color:var(--accent);font-weight:800;text-align:center;margin-bottom:2px;}
+  .diagBox .cap{font-size:11.5px;color:var(--dim);text-align:center;margin-bottom:2px;line-height:1.35;}
+  .diagBox svg{flex:1;width:100%;min-height:0;}
+  b{color:var(--warn);}
+  .r{color:var(--bad);font-weight:bold;} .y{color:#ffd24d;font-weight:bold;}
+  .bl{color:#4da6ff;font-weight:bold;} .pu{color:var(--purple);font-weight:bold;} .g{color:var(--good);font-weight:bold;}
+  #timeline{
+    margin-top:10px;
+    background:linear-gradient(180deg,rgba(34,47,80,.80),rgba(17,25,45,.72));
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:8px 18px;
+    display:flex;
+    align-items:center;
+    gap:0;
+    box-shadow:0 18px 40px -28px #000, inset 0 1px 0 rgba(255,255,255,.06);
+  }
+  .tlStep{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;}
+  .tlDot{width:14px;height:14px;border-radius:50%;background:var(--accent);border:2px solid #0a1020;z-index:1;}
+  .tlLabel{font-size:12.5px;font-weight:bold;color:var(--text);margin-top:4px;text-align:center;white-space:nowrap;}
+  .tlLine{position:absolute;top:6px;left:50%;width:100%;height:2px;background:var(--line);z-index:0;}
+  .tlStep:last-child .tlLine{display:none;}
+</style>
+</head>
+<body>
+<div id="stage"><div id="sheet">
+  <header>
+    <h1>P6 二天竜「ホーリーウィング1・2」安置カンペ</h1>
+    <div id="northNote">上 ＝ フレース(疑似北・カメラ基準)</div>
+    <div class="sub"><b>実際の方角は無視。フレースを疑似北にして左右・奥手前で処理する。</b><br><span class="bl">フレース=光った翼側の半面</span>を薙ぐ。<span class="r">プルーム=頭下げ:近い2名/頭上げ:遠い2名</span>=<b>タンク2名がベイト</b>。距離は<b>フレースのタゲサ中心</b>基準。</div>
+  </header>
+
+  <div class="row">
+    <div class="diagBox">
+      <h2>①ホーリーウィング1回目(安置=1/4)</h2>
+      <div class="cap">見る順: <b>①ニーズ(左/右の外周から奥or手前の半面を直線)</b> → <b>②翼(光った側の半面)</b> → <b>③頭(上げ/下げ)</b>。残った1/4に全員。</div>
+      <svg id="d1" viewBox="0 0 400 460" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+    <div class="diagBox">
+      <h2>②プルーム誘導(1・2回目共通)</h2>
+      <div class="cap"><b>頭下げ=近い2名</b>: タンクはタゲサの<b>中</b>に密着・他は外へ。<b>頭上げ=遠い2名</b>: タンクは安置の<b>手前(フレースから遠い側)</b>で分かれ・他はフレースへ寄る。</div>
+      <svg id="d2" viewBox="0 0 400 460" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+    <div class="diagBox">
+      <h2>③ホーリーウィング2回目(全員1列)</h2>
+      <div class="cap">判断順を固定: <b>①翼(自分から見て左右)</b> → <b>②顔(奥/手前)</b> → <b>③詠唱(内外)</b>。<span class="r">ホットテイル=中央直線→外周列</span> / <span class="y">ホットウィング=両サイド→中央列</span>。</div>
+      <svg id="d3" viewBox="0 0 400 460" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+  </div>
+
+  <div id="timeline">
+    <div class="tlStep"><div class="tlLine"></div><div class="tlDot" style="background:var(--warn);"></div><div class="tlLabel">HW1詠唱: ニーズ→翼→頭</div></div>
+    <div class="tlStep"><div class="tlLine"></div><div class="tlDot" style="background:var(--bad);"></div><div class="tlLabel">着弾: 1/4安置+プルーム誘導</div></div>
+    <div class="tlStep"><div class="tlLine"></div><div class="tlDot" style="background:var(--purple);"></div><div class="tlLabel">滅殺① DPS→MT(中央)</div></div>
+    <div class="tlStep"><div class="tlLine"></div><div class="tlDot" style="background:var(--accent);"></div><div class="tlLabel">邪念の炎 → 滅殺② MT→ST(中央)</div></div>
+    <div class="tlStep"><div class="tlLine"></div><div class="tlDot" style="background:var(--bad);"></div><div class="tlLabel">HW2: 翼→顔→詠唱で1列</div></div>
+    <div class="tlStep"><div class="tlDot" style="background:var(--purple);"></div><div class="tlLabel">滅殺③ ST→D1(中央)</div></div>
+  </div>
+</div></div>
+
+<script>
+const ns='http://www.w3.org/2000/svg';
+function E(parent,t,attrs,txt){const e=document.createElementNS(ns,t);for(const k in attrs)e.setAttribute(k,attrs[k]);if(txt!=null)e.textContent=txt;parent.appendChild(e);return e;}
+function token(svg,x,y,label,col,hi,r){
+  r=r||12;
+  E(svg,'circle',{cx:x,cy:y,r,fill:col||'#5fb3ff',stroke:hi?'#ffffff':'#0a0e18','stroke-width':hi?2.5:1.3});
+  E(svg,'text',{x,y:y+3.5,fill:'#08111f','font-size':9.5,'font-weight':'bold','text-anchor':'middle'},label);
+}
+function labelText(svg,x,y,txt,col,size,anchor){
+  E(svg,'text',{x,y,fill:col||'#e8edf7','font-size':size||11,'font-weight':'bold','text-anchor':anchor||'middle'},txt);
+}
+function arrow(svg,x1,y1,x2,y2,col,w){
+  w=w||2.5;
+  E(svg,'line',{x1,y1,x2,y2,stroke:col,'stroke-width':w});
+  const a=Math.atan2(y2-y1,x2-x1);
+  E(svg,'path',{d:`M${x2},${y2} L${x2-9*Math.cos(a-0.4)},${y2-9*Math.sin(a-0.4)} L${x2-9*Math.cos(a+0.4)},${y2-9*Math.sin(a+0.4)} Z`,fill:col});
+}
+function dashCircle(svg,cx,cy,r,col,label,labelDy){
+  E(svg,'circle',{cx,cy,r,fill:'none',stroke:col,'stroke-width':2,'stroke-dasharray':'5,4'});
+  if(label) E(svg,'text',{x:cx,y:cy+(labelDy!=null?labelDy:-r-6),fill:col,'font-size':10,'font-weight':'bold','text-anchor':'middle'},label);
+}
+function squareField(svg, cx, cy, half){
+  E(svg,'rect',{x:cx-half,y:cy-half,width:half*2,height:half*2,rx:8,fill:'#101625',stroke:'#3a4a70','stroke-width':2});
+  const step=half/3;
+  for(let i=1;i<6;i++){
+    E(svg,'line',{x1:cx-half+i*step,y1:cy-half,x2:cx-half+i*step,y2:cy+half,stroke:'#202c48','stroke-width':1});
+    E(svg,'line',{x1:cx-half,y1:cy-half+i*step,x2:cx+half,y2:cy-half+i*step,stroke:'#202c48','stroke-width':1});
+  }
+  E(svg,'circle',{cx,cy,r:3.5,fill:'#4a5a80'});
+}
+function dragon(svg,x,y,label,col,stroke,r){
+  r=r||16;
+  E(svg,'circle',{cx:x,cy:y,r,fill:col,stroke,'stroke-width':2.5});
+  E(svg,'text',{x,y:y+4,fill:stroke,'font-size':10,'font-weight':'bold','text-anchor':'middle'},label);
+}
+// フレース(東端・西向き)+翼。glow: 'N' or 'S' が光る側
+function hraes(svg,x,y,glow,r){
+  r=r||16;
+  // 翼: 北側・南側の三角
+  const wing=(dy,on)=>{
+    const s=on?1:0;
+    E(svg,'path',{d:`M${x-4},${y+dy*6} L${x+14},${y+dy*30} L${x-16},${y+dy*22} Z`,
+      fill:on?'rgba(255,210,77,.55)':'rgba(157,216,255,.18)',stroke:on?'#ffd24d':'#6f9ac8','stroke-width':on?2.5:1.5});
+    if(on) labelText(svg,x-2,y+dy*30+(dy>0?12:-4),'光',"#ffd24d",10);
+  };
+  wing(-1,glow==='N'); wing(1,glow==='S');
+  dragon(svg,x,y,'フレース','#102030','#9dd8ff',r);
+}
+// マーカー
+function marker(svg,x,y,t,col){
+  E(svg,'rect',{x:x-8,y:y-8,width:16,height:16,rx:4,fill:'rgba(255,255,255,.06)',stroke:col,'stroke-width':2});
+  E(svg,'text',{x,y:y+4,fill:col,'font-size':10,'font-weight':'bold','text-anchor':'middle'},t);
+}
+function markers(svg,cx,cy,H){
+  marker(svg,cx,cy-H+14,'A','#ff6070');
+  marker(svg,cx-H+30,cy-H+30,'4','#c96bff'); marker(svg,cx+H-30,cy-H+30,'1','#ff6070');
+  marker(svg,cx-H+30,cy+H-30,'3','#4da6ff'); marker(svg,cx+H-30,cy+H-30,'2','#ffd24d');
+}
+function safeRect(svg,x,y,w,h,label){
+  E(svg,'rect',{x,y,width:w,height:h,fill:'rgba(74,222,128,.10)',stroke:'#4ade80','stroke-width':2.5,'stroke-dasharray':'7,4'});
+  if(label) labelText(svg,x+w/2,y+h/2+4,label,'#4ade80',12);
+}
+
+// ===================== 図1: HW1(疑似北=フレース) =====================
+(function(){
+  const svg = document.getElementById('d1');
+  const CX=200, CY=214, H=136;
+  squareField(svg, CX, CY, H);
+  // ②フレース: 疑似北(上)・こちら向き。例=自分から見て右翼が光る → 右半面が死
+  E(svg,'rect',{x:CX,y:CY-H,width:H,height:H*2,fill:'#6fd2ff',opacity:.16});
+  const fx=CX, fy=CY-H-24;
+  const wing=(dx,on)=>{
+    E(svg,'path',{d:`M${fx+dx*6},${fy-4} L${fx+dx*34},${fy+14} L${fx+dx*24},${fy-18} Z`,
+      fill:on?'rgba(255,210,77,.55)':'rgba(157,216,255,.18)',stroke:on?'#ffd24d':'#6f9ac8','stroke-width':on?2.5:1.5});
+    if(on) labelText(svg,fx+dx*40,fy+2,'光','#ffd24d',10,dx>0?'start':'end');
+  };
+  wing(-1,false); wing(1,true);
+  dragon(svg, fx, fy, 'フレース', '#102030', '#9dd8ff', 15);
+  labelText(svg, CX+H+10, fy+4, '②光った翼側', '#9dd8ff', 9.5, 'start');
+  labelText(svg, CX+H+10, fy+16, 'の半面=死', '#9dd8ff', 9.5, 'start');
+  labelText(svg, CX+H/2, CY+H/2+4, '翼の半面=死', '#9dd8ff', 11);
+  // ①ニーズ: 左or右の外周から、奥or手前の半面を直線(例=左外周・奥半面)
+  E(svg,'rect',{x:CX-H,y:CY-H,width:H*2,height:H,fill:'#ff6070',opacity:.20});
+  arrow(svg, CX-H+12, CY-H/2, CX+H-10, CY-H/2, '#ff6070', 3);
+  dragon(svg, CX-H-22, CY-H/2, 'ニーズ', '#2a1015', '#ff6070', 15);
+  labelText(svg, CX-H-22, CY-H/2-26, '①左or右の', '#ff6070', 9.5);
+  labelText(svg, CX-H-22, CY-H/2-15, '外周から', '#ff6070', 9.5);
+  labelText(svg, CX-H/2, CY-H/2+4, 'ニーズ直線=死', '#ff9aa6', 11);
+  labelText(svg, CX-H/2, CY-H/2+18, '(奥or手前の半面)', '#ff9aa6', 9);
+  // 安置=手前左1/4
+  safeRect(svg, CX-H, CY, H, H, '');
+  labelText(svg, CX-H/2, CY+H/2-6, '安置1/4', '#4ade80', 13);
+  labelText(svg, CX-H/2, CY+H/2+10, '全員ここ', '#4ade80', 10);
+  labelText(svg, CX-H/2, CY+H-8, '③頭を見てプルーム→図②', '#ffc857', 9.5);
+  labelText(svg, CX, CY+H+16, '自分(カメラ)はこちら側 ↑フレースを見上げる', '#93a3c8', 9);
+  // 注記
+  E(svg,'rect',{x:20,y:CY+H+26,width:360,height:76,rx:10,fill:'rgba(17,25,45,.92)',stroke:'#ffc857','stroke-width':2});
+  labelText(svg, CX, CY+H+46, '安置=「ニーズが飛んでない側」×「光ってない翼側」', '#ffc857', 11);
+  labelText(svg, CX, CY+H+62, '図は左安置。右翼が光らなければ左右反転して読む', '#e9eefc', 10);
+  labelText(svg, CX, CY+H+78, '着弾後: 滅殺① DPS→MT を中央で(受ける2人以外は離れる)', '#c96bff', 10);
+  labelText(svg, CX, CY+H+93, '熱傷=最大HP半減。MTは軽減を確認してから中央へ', '#93a3c8', 9.5);
+})();
+
+// ===================== 図2: プルーム(安置1/4の拡大・疑似北=フレース) =====================
+(function(){
+  const svg = document.getElementById('d2');
+  // 安置1/4を拡大。フレース(疑似北)は安置のフレース寄り角=図①なら右上角。
+  function quad(oy, title, col){
+    const x0=40, y0=oy, w=250, h=150;
+    E(svg,'rect',{x:x0,y:y0,width:w,height:h,rx:8,fill:'rgba(74,222,128,.08)',stroke:'#4ade80','stroke-width':2,'stroke-dasharray':'7,4'});
+    labelText(svg, x0+6, y0+h-6, '安置1/4(拡大)', '#4ade80', 9, 'start');
+    E(svg,'circle',{cx:x0+w,cy:y0,r:58,fill:'rgba(157,216,255,.10)',stroke:'#9dd8ff','stroke-width':2,'stroke-dasharray':'4,4'});
+    dragon(svg, x0+w, y0, 'フレース', '#102030', '#9dd8ff', 15);
+    labelText(svg, x0+w+62, y0+40, 'タゲサ', '#9dd8ff', 9);
+    labelText(svg, x0-14, oy-12, title, col, 12.5, 'start');
+    return {x0,y0,w,h};
+  }
+  // --- 頭下げ ---
+  let q=quad(40, '頭下げ = 最も近い2名 → タンクは密着', '#ff6070');
+  token(svg, q.x0+q.w-40, q.y0+22, 'MT', '#4da6ff', true, 13);
+  token(svg, q.x0+q.w-22, q.y0+48, 'ST', '#8fa8ff', true, 13);
+  dashCircle(svg, q.x0+q.w-40, q.y0+22, 34, '#ff9aa6');
+  dashCircle(svg, q.x0+q.w-22, q.y0+48, 34, '#ff9aa6');
+  labelText(svg, q.x0+q.w-124, q.y0+40, 'タゲサの中', '#ffc857', 10);
+  labelText(svg, q.x0+q.w-124, q.y0+52, '(踏む意識)', '#93a3c8', 9);
+  [['H1',0],['D1',1],['D3',2]].forEach(o=>token(svg, q.x0+22+o[1]*24, q.y0+q.h-42, o[0], '#7f8db0'));
+  [['H2',0],['D2',1],['D4',2]].forEach(o=>token(svg, q.x0+22+o[1]*24, q.y0+q.h-20, o[0], '#7f8db0'));
+  labelText(svg, q.x0+110, q.y0+q.h-30, '← 他はタゲサの外・手前の角へ', '#e9eefc', 9.5, 'start');
+  // --- 頭上げ ---
+  q=quad(250, '頭上げ = 最も遠い2名 → タンクは手前で分かれる', '#ffd24d');
+  token(svg, q.x0+18, q.y0+40, 'MT', '#4da6ff', true, 13);
+  token(svg, q.x0+80, q.y0+q.h-18, 'ST', '#8fa8ff', true, 13);
+  dashCircle(svg, q.x0+18, q.y0+40, 34, '#ff9aa6');
+  dashCircle(svg, q.x0+80, q.y0+q.h-18, 34, '#ff9aa6');
+  labelText(svg, q.x0+18, q.y0+16, 'MT=外側(壁側)', '#4da6ff', 9.5);
+  labelText(svg, q.x0+124, q.y0+q.h-14, 'ST=手前側', '#8fa8ff', 9.5, 'start');
+  [['H1',0],['D1',1],['D3',2]].forEach(o=>token(svg, q.x0+q.w-110+o[1]*24, q.y0+26, o[0], '#7f8db0'));
+  [['H2',0],['D2',1],['D4',2]].forEach(o=>token(svg, q.x0+q.w-110+o[1]*24, q.y0+50, o[0], '#7f8db0'));
+  labelText(svg, q.x0+q.w-62, q.y0+72, '他はフレースへ寄る', '#e9eefc', 9.5);
+  // 注記
+  E(svg,'rect',{x:20,y:412,width:360,height:40,rx:10,fill:'rgba(17,25,45,.92)',stroke:'#ff6070','stroke-width':2});
+  labelText(svg, 200, 428, 'タンク2人の円は重ねない(離す)。MT/STの担当はPTで固定', '#ff6070', 10);
+  labelText(svg, 200, 444, '距離はタゲサ中心基準。無敵はカータ用に温存→個人軽減+相方バフ', '#93a3c8', 9.5);
+})();
+
+// ===================== 図3: HW2(上=フレース・カメラ基準) =====================
+(function(){
+  const svg = document.getElementById('d3');
+  // フレース=上(奥)・自分は下から見上げる。翼は自分から見た左右。ニーズ=下(手前)。
+  function board(oy, mode){
+    const CX=200, CY=oy, H=78;
+    squareField(svg, CX, CY, H);
+    // 翼半面: 例=自分から見て右の翼が光る → 右半面が死
+    E(svg,'rect',{x:CX,y:CY-H,width:H,height:H*2,fill:'#6fd2ff',opacity:.16});
+    labelText(svg, CX+H/2, CY+4, '光った翼側', '#9dd8ff', 10);
+    labelText(svg, CX+H/2, CY+16, '=死', '#9dd8ff', 10);
+    // フレース(上・こちら向き)。翼=左右の三角
+    const fx=CX, fy=CY-H-18;
+    const wing=(dx,on)=>{
+      E(svg,'path',{d:`M${fx+dx*6},${fy-4} L${fx+dx*30},${fy+12} L${fx+dx*22},${fy-16} Z`,
+        fill:on?'rgba(255,210,77,.55)':'rgba(157,216,255,.18)',stroke:on?'#ffd24d':'#6f9ac8','stroke-width':on?2.5:1.5});
+      if(on) labelText(svg,fx+dx*36,fy+2,'光','#ffd24d',10,dx>0?'start':'end');
+    };
+    wing(-1,false); wing(1,true);
+    dragon(svg, fx, fy, 'フレース', '#102030', '#9dd8ff', 13);
+    dragon(svg, CX, CY+H+16, 'ニーズ', '#2a1015', '#ff6070', 11);
+    labelText(svg, CX-H-6, CY+H+20, '自分(カメラ)はこちら側', '#93a3c8', 8.5, 'end');
+    if(mode==='tail'){
+      // 中央直線(手前→奥)
+      E(svg,'rect',{x:CX-20,y:CY-H,width:40,height:H*2,fill:'#ff6070',opacity:.30});
+      labelText(svg, CX, CY-H/2+4, '中央', '#ff9aa6', 9.5);
+      labelText(svg, CX, CY-H/2+16, '直線', '#ff9aa6', 9.5);
+      // 安置=左半面の外周列(左壁沿い)
+      safeRect(svg, CX-H, CY-H, 26, H*2, '');
+      const x=CX-H+13;
+      token(svg, x, CY-H+14, 'MT', '#4da6ff', true, 9); token(svg, x, CY-H+34, 'ST', '#8fa8ff', true, 9);
+      ['D1','D2','H1','H2','D3','D4'].forEach((n,i)=>token(svg, x, CY-H+56+i*19, n, '#7f8db0', false, 8));
+      labelText(svg, CX-H-6, CY-H+18, '外周列', '#4ade80', 11, 'end');
+      labelText(svg, CX-H-6, CY-H+32, '(壁際)', '#93a3c8', 9, 'end');
+    }else{
+      // 両サイド(左右の壁側)
+      E(svg,'rect',{x:CX-H,y:CY-H,width:H-16,height:H*2,fill:'#ff6070',opacity:.30});
+      E(svg,'rect',{x:CX+16,y:CY-H,width:H-16,height:H*2,fill:'#ff6070',opacity:.30});
+      labelText(svg, CX-H/2-8, CY-H/2+4, '両サイド', '#ff9aa6', 9.5);
+      // 安置=中央ラインの左側(狭い)
+      safeRect(svg, CX-16, CY-H, 16, H*2, '');
+      const x=CX-8;
+      token(svg, x, CY-H+14, 'MT', '#4da6ff', true, 8); token(svg, x, CY-H+34, 'ST', '#8fa8ff', true, 8);
+      ['D1','D2','H1','H2','D3','D4'].forEach((n,i)=>token(svg, x, CY-H+56+i*19, n, '#7f8db0', false, 7));
+      labelText(svg, CX-H-6, CY-H+18, '中央列', '#4ade80', 11, 'end');
+      labelText(svg, CX-H-6, CY-H+32, '狭い!矢印側', '#ffc857', 9, 'end');
+    }
+  }
+  labelText(svg, 4, 24, 'ホットテイル→外周列(壁際)', '#ff6070', 11, 'start');
+  board(118, 'tail');
+  labelText(svg, 4, 250, 'ホットウィング→中央列', '#ffd24d', 11, 'start');
+  board(336, 'wing');
+  labelText(svg, 200, 446, '図は頭下げ(タンク=フレース側=奥)。頭上げならタンクは手前端へ', '#e9eefc', 9.5);
+  labelText(svg, 200, 459, '薙ぎは半面より少し広い→中央列は境界に寄りすぎない。着弾後 滅殺③ ST→D1 中央', '#c96bff', 9);
+})();
+</script>
+
+<script>
+const sheet = document.getElementById('sheet');
+function fitStage(){
+  const W=1280,H=720;
+  const scale = Math.min(window.innerWidth/W, window.innerHeight/H);
+  sheet.style.transform = `translate(-50%,-50%) scale(${scale})`;
+}
+window.addEventListener('resize', fitStage);
+fitStage();
+</script>
+</body>
+</html>
