@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>絶竜詩 フィールド＆マーカー 印刷用</title>
+<style>
+  @page { size: A4 portrait; margin: 10mm; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #fff; color: #222; font-family: "Yu Gothic UI","Meiryo","Hiragino Sans",sans-serif; }
+  body { display: flex; flex-direction: column; align-items: center; padding: 8mm 6mm; }
+  h1 { font-size: 18px; margin: 0 0 4px; letter-spacing: .04em; }
+  .sub { font-size: 11px; color: #555; margin-bottom: 6px; }
+  svg { width: 100%; max-width: 190mm; height: auto; display: block; }
+  .legend { display: flex; gap: 14px; font-size: 12px; margin-top: 8px; flex-wrap: wrap; justify-content: center; }
+  .legend span { display: inline-flex; align-items: center; gap: 5px; }
+  .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; border: 1px solid #333; }
+  .toolbar { margin-bottom: 8px; }
+  .toolbar button { font-size: 13px; padding: 5px 14px; cursor: pointer; }
+  @media print { .toolbar { display: none; } body { padding: 0; } }
+</style>
+</head>
+<body>
+<div class="toolbar"><button onclick="window.print()">🖨 印刷</button></div>
+<h1>絶竜詩戦争　フィールド &amp; フィールドマーカー（全体図）</h1>
+<div class="sub">上=北。A/1=赤、B/2=黄、C/3=青、D/4=紫（ゲーム準拠）。円形フィールド、外周に8マーカー。</div>
+
+<svg viewBox="0 0 720 720" xmlns="http://www.w3.org/2000/svg" id="field"></svg>
+
+<div class="legend">
+  <span><i style="background:#e8404d"></i>A / 1 = 赤</span>
+  <span><i style="background:#f2c230"></i>B / 2 = 黄</span>
+  <span><i style="background:#3a8ef0"></i>C / 3 = 青</span>
+  <span><i style="background:#a558e6"></i>D / 4 = 紫</span>
+</div>
+
+<script>
+(function(){
+  const svg = document.getElementById('field');
+  const NS = 'http://www.w3.org/2000/svg';
+  const CX = 360, CY = 360, R = 290;
+  const el = (t, a, parent=svg) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); parent.appendChild(e); return e; };
+  const pol = (deg, r) => ({ x: CX + r*Math.sin(deg*Math.PI/180), y: CY - r*Math.cos(deg*Math.PI/180) });
+
+  // 外周(段差・縁取り)
+  el('circle', {cx:CX, cy:CY, r:R+14, fill:'#d9d4c8', stroke:'#8a8378', 'stroke-width':2});
+  el('circle', {cx:CX, cy:CY, r:R, fill:'#efece4', stroke:'#7a7368', 'stroke-width':3});
+  // 石畳リング
+  [0.82, 0.62, 0.42, 0.22].forEach(k => el('circle', {cx:CX, cy:CY, r:R*k, fill:'none', stroke:'#b9b3a6', 'stroke-width':1.2, 'stroke-dasharray':'6 5'}));
+  // 中央紋章
+  el('circle', {cx:CX, cy:CY, r:R*0.12, fill:'#e3ded2', stroke:'#8a8378', 'stroke-width':2});
+  el('circle', {cx:CX, cy:CY, r:4, fill:'#6b655a'});
+
+  // 8方向の補助線
+  for (let a = 0; a < 360; a += 45) {
+    const p1 = pol(a, R*0.12), p2 = pol(a, R);
+    el('line', {x1:p1.x, y1:p1.y, x2:p2.x, y2:p2.y, stroke: a%90===0 ? '#9c968a' : '#c9c3b6', 'stroke-width': a%90===0 ? 1.6 : 1, 'stroke-dasharray': a%90===0 ? '' : '4 6'});
+  }
+
+  // 方位ラベル(外側)
+  const dirs = [['北',0],['東',90],['南',180],['西',270]];
+  dirs.forEach(([t,a]) => {
+    const p = pol(a, R+48);
+    const g = el('g', {});
+    el('text', {x:p.x, y:p.y+7, 'text-anchor':'middle', 'font-size':20, 'font-weight':'bold', fill:'#333'}, g).textContent = t;
+  });
+
+  // マーカー
+  const markers = [
+    {t:'A', a:0,   c:'#e8404d'},
+    {t:'1', a:45,  c:'#e8404d'},
+    {t:'B', a:90,  c:'#f2c230'},
+    {t:'2', a:135, c:'#f2c230'},
+    {t:'C', a:180, c:'#3a8ef0'},
+    {t:'3', a:225, c:'#3a8ef0'},
+    {t:'D', a:270, c:'#a558e6'},
+    {t:'4', a:315, c:'#a558e6'},
+  ];
+  markers.forEach(m => {
+    const p = pol(m.a, R-30);
+    const g = el('g', {});
+    const isLetter = /[A-D]/.test(m.t);
+    if (isLetter) {
+      el('circle', {cx:p.x, cy:p.y, r:24, fill:m.c, stroke:'#222', 'stroke-width':2.5}, g);
+    } else {
+      el('rect', {x:p.x-22, y:p.y-22, width:44, height:44, rx:6, fill:m.c, stroke:'#222', 'stroke-width':2.5}, g);
+    }
+    el('text', {x:p.x, y:p.y+9, 'text-anchor':'middle', 'font-size':26, 'font-weight':'bold', fill:'#fff', stroke:'#222', 'stroke-width':0.8}, g).textContent = m.t;
+  });
+})();
+</script>
+</body>
+</html>
