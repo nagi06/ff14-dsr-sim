@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>P7 最終 スイッチ順(誰が1位か)図解</title>
+<!--
+  2026-09-21 新規作成。ハムカツさん動画「文字を読みたくない人のための騎竜神トールダン【解説】」の
+  最終フェーズタイムライン(毎ギミック詠唱中にスイッチ→AA2発)を、
+  「そのギミックの後は MT/ST どちらがヘイト1位(=AAを正面で受ける)か」で並べた1枚図。
+  開幕は動画の図の通り ST=1位・MT=2位 を既定とした。Hosiume資料の交代則
+  (エクサ1・3回目後=戦士(MT)が真北/2回目=暗黒(ST)、アクモーン1・3回目後=暗黒MT/2回目後=戦士MT)と一致する。
+  固定によっては開幕MT1位で始めるので、上のボタンで全段反転できる。
+  AA(トリニティ)は 1位・2位・ボス直下の担当 の3人に当たる。担当はハムカツマクロ:
+  エクサ後 H1→H2、アクモーン後 D1→D2、ギガフレア後 D3→D4(3周目は最初に戻る)。
+-->
+<style>
+  :root{
+    --bg:#0a1020; --line:rgba(124,160,224,.20);
+    --accent:#7cc4ff; --accent-2:#a78bfa; --good:#4ade80; --bad:#ff6070; --warn:#ffc857; --purple:#c96bff;
+    --text:#e9eefc; --dim:#93a3c8; --mt:#4da6ff; --st:#c96bff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{width:100%;height:100%;background:#000;color:var(--text);
+    font-family:"Hiragino Sans","Yu Gothic",system-ui,sans-serif;overflow:hidden;}
+  #stage{position:fixed;inset:0;}
+  #sheet{
+    position:absolute;left:50%;top:50%;transform-origin:center center;
+    width:1280px;height:720px;
+    background:
+      radial-gradient(700px 420px at 12% -6%, rgba(66,108,232,.22), transparent 62%),
+      radial-gradient(600px 380px at 102% 4%, rgba(150,92,240,.16), transparent 60%),
+      var(--bg);
+    display:flex;flex-direction:column;padding:14px 22px 12px;border-radius:6px;
+  }
+  header{display:flex;align-items:center;gap:14px;margin-bottom:8px;}
+  header h1{font-size:22px;font-weight:800;white-space:nowrap;
+    background:linear-gradient(100deg,#fff 6%,var(--accent) 52%,var(--accent-2) 96%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;}
+  header .sub{font-size:12px;color:var(--dim);line-height:1.35;flex:1;}
+  .btn{
+    border:2px solid var(--warn);color:var(--warn);background:rgba(42,32,10,.6);
+    border-radius:10px;padding:6px 14px;font-size:14px;font-weight:bold;cursor:pointer;white-space:nowrap;
+  }
+  .btn.alt{border-color:#ff9dc7;color:#ff9dc7;background:rgba(42,22,51,.7);}
+  #main{flex:1;display:grid;grid-template-columns:1fr 330px;gap:12px;min-height:0;}
+  #rows{display:grid;grid-template-rows:repeat(10,1fr);gap:4px;min-height:0;}
+  .row{
+    display:grid;grid-template-columns:150px 44px 1fr 1fr 150px;align-items:center;gap:8px;
+    background:linear-gradient(180deg,rgba(34,47,80,.80),rgba(17,25,45,.72));
+    border:1px solid var(--line);border-radius:10px;padding:2px 10px;min-height:0;
+  }
+  .row.head{background:none;border:none;color:var(--dim);font-size:11px;padding:0 10px;}
+  .row.head div{text-align:center;}
+  .gim{font-size:16px;font-weight:800;}
+  .gim.exa{color:#ffd24d;} .gim.akh{color:#5ee6ff;} .gim.giga{color:#ff6070;} .gim.morn{color:#fff;}
+  .sw{font-size:18px;text-align:center;color:var(--warn);}
+  .tank{display:flex;align-items:center;justify-content:center;gap:6px;font-size:14px;}
+  .chip{
+    display:inline-block;min-width:44px;text-align:center;padding:3px 8px;border-radius:7px;
+    font-weight:900;font-size:16px;color:#fff;border:2px solid transparent;
+  }
+  .chip.MT{background:#1f4fa0;border-color:#4da6ff;}
+  .chip.ST{background:#5a2a8c;border-color:#c96bff;}
+  .chip.dps{background:#a02020;border-color:#ff8080;font-size:14px;min-width:40px;}
+  .chip.heal{background:#1f6a30;border-color:#4ade80;font-size:14px;min-width:40px;}
+  .lbl{color:var(--dim);font-size:11px;}
+  .first{outline:2px solid var(--warn);outline-offset:2px;}
+  .note{font-size:12px;color:var(--warn);text-align:center;}
+  .row.morn .note{color:#ff9dc7;}
+  #side{
+    display:flex;flex-direction:column;gap:8px;min-height:0;
+  }
+  .box{
+    background:linear-gradient(180deg,rgba(34,47,80,.80),rgba(17,25,45,.72));
+    border:1px solid var(--line);border-radius:12px;padding:8px 10px;
+  }
+  .box h2{font-size:13.5px;color:var(--accent);font-weight:800;margin-bottom:4px;}
+  .box p,.box li{font-size:12px;line-height:1.45;color:var(--text);}
+  .box ul{padding-left:16px;}
+  b{color:var(--warn);}
+  .mt{color:var(--mt);font-weight:bold;} .st{color:var(--st);font-weight:bold;}
+  #credit{position:absolute;right:24px;bottom:2px;font-size:10px;color:var(--dim);opacity:.75;}
+</style>
+</head>
+<body>
+<div id="stage"><div id="sheet">
+  <header>
+    <h1>P7 最終「誰が1位か」スイッチ順</h1>
+    <div class="sub">毎ギミック<b>詠唱中に挑発＋スタンスON/OFF</b>で交代 → その後のAA(トリニティ)2発を新1位が正面で受ける。<br>
+      黄枠=そのギミック後の<b>ヘイト1位(実質MT)</b>。担当=ボス直下でAA3発目を受ける人(ハムカツマクロ)。</div>
+    <button class="btn" id="tog">開幕1位: <span id="togv">ST</span>(押すと反転)</button>
+  </header>
+
+  <div id="main">
+    <div id="rows">
+      <div class="row head"><div>ギミック</div><div></div><div>1位(A側・正面)</div><div>2位(1位の横)</div><div>AA担当(ボス直下)</div></div>
+    </div>
+
+    <div id="side">
+      <div class="box">
+        <h2>読み方</h2>
+        <ul>
+          <li>ギミックの<b>詠唱が見えたら</b>2位が挑発、1位はスタンスOFF。着弾後、新1位がスタンスON。</li>
+          <li>AAは1位・2位・ボス直下の3人に当たる。1位は<b>A側</b>、2位は<b>1位の横</b>。</li>
+          <li>交代は挑発とスタンスだけ。<b>声かけを毎回</b>。</li>
+        </ul>
+      </div>
+      <div class="box">
+        <h2>戦士(元MT)の目線</h2>
+        <ul>
+          <li>開幕ST1位なら、自分が1位になるのは<b>エクサ1・3回目後 / ギガフレア1回目後 / アクモーン2回目後</b>。</li>
+          <li>アクモーンは<b>1回目バフ全部、2回目TLB3、3回目は固定ルール(1・1・6なら無敵)</b>。ホルムギャングは1回目に使わない。</li>
+          <li>ギガフレアは1位がA向きを維持。向きが崩れると全員の安置判断が壊れる。</li>
+        </ul>
+      </div>
+      <div class="box">
+        <h2>開幕の1位が違う固定は</h2>
+        <p>上のボタンで全段反転。Hosiume資料の交代則(エクサ1・3回目後=戦士が真北、アクモーン1・3回目後=暗黒MT)は<b>開幕ST1位</b>と一致。</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="credit">タイムライン出典: ハムカツさん「文字を読みたくない人のための騎竜神トールダン【解説】」/ 交代則の照合: Hosiume Sanさん資料</div>
+</div></div>
+
+<script>
+const gims=[
+  {n:'エクサフレア①',c:'exa',t:'H1',tc:'heal'},
+  {n:'アクモーン①',c:'akh',t:'D1',tc:'dps',note:'南でタンク頭割り・バフ全部'},
+  {n:'ギガフレア①',c:'giga',t:'D3',tc:'dps'},
+  {n:'エクサフレア②',c:'exa',t:'H2',tc:'heal'},
+  {n:'アクモーン②',c:'akh',t:'D2',tc:'dps',note:'タンクLB3(「ク・」で発動)'},
+  {n:'ギガフレア②',c:'giga',t:'D4',tc:'dps'},
+  {n:'エクサフレア③',c:'exa',t:'H1',tc:'heal'},
+  {n:'アクモーン③',c:'akh',t:'D1',tc:'dps',note:'固定ルール確認(1・1・6=各自無敵)'},
+  {n:'モーンアファー',c:'morn',t:'',tc:'',note:'時間切れ前。1回目←H1↓MT→H2 / 2回目←D3↓ST→D4'},
+];
+let openFirst='ST';
+function render(){
+  document.getElementById('togv').textContent=openFirst;
+  const rows=document.getElementById('rows');
+  rows.querySelectorAll('.row:not(.head)').forEach(e=>e.remove());
+  let first=openFirst, second=openFirst==='ST'?'MT':'ST';
+  gims.forEach((g,i)=>{
+    const r=document.createElement('div');r.className='row '+g.c;
+    if(g.c==='morn'){
+      r.innerHTML=`<div class="gim morn">${g.n}</div><div class="sw"></div>
+        <div class="note" style="grid-column:3/6">${g.note}</div>`;
+      rows.appendChild(r);return;
+    }
+    [first,second]=[second,first];
+    r.innerHTML=`<div class="gim ${g.c}">${g.n}</div><div class="sw">⇄</div>
+      <div class="tank"><span class="chip ${first} first">${first}</span><span class="lbl">が挑発→1位</span></div>
+      <div class="tank"><span class="chip ${second}">${second}</span><span class="lbl">スタンスOFF→2位</span></div>
+      <div class="tank"><span class="chip ${g.tc}">${g.t}</span></div>`;
+    if(g.note){const n=document.createElement('div');n.className='note';n.style.gridColumn='1/6';n.textContent=g.note;
+      r.style.gridTemplateRows='auto auto';r.appendChild(n);}
+    rows.appendChild(r);
+  });
+}
+document.getElementById('tog').addEventListener('click',()=>{openFirst=openFirst==='ST'?'MT':'ST';render();});
+render();
+
+const sheet=document.getElementById('sheet');const W=1280,H=720;
+function fitStage(){const s=Math.min(window.innerWidth/W,window.innerHeight/H);sheet.style.transform=`translate(-50%,-50%) scale(${s})`;}
+window.addEventListener('resize',fitStage);fitStage();
+</script>
+</body>
+</html>
