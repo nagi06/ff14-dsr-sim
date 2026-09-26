@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>P3 サイコロ① → 塔③(Cマカ側) 牙尾ルート 図解(1枚)</title>
+<!--
+  2026-09-27 新規作成 / 同日 本人指摘で修正(ルート=タゲサのフチ・塔=真横・NG面削除・ゲイルスコグルは詠唱を見てから移動)。
+  自分=サイコロ①の「真ん中担当」が、連旋2回目が【牙尾(外→中)】だったときに
+  Cマカ側(真下)の塔③を踏みに行くルートの図解。
+  本人の申告した実際の動き:
+    ・A側(頭割り②の位置=すでに外)から出発。そこから外周へは膨らまない
+    ・ボスのタゲサのフチぎりぎりを時計回り(外周まで膨らむと間に合わない)
+    ・B側の塔を通過するあたりで1発目(外処理)が終わる → ボスと自分の塔の間までしっかり中へ(牙尾)
+    ・Cマカ側(真下)の塔③を踏む
+    ・A/B/C等のマーカーは「方向の目安」。経由しない
+  塔①③の位置: 左右の塔はD/Bマーカーと同じ高さ(真横270°/90°)、真ん中は真下180°。
+  (文字起こし「左側・後方・右側のターゲットサークル上」準拠。
+   シミュ・カンペも同日に真横へ修正済み)
+  半径比はシミュレータ準拠: フィールド195 / タゲサ100 / 塔110 / 頭割り115。
+  形式・スケーリング(fitStage)・UI v2パレットは p5_fuusou_numa_onepage.html を流用。
+-->
+<style>
+  :root{
+    --bg:#0a1020; --line:rgba(124,160,224,.20);
+    --accent:#7cc4ff; --accent-2:#a78bfa; --good:#4ade80; --bad:#ff6070; --warn:#ffc857;
+    --text:#e9eefc; --dim:#93a3c8;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{width:100%;height:100%;background:#000;color:var(--text);
+    font-family:"Hiragino Sans","Yu Gothic",system-ui,sans-serif;overflow:hidden;}
+  #stage{position:fixed;inset:0;}
+  #sheet{position:absolute;left:50%;top:50%;transform-origin:center center;
+    width:1280px;height:720px;
+    background:
+      radial-gradient(700px 420px at 12% -6%, rgba(66,108,232,.22), transparent 62%),
+      radial-gradient(600px 380px at 102% 4%, rgba(150,92,240,.16), transparent 60%),
+      var(--bg);
+    display:flex;flex-direction:column;padding:14px 20px 12px;border-radius:6px;}
+  header{display:flex;align-items:center;gap:16px;margin-bottom:8px;}
+  header h1{font-size:23px;font-weight:800;white-space:nowrap;
+    background:linear-gradient(100deg,#fff 6%,var(--accent) 52%,var(--accent-2) 96%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;}
+  #ruleNote{background:linear-gradient(135deg,rgba(42,22,51,.85),rgba(26,16,34,.78));
+    border:2px solid #ff9dc7;border-radius:10px;padding:5px 14px;
+    font-size:16px;font-weight:bold;color:#ff9dc7;white-space:nowrap;}
+  header .sub{font-size:12px;color:var(--dim);line-height:1.45;}
+  .row{flex:1;display:flex;gap:11px;min-height:0;}
+  .box{background:linear-gradient(180deg,rgba(34,47,80,.80),rgba(17,25,45,.72));
+    border:1px solid var(--line);border-radius:13px;padding:7px 9px 5px;
+    display:flex;flex-direction:column;min-height:0;min-width:0;
+    box-shadow:0 18px 40px -28px #000, inset 0 1px 0 rgba(255,255,255,.06);}
+  .box h2{font-size:14px;color:var(--accent);font-weight:800;text-align:center;margin-bottom:2px;}
+  .box.ng h2{color:var(--bad);}
+  .box .cap{font-size:11px;color:var(--dim);text-align:center;line-height:1.4;margin-bottom:2px;}
+  .box svg{flex:1;width:100%;min-height:0;}
+  ul.pt{font-size:11.5px;line-height:1.5;padding-left:15px;margin-top:4px;}
+  ul.pt li{margin-bottom:3px;}
+  ol.tl{list-style:none;counter-reset:s;font-size:12px;line-height:1.5;}
+  ol.tl li{counter-increment:s;position:relative;padding-left:22px;margin-bottom:7px;}
+  ol.tl li::before{content:counter(s);position:absolute;left:0;top:1px;
+    width:16px;height:16px;border-radius:50%;font-size:10.5px;font-weight:800;
+    display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(140deg,var(--accent),var(--accent-2));color:#06101f;}
+  .cmp{margin-top:auto;border-top:1px dashed var(--line);padding-top:5px;}
+  .cmp .t{font-size:11.5px;color:var(--dim);line-height:1.45;}
+  .cmp svg{height:112px;flex:none;}
+  #notes{margin-top:9px;background:linear-gradient(180deg,rgba(34,47,80,.80),rgba(17,25,45,.72));
+    border:1px solid var(--line);border-radius:11px;padding:7px 16px;font-size:12px;line-height:1.55;}
+  b{color:var(--warn);}
+  .g{color:var(--good);font-weight:bold;} .r{color:var(--bad);font-weight:bold;}
+  .a{color:var(--accent);font-weight:bold;} .y{color:#ffd24d;font-weight:bold;}
+  .bl{color:#4da6ff;font-weight:bold;} .pu{color:#c07aff;font-weight:bold;}
+
+  /* ===== 縦持ち(スマホ)：16:9の縮小をやめて縦1列でスクロール ===== */
+  @media (orientation: portrait){
+    html,body{height:auto;overflow:auto;background:var(--bg);}
+    #stage{position:static;}
+    #sheet{position:static;transform:none!important;width:100%;height:auto;
+      padding:14px 16px 24px;border-radius:0;}
+    header{flex-direction:column;align-items:stretch;gap:8px;margin-bottom:12px;}
+    header h1{white-space:normal;font-size:21px;line-height:1.35;}
+    #ruleNote{text-align:center;font-size:15px;white-space:normal;}
+    header .sub{font-size:13px;line-height:1.6;}
+    header .sub br{display:none;}
+    .row{flex-direction:column;gap:12px;}
+    .box{flex:none!important;padding:10px 12px 10px;}
+    .box h2{font-size:16px;}
+    .box .cap{font-size:13px;margin-bottom:4px;}
+    .box svg{flex:none;height:auto;}
+    #main{aspect-ratio:420/448;}
+    #zoom{aspect-ratio:390/432;}
+    ol.tl{font-size:14px;line-height:1.6;}
+    ol.tl li{padding-left:26px;margin-bottom:10px;}
+    ol.tl li::before{width:19px;height:19px;font-size:12px;top:2px;}
+    .cmp{margin-top:6px;padding-top:8px;}
+    .cmp .t{font-size:13px;}
+    .cmp svg{height:130px;}
+    #notes{margin-top:12px;font-size:13.5px;line-height:1.7;padding:10px 14px;}
+  }
+</style>
+</head>
+<body>
+<div id="stage"><div id="sheet">
+  <header>
+    <h1>P3 サイコロ① → 塔③(<span style="color:#4da6ff">Cマカ</span>側)「牙尾」ルート</h1>
+    <div id="ruleNote">タゲサのフチぎりぎりを回る</div>
+    <div class="sub">自分=<b>サイコロ①の真ん中担当</b>。上=北(Aマカ)。連旋2回目が<b>牙尾(外→中)</b>のとき、頭割り②の位置(<b>すでに外</b>)から<br>
+      <span class="g">タゲサのフチをなぞって時計回り</span> → B側の塔を通過 → <span class="a">ボスと塔の間までしっかり中へ</span> → <span class="bl">Cマカ側の塔③</span>。マーカーは<b>方向の目安</b>。</div>
+  </header>
+
+  <div class="row">
+    <div class="box" style="flex:1.16;">
+      <h2>① 全体ルート</h2>
+      <div class="cap"><span class="g">緑=外フェーズ(1発目・足元範囲)</span> ／ <span class="a">青=中フェーズ(2発目・円範囲)</span>。<b>外周へは膨らまない</b>。</div>
+      <svg id="main" viewBox="0 0 420 448" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+
+    <div class="box" style="flex:1.1;">
+      <h2>② 拡大図：B側の塔〜C塔</h2>
+      <div class="cap">B側の塔(<span class="y">2番の担当</span>)は<b>通過するだけ</b>。ここで外処理が終わる → <b>ボスと自分の塔の間までしっかり中へ</b> → C塔へ。</div>
+      <svg id="zoom" viewBox="150 90 390 432" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+
+    <div class="box" style="flex:0.95;">
+      <h2>③ 手順</h2>
+      <ol class="tl">
+        <li><b>頭割り②</b>(A側タゲサのフチ)。この位置が<b>すでに外</b>。並行して3番が<b>塔③を設置</b>。</li>
+        <li>詠唱が<b>牙尾</b> → <span class="g">膨らまずに、タゲサのフチぎりぎりを時計回り</span>(B方向へ)。</li>
+        <li><span class="y">B側の塔の上を通過</span>。このあたりで<b>1発目(外)が終わる</b>。</li>
+        <li><span class="a">しっかり中へ</span>(ボスと自分の塔の間まで。2発目=円範囲は中が安置) → 外へ一歩出て<span class="bl">Cマカ側(真下)の塔③</span>を踏む。</li>
+        <li>踏んだら<b>塔の外周側</b>に立って分身の<b>ゲイルスコグル</b>を誘導 → <b>詠唱が見えてから移動</b>してA側へ集合。</li>
+      </ol>
+      <div class="cmp">
+        <div class="t"><b>尾牙</b>(中→外)だったら…<br><span class="pu">ボス下を中央突破</span>で真下の塔へ。</div>
+        <svg id="biba" viewBox="0 0 220 120" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+    </div>
+  </div>
+
+  <div id="notes">
+    <b>事故ポイント</b>：
+    ① <span class="r">B側の塔で減速・停止すると2人踏み</span>(通過するだけ) ／
+    ② B側の塔を過ぎても<span class="r">フチをなぞり続ける</span>と2発目の円範囲に当たる(<b>ここで内側へ切る</b>) ／
+    ③ 塔を踏んで<span class="r">すぐ動く</span>とゲイルスコグルが味方を向く(<b>詠唱が見えてから移動</b>)。
+  </div>
+</div></div>
+
+<script>
+const ns='http://www.w3.org/2000/svg';
+function E(p,t,a,txt){const e=document.createElementNS(ns,t);for(const k in a)e.setAttribute(k,a[k]);if(txt!=null)e.textContent=txt;p.appendChild(e);return e;}
+function pol(C,ang,r){const rad=ang*Math.PI/180;return{x:C.cx+r*Math.sin(rad),y:C.cy-r*Math.cos(rad)};}
+
+// マーカー色はゲーム準拠: A/1=赤, B/2=黄, C/3=青, D/4=紫
+const MC=[['A','#ff5c5c',0],['1','#ff5c5c',45],['B','#ffd24d',90],['2','#ffd24d',135],
+          ['C','#4da6ff',180],['3','#4da6ff',225],['D','#c07aff',270],['4','#c07aff',315]];
+// 半径比 (シミュレータ: フィールド195 / タゲサ100 / 塔110 / 頭割り115)
+const K_TGT=0.513, K_TOWER=0.564, K_STACK=0.59, K_MARK=0.89;
+// 塔③: 左右はD/Bと同じ高さ(真横)、真ん中は真下
+const T_LEFT=270, T_MID=180, T_RIGHT=90;
+const GREEN='#3ddc84', BLUE='#7cc4ff', GOLD='#ffd24d', NG='#ff5a6a';
+
+function field(svg,C){
+  E(svg,'circle',{cx:C.cx,cy:C.cy,r:C.R,fill:'#101625',stroke:'#3a4a70','stroke-width':2});
+  for(let a=0;a<360;a+=45){const p=pol(C,a,C.R);
+    E(svg,'line',{x1:C.cx,y1:C.cy,x2:p.x,y2:p.y,stroke:'#1d2740','stroke-width':1});}
+  // タゲサ(ルートの基準なので少し強め)
+  E(svg,'circle',{cx:C.cx,cy:C.cy,r:C.R*K_TGT,fill:'rgba(138,90,58,.08)',stroke:'#b07a52','stroke-width':C.R*0.012,'stroke-dasharray':'5,4'});
+  MC.forEach(function(m){
+    var p=pol(C,m[2],C.R*K_MARK), s=C.R*0.062;
+    E(svg,'circle',{cx:p.x,cy:p.y,r:s,fill:'#141b2c',stroke:m[1],'stroke-width':C.R*0.013,opacity:.9});
+    E(svg,'text',{x:p.x,y:p.y+s*0.38,fill:m[1],'font-size':s*1.25,'font-weight':'bold','text-anchor':'middle'},m[0]);});
+  var br=C.R*0.105;
+  E(svg,'circle',{cx:C.cx,cy:C.cy,r:br,fill:'#3a2233',stroke:'#ff9dc7','stroke-width':C.R*0.013});
+  E(svg,'text',{x:C.cx,y:C.cy+br*0.4,fill:'#ff9dc7','font-size':br*1.1,'text-anchor':'middle'},'竜');
+}
+function tower(svg,C,ang,label,mine){
+  var p=pol(C,ang,C.R*K_TOWER), s=C.R*0.085;
+  E(svg,'rect',{x:p.x-s,y:p.y-s,width:s*2,height:s*2,rx:s*0.32,
+    fill:mine?'#12304a':'#241c3c',stroke:mine?BLUE:'#8f7ad0','stroke-width':mine?C.R*0.02:C.R*0.012,opacity:mine?1:.9});
+  E(svg,'text',{x:p.x,y:p.y+s*0.4,fill:mine?'#bfe4ff':'#c5b6ef','font-size':s*1.05,'font-weight':'bold','text-anchor':'middle'},'③');
+  if(label) E(svg,'text',{x:p.x,y:p.y+s*2.3,fill:mine?BLUE:'#a795e0','font-size':C.R*0.07,'font-weight':'bold','text-anchor':'middle'},label);
+  return p;
+}
+function towers(svg,C,labels){
+  labels=labels||['','',''];
+  tower(svg,C,T_LEFT,labels[0],false); tower(svg,C,T_RIGHT,labels[2],false);
+  return tower(svg,C,T_MID,labels[1],true);
+}
+function seg(C,a0,r0,a1,r1,n){var o=[];for(var i=0;i<=n;i++){var t=i/n;o.push(pol(C,a0+(a1-a0)*t,r0+(r1-r0)*t));}return o;}
+// 2次ベジェ: 中点 mid を通るように制御点を逆算
+function quadThrough(p0,mid,p2,n){
+  var q={x:2*mid.x-(p0.x+p2.x)/2, y:2*mid.y-(p0.y+p2.y)/2}, o=[];
+  for(var i=0;i<=n;i++){var t=i/n,u=1-t;
+    o.push({x:u*u*p0.x+2*u*t*q.x+t*t*p2.x, y:u*u*p0.y+2*u*t*q.y+t*t*p2.y});}
+  return o;
+}
+function line(svg,pts,col,w,dash){
+  var d='M'+pts.map(function(p){return p.x.toFixed(1)+','+p.y.toFixed(1);}).join(' L');
+  E(svg,'path',{d:d,fill:'none',stroke:col,'stroke-width':w,'stroke-linecap':'round','stroke-linejoin':'round',
+    'stroke-dasharray':dash||'none',opacity:.95});
+}
+function head(svg,p1,p2,col,s){
+  var a=Math.atan2(p2.y-p1.y,p2.x-p1.x);s=s||11;
+  E(svg,'path',{d:'M'+p2.x+','+p2.y+' L'+(p2.x-s*Math.cos(a-0.42))+','+(p2.y-s*Math.sin(a-0.42))+
+    ' L'+(p2.x-s*Math.cos(a+0.42))+','+(p2.y-s*Math.sin(a+0.42))+' Z',fill:col});
+}
+function badge(svg,p,txt,col,r){
+  r=r||10;
+  E(svg,'circle',{cx:p.x,cy:p.y,r:r,fill:'#06101f',stroke:col,'stroke-width':2.2});
+  E(svg,'text',{x:p.x,y:p.y+r*0.37,fill:col,'font-size':r*1.15,'font-weight':'bold','text-anchor':'middle'},txt);
+}
+function me(svg,p,r){
+  r=r||9;
+  E(svg,'circle',{cx:p.x,cy:p.y,r:r*1.5,fill:'none',stroke:'#fff','stroke-width':1,opacity:.35});
+  E(svg,'circle',{cx:p.x,cy:p.y,r:r,fill:'#fff',stroke:BLUE,'stroke-width':2});
+  E(svg,'text',{x:p.x,y:p.y+r*0.38,fill:'#06101f','font-size':r*0.95,'font-weight':'bold','text-anchor':'middle'},'私');
+}
+
+/* ルート(全図共通)
+   外: 頭割り②(0°) → タゲサのフチを時計回り → B側の塔(90°)
+   中: B側の塔 → ボスと自分の塔の間(しっかり中) → C側の塔(180°) */
+function routeOuter(C){ return seg(C,0,C.R*K_STACK,84,C.R*0.572,20).concat([pol(C,T_RIGHT,C.R*K_TOWER)]); }
+// 4=ボスと自分の塔(真下)の間まで、しっかり中に入る
+const P4_ANG=168, P4_K=0.28;
+function routeInner(C){ return quadThrough(pol(C,T_RIGHT,C.R*K_TOWER), pol(C,125,C.R*0.40), pol(C,P4_ANG,C.R*P4_K), 18).concat([pol(C,T_MID,C.R*K_TOWER)]); }
+function drawRoute(svg,C,w,hs){
+  var o=routeOuter(C), i=routeInner(C);
+  line(svg,o,GREEN,w); head(svg,o[9],o[11],GREEN,hs);
+  line(svg,i,BLUE,w); head(svg,i[i.length-2],i[i.length-1],BLUE,hs);
+  return {o:o,i:i};
+}
+
+/* ===================== ① 全体ルート ===================== */
+(function(){
+  var svg=document.getElementById('main');
+  var C={cx:210,cy:196,R:152};
+  field(svg,C);
+  var tMine=towers(svg,C,['左=2番','自分','右=2番']);
+  var st=pol(C,0,C.R*K_STACK);
+  E(svg,'circle',{cx:st.x,cy:st.y,r:17,fill:'none',stroke:GOLD,'stroke-width':1.8,'stroke-dasharray':'5,4'});
+  E(svg,'text',{x:st.x-24,y:st.y+4,fill:GOLD,'font-size':11,'font-weight':'bold','text-anchor':'end'},'頭割り②(もう外)');
+  var R=drawRoute(svg,C,5,12);
+  // 注記: フチをなぞる
+  var lp=pol(C,42,C.R*0.74);
+  E(svg,'text',{x:lp.x+6,y:lp.y,fill:GREEN,'font-size':11.5,'font-weight':'bold','text-anchor':'start'},'タゲサのフチ');
+  E(svg,'text',{x:lp.x+6,y:lp.y+14,fill:GREEN,'font-size':11.5,'font-weight':'bold','text-anchor':'start'},'ぎりぎり');
+  // バッジ
+  var tR=pol(C,T_RIGHT,C.R*K_TOWER), s=C.R*0.085;
+  badge(svg,st,'1',GOLD);
+  badge(svg,pol(C,45,C.R*0.58),'2',GREEN);
+  badge(svg,{x:tR.x+s*1.4,y:tR.y-s*1.4},'3',GOLD,9);
+  var p4=pol(C,P4_ANG,C.R*P4_K); badge(svg,{x:p4.x+14,y:p4.y-4},'4',BLUE);
+  badge(svg,{x:tMine.x+s*1.4,y:tMine.y-s*1.4},'5',BLUE,9);
+  me(svg,pol(C,0,C.R*K_STACK-24),7.5);
+  var L=[['1','A側・頭割り②の位置(＝もう外)からスタート',GOLD],
+         ['2','膨らまずタゲサのフチを時計回り',GREEN],
+         ['3','B側の塔は通過(ここで外処理おわり)',GOLD],
+         ['4','しっかり中へ(ボスと自分の塔の間)',BLUE],
+         ['5','Cマカ側の塔③を踏む',BLUE]];
+  L.forEach(function(row,k){
+    var y=362+k*19;
+    E(svg,'circle',{cx:17,cy:y-5,r:8.5,fill:'#06101f',stroke:row[2],'stroke-width':1.8});
+    E(svg,'text',{x:17,y:y-1.5,fill:row[2],'font-size':10,'font-weight':'bold','text-anchor':'middle'},row[0]);
+    E(svg,'text',{x:32,y:y,fill:'#cbd6f0','font-size':14},row[1]);
+  });
+  E(svg,'text',{x:414,y:16,fill:'#93a3c8','font-size':12,'text-anchor':'end'},'※マーカーは方向の目安。経由しない');
+})();
+
+/* ===================== ② 拡大図 ===================== */
+(function(){
+  var svg=document.getElementById('zoom');
+  var C={cx:210,cy:196,R:340};   // 大きく描いて viewBox でB〜C側だけ切り出す
+  field(svg,C);
+  towers(svg,C);
+  var tB=pol(C,T_RIGHT,C.R*K_TOWER), tC=pol(C,T_MID,C.R*K_TOWER);
+  var R=drawRoute(svg,C,9,20);
+  E(svg,'text',{x:tB.x-40,y:tB.y-58,fill:GOLD,'font-size':15,'font-weight':'bold','text-anchor':'end'},'B側の塔(2番)');
+  E(svg,'text',{x:tB.x-40,y:tB.y-40,fill:'#ffe9a8','font-size':13,'text-anchor':'end'},'通過＝外処理おわり');
+  var d=pol(C,P4_ANG,C.R*P4_K);
+  E(svg,'circle',{cx:d.x,cy:d.y,r:12,fill:'none',stroke:BLUE,'stroke-width':2.5,'stroke-dasharray':'5,4'});
+  E(svg,'text',{x:d.x+24,y:d.y+26,fill:BLUE,'font-size':15,'font-weight':'bold','text-anchor':'start'},'しっかり中へ');
+  E(svg,'text',{x:d.x+24,y:d.y+44,fill:'#9fd0ff','font-size':13,'text-anchor':'start'},'ボスと自分の塔の間');
+  E(svg,'text',{x:tC.x+38,y:tC.y+4,fill:BLUE,'font-size':17,'font-weight':'bold','text-anchor':'start'},'ここを踏む');
+  E(svg,'text',{x:tC.x+38,y:tC.y+23,fill:'#9fd0ff','font-size':12.5,'text-anchor':'start'},'外周側に立って');
+  E(svg,'text',{x:tC.x+38,y:tC.y+41,fill:'#9fd0ff','font-size':12.5,'text-anchor':'start'},'ゲイルスコグル誘導');
+  E(svg,'text',{x:tC.x+38,y:tC.y+59,fill:'#9fd0ff','font-size':12.5,'text-anchor':'start'},'→詠唱が見えてから移動');
+  me(svg,{x:tB.x,y:tB.y},12);
+})();
+
+/* ===================== ③ 尾牙(比較) ===================== */
+(function(){
+  var svg=document.getElementById('biba');
+  var C={cx:96,cy:58,R:50};
+  field(svg,C);
+  towers(svg,C);
+  var a=pol(C,0,C.R*K_STACK), b=pol(C,T_MID,C.R*K_TOWER);
+  line(svg,[a,{x:C.cx,y:C.cy},b],'#c07aff',3.5);
+  head(svg,{x:C.cx,y:C.cy},b,'#c07aff',8);
+  E(svg,'text',{x:C.cx+C.R+12,y:C.cy-4,fill:'#c07aff','font-size':11.5,'font-weight':'bold','text-anchor':'start'},'中央突破');
+  E(svg,'text',{x:C.cx+C.R+12,y:C.cy+12,fill:'#93a3c8','font-size':10.5,'text-anchor':'start'},'(尾牙=中→外)');
+})();
+</script>
+<script>
+var sheet=document.getElementById('sheet');
+var portrait=window.matchMedia('(orientation: portrait)');
+function fitStage(){var W=1280,H=720;
+  if(portrait.matches){ sheet.style.transform='none'; return; }  // 縦持ち: CSSで縦1列スクロール
+  var s=Math.min(window.innerWidth/W,window.innerHeight/H);
+  sheet.style.transform='translate(-50%,-50%) scale('+s+')';}
+window.addEventListener('resize',fitStage);fitStage();
+</script>
+</body>
+</html>

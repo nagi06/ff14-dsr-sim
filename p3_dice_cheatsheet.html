@@ -73,7 +73,7 @@
       <table>
         <tr><th>ミックス</th><td>イルーシブ=<b>左(D側)</b> / スパイン=<b>右(B側)</b> / HJ=真下</td></tr>
         <tr><th>全員HJ</th><td>優先度: 西 H1 MT ST D1 D2 D3 D4 H2 東</td></tr>
-        <tr><th>1・3番</th><td>タゲサ淵の<b>左下/真下/右下</b></td></tr>
+        <tr><th>1・3番</th><td>タゲサ淵の<b>左(D側)/真下/右(B側)</b>(左右はD・Bと同じ高さ)</td></tr>
         <tr><th>2番</th><td>タゲサから離れた北側 <b>左=4-A間 / 右=A-1間</b></td></tr>
       </table>
     </div>
@@ -85,9 +85,9 @@
       <span class="a">1番は頭割り①に入らないが内外回避は全員参加</span>。</p>
     </div>
     <div class="box">
-      <h2>竜騎士の分身(直線)</h2>
-      <p>塔を踏んだ本人が<b>塔の外周側</b>に立って外へ誘導。<br>
-      対象決定は<b>踏んだ約2秒後</b> → 向き確定を見てから離れる。</p>
+      <h2>分身のゲイルスコグル(直線)</h2>
+      <p>塔を踏んだ本人が<b>塔の外周側</b>に立って分身のゲイルスコグルを外へ誘導。<br>
+      <b>ゲイルスコグルの詠唱が見えてから移動</b>。</p>
     </div>
   </div>
 
@@ -104,13 +104,13 @@
     <div class="box" style="flex:1;">
       <h2>タイムライン</h2>
       <ol class="tl">
-        <li><span class="who">1番</span> 左下/真下/右下で塔①設置(向き注意)。<span class="who">2・3番</span>はA側淵で<b>頭割り①</b></li>
+        <li><span class="who">1番</span> 左/真下/右で塔①設置(向き注意)。<span class="who">2・3番</span>はA側淵で<b>頭割り①</b></li>
         <li>全員で連旋①回避(内外) → <span class="who">1番</span>は<b>A正面へ</b>(塔に残らない)</li>
         <li><span class="who">3番</span>が塔①を踏む(<b>自分が後で塔を出す場所と同じ</b>)→直線誘導。<span class="who">2番</span>は北で塔②設置(向き注意)→設置後すぐ頭割りへ</li>
         <li><span class="who">1番</span> 左にいた人→左塔②・右にいた人→右塔②を踏み誘導→<b>すぐ頭割り②へ</b>。真ん中の1番は直行</li>
         <li>連旋②回避 → <span class="who">3番</span>はその場(担当位置)で塔③設置(向き注意)→設置後A側へ</li>
         <li><span class="who">2番</span>=左右の塔③、<span class="who">真ん中の1番</span>=真ん中の塔③<br>
-        ルート: <b>尾牙=ボス下を中央突破</b> ／ <b>牙尾=円周沿い</b><br>
+        ルート: <b>尾牙=ボス下を中央突破</b> ／ <b>牙尾=タゲサのフチ沿い</b><br>
         踏んだら直線誘導→終わったらA側集合</li>
       </ol>
     </div>
@@ -119,7 +119,7 @@
       <ul>
         <li>塔を出したら<b>その場を離れる</b>(残る=踏めない塔を踏む)</li>
         <li>ミックスの向きミス → 塔が変な場所に出て処理不能(<b>矢印=西のD向き</b>を徹底)</li>
-        <li>誘導後の離脱が早い → 直線が味方に向く(2秒待つ)</li>
+        <li>誘導後の離脱が早い → 直線が味方に向く(<b>詠唱が見えてから動く</b>)</li>
       </ul>
     </div>
   </div>
@@ -147,8 +147,8 @@ MARKERS.forEach(m=>{const p=pol(m.a,R_MARK);
 // ボス
 el('circle',{cx:0,cy:0,r:16,fill:'#3a2233',stroke:'#ff9dc7','stroke-width':2});
 el('text',{x:0,y:5,fill:'#ff9dc7','font-size':13,'text-anchor':'middle'},'竜');
-// 塔①③ (左下250/真下180/右下110 タゲサ淵)
-[[250,'左下'],[180,'真下'],[110,'右下']].forEach(([a,label])=>{
+// 塔①③ (左=D側270/真下180/右=B側90 タゲサ淵。左右はD・Bと同じ高さ)
+[[270,'左(D側)'],[180,'真下'],[90,'右(B側)']].forEach(([a,label])=>{
   const p=pol(a,R_MID);
   el('rect',{x:p.x-15,y:p.y-15,width:30,height:30,rx:5,fill:'#2a1f45',stroke:'#b98bff','stroke-width':2});
   el('text',{x:p.x,y:p.y+4,fill:'#dcc3ff','font-size':11,'text-anchor':'middle'},'①③');
