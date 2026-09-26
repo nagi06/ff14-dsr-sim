@@ -17,14 +17,15 @@
     全員HJ時は優先度で西/南/東。1番/3番の塔=タゲサ淵のすぐ外。2番の塔=タゲサから離れた北側(A寄り)、
     向かって左が4-A間・右がA-1間。1番/3番の塔はタゲサ淵の真横と真下(左=D側270°/真下180°/右=B側90°。左右はD・Bマーカーと同じ高さ)。
   ・連旋の避けは 内→外 or 外→内 の連続移動。内=ボスの足元/外=ターゲットサークル際(盤面に可視化、表示は多少オーバー)。
-    仕事が終わった人はAマーカー側(ボス正面)に集合する。
+    仕事が終わった人はAマーカー側(ボス正面)に集合する。ただし塔③を踏んだ3人はその場に残る(ドラッケンランス・次の塔に備える)。
+    3番は1番の塔を踏んで誘導したあと、そのまま担当位置で塔③を出すので頭割り②には入らない。
   ・塔を出したらその場を離れる(残ると自分の塔=踏めない塔を踏む)。1番は塔①設置後すぐA側で待機、
-    2番は塔②出現と同時に頭割りへ、3番は塔③出現後すぐA側へ。
+    2番は塔②出現と同時に頭割りへ、3番は塔③を出したら連旋2回目の内外を避けつつ北(A側)へ。
   ・塔は数字順(1→2→3)に時間差で出現。自分の塔は踏めない(耐性低下)ので別の数字が踏む。
   ・塔を出したらその場を離れる(残ると踏めない塔を踏む)。ただし頭割り1は1番がまだ塔にいるタイムライン
     (頭割りは常に5人)。1番は頭割りには参加しないが牙尾/尾牙の内外回避には全員参加(避けないと死ぬ)。
     回避後にA正面へ自動集合(判断不要)→2番塔担当or頭割り2、
-    2番は塔②出現と同時に頭割りへ、3番は塔③出現後すぐA側へ。
+    2番は塔②出現と同時に頭割りへ、3番は塔③を出したら連旋2回目の内外を避けつつ北(A側)へ。
   ・塔踏み担当(モデル化した取り決め):
     - 1番の塔(西/南/東) → 3番が「自分が後で塔を出すのと同じスロット」を踏む。
     - 2番の塔(北西/北東) → 初期散開で西にいた1番→北西、東にいた1番→北東。中間(南)の1番は踏まず頭割り2に合流。
@@ -299,7 +300,7 @@
           <b>ダイブの意味＝塔が出る位置</b>：スパイン=前方／イルーシブ=後方／ハイジャンプ=真上(向き自由)。<br>
           <b>矢印持ちの向き(PT取り決め)</b>：1/2/3とも<b>全員「西のD」を向く</b>。これでスパイン=前方塔/イルーシブ=後方塔が問題なく出る。<br>
           <b>位置(ミックス)</b>：イルーシブ=<b>マーカーD側(西)</b>固定、スパイン=<b>マーカーB側(東)</b>固定、ハイジャンプ=その中間(南)。<br>
-          <b>塔を出したら離れる</b>：塔の位置にとどまると自分の塔(踏めない塔)を踏んでしまう。ただし頭割り1の時点では<b>1番はまだ塔の位置</b>(頭割りは常に5人・1番は不参加)。<b>牙尾/尾牙の内外回避には1番も参加</b>(避けないと喰らって倒される)。回避が終わったら<b>A正面へ集合</b>して2番の塔を待つ(ここに判断は不要)。2番=塔②が出たら頭割りへ/3番=塔③が出たらA側へ。<br>
+          <b>塔を出したら離れる</b>：塔の位置にとどまると自分の塔(踏めない塔)を踏んでしまう。ただし頭割り1の時点では<b>1番はまだ塔の位置</b>(頭割りは常に5人・1番は不参加)。<b>牙尾/尾牙の内外回避には1番も参加</b>(避けないと喰らって倒される)。回避が終わったら<b>A正面へ集合</b>して2番の塔を待つ(ここに判断は不要)。2番=塔②が出たら頭割りへ/3番=塔③を出したら連旋2回目の内外を避けつつA側へ。<br>
           <b>竜騎士の分身</b>：塔着弾後に出現し、最も近い1名へ直線攻撃を詠唱。<b>塔を踏んだ本人が「塔の外周側」に立って直線を外に誘導</b>する(味方に当てない)。<b>ゲイルスコグルの詠唱が見えてから移動</b>して頭割りへ集合する(見る前に動くと味方に向く)。<br>
           <b>矢印持ちの向き調整のコツ</b>：ミスが多いポイント。対象(ボス)をタゲって向きを確認し、<b>着弾2秒前には向きを固定</b>して動かない。<br>
           <b>牙尾/尾牙の連旋(2回・各回独立抽選)</b>：ボス正面の1名に頭割り→<br>
@@ -307,7 +308,7 @@
           目安はボスの<b>ターゲットサークル</b>: 内=<b>ボスの足元</b>／外=<b>ターゲットサークル際</b>(大げさに動く余裕はない)。<br>
           頭割り1回目=<b>2番+3番の5人</b>／2回目=<b>1番+2番の5人</b>。頭割り位置は<b>ボス正面Aマーカー側のタゲサ淵(タゲサを踏まない=必ず外側)</b>。<br>
           <b>時系列</b>：<br>
-          ①1番が西/南/東に散開して塔設置(2番3番はボス正面で頭割り1) → ②連旋1回目を避けつつ<b>3番が1番の塔を踏む</b>(自分が後で塔を出すスロットと同じ場所)＋直線誘導。並行して<b>2番は北へ移動して塔設置</b>(左=4-A間/右=A-1間、タゲサから離れたA寄り) →③2番の塔を<b>西/東にいた1番</b>が踏む(西→左塔/東→右塔)＋直線誘導→すぐ頭割り2に合流。中間(南)の1番は踏まずに頭割り2へ。2番も設置後すぐ頭割り2へ → ④連旋2回目 → ⑤<b>3番がその場で塔設置</b>(ミックスは向き注意) → ⑥3番の塔を<b>2番(左右)＋頭割りにいた1番(真ん中)</b>が踏む＋直線誘導。真ん中の1番のルートは<b>尾牙=ボス下を中央突破／牙尾=タゲサのフチ沿い</b>。<br>
+          ①1番が西/南/東に散開して塔設置(2番3番はボス正面で頭割り1) → ②連旋1回目を避けつつ<b>3番が1番の塔を踏む</b>(自分が後で塔を出すスロットと同じ場所)＋直線誘導。並行して<b>2番は北へ移動して塔設置</b>(左=4-A間/右=A-1間、タゲサから離れたA寄り) →③2番の塔を<b>西/東にいた1番</b>が踏む(西→左塔/東→右塔)＋直線誘導→すぐ頭割り2に合流。中間(南)の1番は踏まずに頭割り2へ。2番も設置後すぐ頭割り2へ → ④<b>頭割り2と同時に3番がその場で塔③設置</b>(ミックスは向き注意) → ⑤連旋2回目(3番は内外を避けつつ北へ) → ⑥3番の塔を<b>2番(左右)＋頭割りにいた1番(真ん中)</b>が踏む＋直線誘導。真ん中の1番のルートは<b>尾牙=ボス下を中央突破／牙尾=タゲサのフチ沿い</b>。塔③を踏んだ3人は<b>A側に戻らず、その場でドラッケンランスと次の塔に備える</b>。<br>
           <b>4塔(ダークドラゴンダイブ)</b>：斜め4方向にペアで散開(北西=D3/MT、北東=ST/D4、南西=H1/D1、南東=D2/H2)。<b>遠隔(H1/H2/D3/D4)は位置固定＆ゲイル誘導</b>、調整役(近接=MT/ST/D1/D2)が<b>自枠&gt;時計回り&gt;反時計&gt;対角</b>の順に調整。調整役同士がかぶった時は<b>実戦ではその場判断</b>(このシムは採点のため便宜上MT&gt;ST&gt;D1&gt;D2で決めている)。塔の柱の数=必要人数(1〜4・合計8)。<br>
           <b>タンク強着弾後</b>：バーストタイム。MTはボスのAAを【南】向きに誘導。<br>
           <b>ソウルテザー</b>：<b>MT=ボス線固定(無敵)、ST=分身線固定(フルバフ=使える軽減を総動員)</b>(PT取り決め)、他6人は南に集合して待機。
@@ -1001,16 +1002,22 @@ async function askFacingQ(promptText, myJump, explain){
   await ask(promptText, choices, CORRECT_FACING[myJump], explain);
 }
 // 連旋の連続回避アニメ: 対象ロールを 内→外 or 外→内 に連続移動させる
-async function dodgeAnim(roles, firstSide){
+async function dodgeAnim(roles, firstSide, inPlace, angleOf){
   // 内=ボスの足元 / 外=ターゲットサークル際。大げさに動く余裕はない(表示は多少オーバー)
-  const R_FEET=30, R_EDGE=R_STACK;
-  const r1 = firstSide==='in' ? R_FEET : R_EDGE;
-  const r2 = firstSide==='in' ? R_EDGE : R_FEET;
-  roles.forEach(r=>{ const t=tokens[r]; moveTokenAnimated(r, t.angle, r1, MOVE_MS*0.6); });
+  // inPlace = 頭割りに入らず自分の塔の位置にいる人。足元まで寄せると頭割り組と混ざって見えるので、
+  //           担当位置の近く(タゲサの内側すぐ/塔の外周側)で内外を避ける
+  const R_FEET=30, R_EDGE=R_STACK, R_IN_SLOT=R_TARGET-20, R_OUT_SLOT=R_MID+30;
+  const stay = new Set(inPlace||[]);
+  const radius = (r, side) => stay.has(r) ? (side==='in' ? R_IN_SLOT : R_OUT_SLOT)
+                                          : (side==='in' ? R_FEET : R_EDGE);
+  const second = firstSide==='in' ? 'out' : 'in';
+  // angleOf = 回避しながら角度もずらす人(例: 塔③を出した3番が北寄りへ向かう)
+  roles.forEach(r=>{ const t=tokens[r]; const a=(angleOf&&angleOf[r]!=null)?angleOf[r]:t.angle;
+    moveTokenAnimated(r, a, radius(r, firstSide), MOVE_MS*0.6); });
   applySeparation(MOVE_MS*0.6);
   await wait(MOVE_MS*0.6+300);
   setMsg(`1発目回避！続けて${firstSide==='in'?'ターゲットサークル際':'ボスの足元'}へ…`);
-  roles.forEach(r=>{ const t=tokens[r]; moveTokenAnimated(r, t.angle, r2, MOVE_MS*0.6); });
+  roles.forEach(r=>{ const t=tokens[r]; moveTokenAnimated(r, t.angle, radius(r, second), MOVE_MS*0.6); });
   applySeparation(MOVE_MS*0.6);
   await wait(MOVE_MS*0.6+300);
 }
@@ -1211,7 +1218,7 @@ async function startRun(){
     `${CAST_JP[cast1]}は${CAST_DESC[cast1]}。${MOVE_JP[first1]}の連続移動で回避`);
   clearStackMark();
   // 1番も内外の回避には参加する(頭割りに入らないだけ。回避しないと喰らって倒される)
-  await dodgeAnim(PRIORITY.slice(), first1);
+  await dodgeAnim(PRIORITY.slice(), first1, group1); // 1番は自分の塔①の位置で避ける
   setMsg('回避完了。1番はそのままA正面へ移動…');
   group1.forEach((r,i)=> moveTokenAnimated(r, (i-(group1.length-1)/2)*10, R_WAIT, MOVE_MS));
   applySeparation(MOVE_MS);
@@ -1309,8 +1316,8 @@ async function startRun(){
   applySeparation(MOVE_MS);
   await wait(MOVE_MS+300);
 
-  // ---- フェーズ6: 直線誘導2 + 連旋2回目(1番+2番の5人頭割り) ----
-  document.getElementById('phaseLabel').textContent='フェーズ6: 直線誘導2・連旋2回目';
+  // ---- フェーズ6: 直線誘導2 ----
+  document.getElementById('phaseLabel').textContent='フェーズ6: 直線誘導2';
   clearTowers();
   document.getElementById('castName').textContent = `連旋2回目: ${CAST_JP[cast2]} (${CAST_DESC[cast2]})`;
   setMsg(`塔②処理！分身の直線を外へ誘導→すぐ頭割りへ。ボスは${CAST_JP[cast2]}を詠唱！`);
@@ -1325,25 +1332,16 @@ async function startRun(){
   moveTokenAnimated(g1West, NWNE_ANGLE.NW, R2+28, MOVE_MS*0.6);
   moveTokenAnimated(g1East, NWNE_ANGLE.NE, R2+28, MOVE_MS*0.6);
   await wait(MOVE_MS+200);
-  setMsg('直線発射！1番と2番は頭割りへ集合(5人受け)…');
   clearClones();
-  // 1番全員+2番が頭割り位置(タゲサ外・A側の淵)へ
+
+  // ---- フェーズ7: 頭割り2(1番+2番) と同時に 3番が担当位置で塔③設置 → 連旋2回目 ----
+  document.getElementById('phaseLabel').textContent='フェーズ7: 頭割り2＋塔③設置・連旋2回目';
+  setMsg('直線発射！1番と2番は頭割りへ集合(5人受け)。同時に3番は担当位置で塔③を設置…');
+  // 1番全員+2番が頭割り位置(タゲサ外・A側の淵)へ / 3番は担当位置(塔①を踏んだ場所)で塔を出す
   gatherNorth(group1.concat(group2), MOVE_MS);
+  group3.forEach(r=> moveTokenAnimated(r, WSE_ANGLE[slot3[r]], R_MID, MOVE_MS));
   applySeparation(MOVE_MS);
   await wait(MOVE_MS+300);
-  setMsg('頭割り着弾！(1番+2番の5人受け) 続けて範囲攻撃…');
-  await wait(BEAT_MS*0.7);
-  const first2 = FIRST_SAFE[cast2];
-  await askInOutP(`${CAST_JP[cast2]}: どう動く？(内→外/外→内)`, first2,
-    `${CAST_JP[cast2]}は${CAST_DESC[cast2]}。${MOVE_JP[first2]}の連続移動で回避`);
-  clearStackMark();
-  await dodgeAnim(PRIORITY.slice(), first2); // 全員回避(3番は担当位置へ戻る)
-  gatherNorth(group1.concat(group2), MOVE_MS*0.6);
-  applySeparation(MOVE_MS*0.6);
-  await wait(MOVE_MS*0.6+200);
-
-  // ---- フェーズ7: 3番がその場で塔設置(向き注意) ----
-  document.getElementById('phaseLabel').textContent='フェーズ7: 3番の塔設置';
   if(myNum===3){
     if(patternUsed==='mixed'){
       const fExplain = myJump==='high' ? 'ハイジャンプは真上に塔が出るので向きは自由'
@@ -1354,34 +1352,37 @@ async function startRun(){
       await wait(BEAT_MS*1.2);
     }
   } else {
-    setMsg('3番が担当位置で塔を設置中(ミックスなら向き注意)…');
+    setMsg('1番+2番は頭割り位置、3番は担当位置で塔を設置中(ミックスなら向き注意)…');
     await wait(BEAT_MS*1.2);
   }
-  group3.forEach(r=> moveTokenAnimated(r, WSE_ANGLE[slot3[r]], R_MID, MOVE_MS*0.6));
-  applySeparation(MOVE_MS*0.6);
-  await wait(MOVE_MS*0.6+200);
   if(patternUsed==='mixed'){
     group3.forEach(r=>{ if(jumpType[r]!=='high') drawFacingArrow(r, CORRECT_FACING[jumpType[r]]); });
   }
   await wait(BEAT_MS*0.8);
-  setMsg('3番のサイコロが着弾…ボスの左(D側)・真下・右(B側)に塔③が出現！');
+  setMsg('頭割り着弾！(1番+2番の5人受け) 同時に3番のサイコロも着弾…ボスの左(D側)・真下・右(B側)に塔③が出現！');
   ['W','S','E'].forEach(s=> drawTower(WSE_ANGLE[s], R_MID, '塔③'));
   group3.forEach(r=> drawFacingArrow(r, null));
-  await wait(BEAT_MS*0.6);
-  // 3番も塔を出したらその場を離れる
+  await wait(BEAT_MS*0.7);
+  // 3番は塔を出したら、すぐ北へではなく「連旋2回目の内外を避けながら」北へ向かう
   if(myNum===3){
     const mySlot3 = slot3[selectedRole];
     const choices=[
       {id:'stay', angle:WSE_ANGLE[mySlot3], r:R_MID, label:'その場で待つ'},
-      {id:'north', angle:0, r:R_WAIT, label:'ボス正面(A側)へ'},
+      {id:'north', angle:0, r:R_WAIT, label:'内外を避けつつ北(A側)へ'},
     ];
     await ask('塔を出したあなたは？', choices, 'north',
-      '塔の位置にとどまると自分の塔(踏めない塔)を踏んでしまう。塔を出す仕事は終わりなので、ボス正面(A側)へ離れる');
-  } else {
-    setMsg('3番は塔を出す仕事が終わったので、その場を離れてボス正面(A側)へ…');
-    await wait(BEAT_MS);
+      '塔の位置にとどまると自分の塔(踏めない塔)を踏んでしまう。連旋2回目の内外を避けながら北(A側)へ向かう(内外ができればどこにいてもいい)');
   }
-  gatherNorth(group3, MOVE_MS*0.7);
+  const first2 = FIRST_SAFE[cast2];
+  await askInOutP(`${CAST_JP[cast2]}: どう動く？(内→外/外→内)`, first2,
+    `${CAST_JP[cast2]}は${CAST_DESC[cast2]}。${MOVE_JP[first2]}の連続移動で回避`);
+  clearStackMark();
+  // 3番は北寄りへずれながら内外を避ける(塔③の上には残らない)
+  const toward = {W:315, S:225, E:45};
+  const angleOf = {}; group3.forEach(r=> angleOf[r]=toward[slot3[r]]);
+  await dodgeAnim(PRIORITY.slice(), first2, group3, angleOf);
+  setMsg('回避完了。3番はそのまま北(A側)へ…');
+  gatherNorth(group1.concat(group2, group3), MOVE_MS*0.7);
   applySeparation(MOVE_MS*0.7);
   await wait(MOVE_MS*0.7+300);
 
@@ -1422,7 +1423,7 @@ async function startRun(){
   if(stomp3[selectedRole]!==undefined){
     const mySlot = stomp3[selectedRole];
     await askAimQ('直線を味方に当てないためにどこに立つ？', WSE_ANGLE[mySlot], R_MID,
-      '各塔とも踏んだ本人だけが誘導。塔の外周側に立って直線を外へ→終わったらAマーカー側へ');
+      '各塔とも踏んだ本人だけが誘導。塔の外周側に立ってゲイルスコグルを外へ誘導。終わってもA側には戻らず、その場でドラッケンランスと次の塔に備える');
   } else {
     setMsg('各塔とも踏んだ本人が直線を外周へ誘導中…');
     await wait(BEAT_MS);
@@ -1431,9 +1432,9 @@ async function startRun(){
   Object.keys(stomp3).forEach(r=> moveTokenAnimated(r, WSE_ANGLE[stomp3[r]], R_MID+30, MOVE_MS*0.7));
   applySeparation(MOVE_MS*0.7);
   await wait(MOVE_MS+400);
-  setMsg('直線発射！仕事が終わったのでAマーカー側(ボス正面)へ集合。サイコロ完了！', 'good');
+  setMsg('直線発射！塔③を踏んだ3人はA側に戻らず、その場でドラッケンランスと次の塔に備える。サイコロ完了！', 'good');
   clearClones();
-  gatherNorth(Object.keys(stomp3));
+  // 塔③を踏んだ3人(2番×2+真ん中の1番)はA側へ集合しない: その場でドラッケンランスと次の塔に備える
   applySeparation(MOVE_MS);
   await wait(MOVE_MS+400);
 

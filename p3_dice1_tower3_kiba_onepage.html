@@ -129,7 +129,7 @@
         <li>詠唱が<b>牙尾</b> → <span class="g">膨らまずに、タゲサのフチぎりぎりを時計回り</span>(B方向へ)。</li>
         <li><span class="y">B側の塔の上を通過</span>。このあたりで<b>1発目(外)が終わる</b>。</li>
         <li><span class="a">しっかり中へ</span>(ボスと自分の塔の間まで。2発目=円範囲は中が安置) → 外へ一歩出て<span class="bl">Cマカ側(真下)の塔③</span>を踏む。</li>
-        <li>踏んだら<b>塔の外周側</b>に立って分身の<b>ゲイルスコグル</b>を誘導 → <b>詠唱が見えてから移動</b>してA側へ集合。</li>
+        <li>踏んだら<b>塔の外周側</b>に立って分身の<b>ゲイルスコグル</b>を誘導(<b>詠唱が見えるまで動かない</b>) → <b>A側には戻らず</b>、その場でドラッケンランスと次の塔に備える。</li>
       </ol>
       <div class="cmp">
         <div class="t"><b>尾牙</b>(中→外)だったら…<br><span class="pu">ボス下を中央突破</span>で真下の塔へ。</div>
@@ -142,7 +142,7 @@
     <b>事故ポイント</b>：
     ① <span class="r">B側の塔で減速・停止すると2人踏み</span>(通過するだけ) ／
     ② B側の塔を過ぎても<span class="r">フチをなぞり続ける</span>と2発目の円範囲に当たる(<b>ここで内側へ切る</b>) ／
-    ③ 塔を踏んで<span class="r">すぐ動く</span>とゲイルスコグルが味方を向く(<b>詠唱が見えてから移動</b>)。
+    ③ 塔を踏んで<span class="r">すぐ動く</span>とゲイルスコグルが味方を向く(<b>詠唱が見えるまで動かない</b>)。
   </div>
 </div></div>
 
@@ -284,7 +284,7 @@ function drawRoute(svg,C,w,hs){
   E(svg,'text',{x:tC.x+38,y:tC.y+4,fill:BLUE,'font-size':17,'font-weight':'bold','text-anchor':'start'},'ここを踏む');
   E(svg,'text',{x:tC.x+38,y:tC.y+23,fill:'#9fd0ff','font-size':12.5,'text-anchor':'start'},'外周側に立って');
   E(svg,'text',{x:tC.x+38,y:tC.y+41,fill:'#9fd0ff','font-size':12.5,'text-anchor':'start'},'ゲイルスコグル誘導');
-  E(svg,'text',{x:tC.x+38,y:tC.y+59,fill:'#9fd0ff','font-size':12.5,'text-anchor':'start'},'→詠唱が見えてから移動');
+  E(svg,'text',{x:tC.x+38,y:tC.y+59,fill:'#9fd0ff','font-size':12.5,'text-anchor':'start'},'→戻らずその場でドラッケンランスへ');
   me(svg,{x:tB.x,y:tB.y},12);
 })();
 
