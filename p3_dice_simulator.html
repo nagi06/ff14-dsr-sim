@@ -1555,5 +1555,102 @@ async function startRun(){
   }
 }
 </script>
+<!-- ===== 一時停止ボタン(全シム共通・2026-09-27) =====
+  タイマー(setTimeout/setInterval)・時刻(Date.now)・CSSアニメーションをまとめて止める。
+  各シムの wait()/runTimer() は setTimeout で動いているので、ここで包めば個別の改修は不要。
+  停止中は盤面の上に透明な膜を張り、選択肢を押して進んでしまわないようにする。
+  ボタン / Pキー / スペースキー で切り替え。プレイ画面の間だけ表示。 -->
+<style>
+  #pauseBtn{position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:10001;
+    min-width:118px;height:52px;padding:0 18px;border-radius:999px;border:1px solid rgba(124,196,255,.55);
+    background:linear-gradient(180deg,rgba(34,47,80,.96),rgba(17,25,45,.96));color:#e9eefc;
+    font:800 16px "Hiragino Sans","Yu Gothic UI","Yu Gothic",system-ui,sans-serif;letter-spacing:.02em;
+    box-shadow:0 12px 30px -14px #000, inset 0 1px 0 rgba(255,255,255,.08);cursor:pointer;
+    display:none;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;}
+  #pauseBtn.show{display:flex;}
+  #pauseBtn.on{background:linear-gradient(100deg,#ffc857,#ff9d4d);color:#1a1206;border-color:#ffc857;}
+  #pauseVeil{position:fixed;inset:0;z-index:10000;display:none;cursor:not-allowed;}
+  #pauseTag{position:fixed;left:50%;top:10px;transform:translateX(-50%);z-index:10001;display:none;white-space:nowrap;
+    padding:7px 16px;border-radius:999px;background:rgba(255,200,87,.96);color:#1a1206;
+    font:800 13.5px "Hiragino Sans","Yu Gothic UI",system-ui,sans-serif;pointer-events:none;
+    box-shadow:0 10px 26px -12px #000;}
+  #pauseVeil.on,#pauseTag.on{display:block;}
+</style>
+<div id="pauseVeil"></div>
+<div id="pauseTag">⏸ 一時停止中 ― 盤面はそのまま確認できます</div>
+<button id="pauseBtn" type="button" aria-pressed="false" title="一時停止(P / スペース)">⏸ 一時停止</button>
+<script>
+(function(){
+  var nST=window.setTimeout.bind(window), nCT=window.clearTimeout.bind(window),
+      nSI=window.setInterval.bind(window), nCI=window.clearInterval.bind(window), nNow=Date.now;
+  var paused=false, pausedAt=0, pausedTotal=0, seq=1000000, jobs={};
+  // 停止中の時間を差し引いた時刻(Date.now で残り時間を計算しているシム用)
+  Date.now=function(){ return (paused?pausedAt:nNow()) - pausedTotal; };
+  function arm(j){
+    j.start=nNow();
+    if(j.iv){ j.nid=nSI(j.fn, j.ms); }
+    else { j.nid=nST(function(){ delete jobs[j.id]; j.fn.apply(null, j.args); }, Math.max(0, j.left)); }
+  }
+  window.setTimeout=function(fn, ms){
+    if(typeof fn!=='function') return nST.apply(null, arguments);
+    var j={id:seq++, fn:fn, args:[].slice.call(arguments, 2), left:+ms||0};
+    jobs[j.id]=j; if(!paused) arm(j); return j.id;
+  };
+  window.setInterval=function(fn, ms){
+    if(typeof fn!=='function') return nSI.apply(null, arguments);
+    var j={id:seq++, fn:fn, ms:+ms||0, iv:true};
+    jobs[j.id]=j; if(!paused) arm(j); return j.id;
+  };
+  window.clearTimeout=window.clearInterval=function(id){
+    var j=jobs[id];
+    if(!j){ nCT(id); nCI(id); return; }
+    if(j.nid!=null){ if(j.iv) nCI(j.nid); else nCT(j.nid); }
+    delete jobs[id];
+  };
+
+  var btn=document.getElementById('pauseBtn'), veil=document.getElementById('pauseVeil'), tag=document.getElementById('pauseTag');
+  function setPaused(p){
+    if(p===paused) return;
+    if(p){
+      pausedAt=nNow();
+      Object.keys(jobs).forEach(function(k){
+        var j=jobs[k]; if(j.nid==null) return;
+        if(j.iv) nCI(j.nid); else { nCT(j.nid); j.left-=(pausedAt-j.start); }
+        j.nid=null;
+      });
+      try{ document.getAnimations().forEach(function(a){ a.pause(); }); }catch(e){}
+      paused=true;
+    }else{
+      paused=false;
+      pausedTotal+=nNow()-pausedAt;
+      Object.keys(jobs).forEach(function(k){ arm(jobs[k]); });
+      try{ document.getAnimations().forEach(function(a){ if(a.playState==='paused') a.play(); }); }catch(e){}
+    }
+    btn.classList.toggle('on', p); btn.setAttribute('aria-pressed', String(p));
+    btn.textContent = p ? '▶ 再開' : '⏸ 一時停止';
+    veil.classList.toggle('on', p); tag.classList.toggle('on', p);
+  }
+  btn.addEventListener('click', function(){ setPaused(!paused); });
+  document.addEventListener('keydown', function(e){
+    var t=e.target, typing=t && (t.tagName==='INPUT' || t.tagName==='TEXTAREA' || t.isContentEditable);
+    if(typing || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+    if(e.key==='p' || e.key==='P' || e.code==='Space'){
+      if(!btn.classList.contains('show')) return;
+      e.preventDefault(); setPaused(!paused);
+    }
+  });
+  // プレイ画面(battleScreen / gameWrap)が出ている間だけボタンを表示
+  function playing(){
+    var b=document.getElementById('battleScreen'); if(b) return !b.hidden;
+    var g=document.getElementById('gameWrap'); if(g) return getComputedStyle(g).display!=='none';
+    return true;
+  }
+  nSI(function(){
+    var on=playing();
+    btn.classList.toggle('show', on);
+    if(!on && paused) setPaused(false);
+  }, 300);
+})();
+</script>
 </body>
 </html>
