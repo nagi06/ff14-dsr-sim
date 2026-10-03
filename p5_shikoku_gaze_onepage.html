@@ -14,8 +14,9 @@
   - P5儀典トールダン_予習メモ.md / P5/ぬけまる死刻.txt …角度135°or180°・ノックバック前に向き確定・正面90°判定
   重要(ユーザー確認済み): ここでの「北」は死刻開始時にゲリックが現れた方向(=こまぞう式改の北)。
   実マーカーのA北とは限らない。整列時からカメラはゲリック北のままなので追加カメラ操作ゼロ。
-  注意: 目が「斜め(北西/北東)+真横(東/西)」の135°パターンは指示向きだと計算上アウトだが、
-  観測例(2と4/BとD/Aと3 のゲリック北相対)では未確認。出たら例外ルール(広い隙間の真ん中)で対処。
+  訂正(2026-10-04): 「45〜90°(マーカー1.5個分)」は北からではなく【目から】数える(元記事の図で確認)。
+  北西に目→北と北東の間／北東に目→北と北西の間／真北に目→左右どちらか。
+  この読みなら目がどの配置(135°/180°の全32通り)でも最小角度差67.5°で安全。例外パターンは無い。
 -->
 <style>
   :root{
@@ -125,7 +126,7 @@
     </div>
     <div class="diagBox">
       <h2>③北3箇所に目がいる</h2>
-      <div class="cap">→ <span class="g">反対側の斜め45〜90°の間(北からマーカー1.5個分)</span>を向く。真北(ゲリック)に目なら左右どちらでもOK。</div>
+      <div class="cap">→ <span class="g">その目から45〜90°の間(目からマーカー1.5個分)</span>を向く。真北(ゲリック)に目なら左右どちらでもOK。</div>
       <svg id="d3" viewBox="0 0 400 460" xmlns="http://www.w3.org/2000/svg"></svg>
     </div>
   </div>
@@ -133,7 +134,7 @@
   <div id="timeline">
     <div class="tlStep"><div class="tlLine"></div><div class="tlDot"></div><div class="tlLabel">整列〜散開<small>カメラはゲリック北のまま</small></div></div>
     <div class="tlStep"><div class="tlLine"></div><div class="tlDot" style="background:#ff9dc7;"></div><div class="tlLabel">中央集合で北3箇所を見る<small>目が居る/居ないだけ判断</small></div></div>
-    <div class="tlStep"><div class="tlLine"></div><div class="tlDot" style="background:var(--warn);"></div><div class="tlLabel">答えを決めて覚えておく<small>居ない=真北/居る=反対斜め1.5個</small></div></div>
+    <div class="tlStep"><div class="tlLine"></div><div class="tlDot" style="background:var(--warn);"></div><div class="tlLabel">答えを決めて覚えておく<small>居ない=真北/居る=目から1.5個</small></div></div>
     <div class="tlStep"><div class="tlLine"></div><div class="tlDot" style="background:var(--good);"></div><div class="tlLabel">配置後そっちへ一歩→止まる<small>体の向き固定・以後移動キー禁止</small></div></div>
     <div class="tlStep"><div class="tlDot" style="background:var(--bad);"></div><div class="tlLabel">ノックバック→鎖切り<small>飛行中も向きは変わらない・宣告は白円</small></div></div>
   </div>
@@ -146,18 +147,42 @@ const ns='http://www.w3.org/2000/svg';
 function E(parent,t,attrs,txt){const e=document.createElementNS(ns,t);for(const k in attrs)e.setAttribute(k,attrs[k]);if(txt!=null)e.textContent=txt;parent.appendChild(e);return e;}
 function pol(cx,cy,angleDeg,r){const rad=angleDeg*Math.PI/180;return{x:cx+r*Math.sin(rad),y:cy-r*Math.cos(rad)};}
 
-function baseField(svg, cx, cy, R, withGuerrique){
-  E(svg,'circle',{cx,cy,r:R,fill:'#101625',stroke:'#3a4a70','stroke-width':2});
-  for(let a=0; a<360; a+=45){
-    const p = pol(cx,cy,a,R);
-    E(svg,'line',{x1:cx,y1:cy,x2:p.x,y2:p.y,stroke:'#202c48','stroke-width':1});
+// 石畳の床(field_markers.pngの模写。p5_shikoku_gaze_simulator.htmlのdrawStoneFloorと同じ構成)
+function stoneFloor(svg, cx, cy, R){
+  const g=E(svg,'g',{transform:`translate(${cx},${cy})`});
+  const add=(t,a)=>E(g,t,a), P=(a,r)=>pol(0,0,a,r);
+  const LIGHT='#ebe8e0', DARK='#e1ddd3', JOINT='#bdb8ab', LINE='#8f8b7f', RIM='#4a473f';
+  const ring=(r1,r2)=>`M${r2},0 A${r2},${r2} 0 1 1 ${-r2},0 A${r2},${r2} 0 1 1 ${r2},0 Z M${r1},0 A${r1},${r1} 0 1 0 ${-r1},0 A${r1},${r1} 0 1 0 ${r1},0 Z`;
+  add('circle',{cx:0,cy:0,r:R,fill:LIGHT});
+  [[0.90,1.00,LIGHT,48,3.75],[0.78,0.90,DARK,40,0],[0.66,0.78,LIGHT,32,5.6],
+   [0.50,0.66,DARK,32,0],[0.34,0.50,LIGHT,24,7.5],[0.177,0.34,DARK,16,11.25]].forEach(([a,b,col,n,off])=>{
+    add('path',{d:ring(R*a,R*b),fill:col,'fill-rule':'evenodd'});
+    for(let i=0;i<n;i++){ const p1=P(off+i*360/n,R*a), p2=P(off+i*360/n,R*b);
+      add('line',{x1:p1.x,y1:p1.y,x2:p2.x,y2:p2.y,stroke:JOINT,'stroke-width':0.6}); }
+  });
+  [0.90,0.66].forEach(k=>add('circle',{cx:0,cy:0,r:R*k,fill:'none',stroke:JOINT,'stroke-width':0.7}));
+  [0.78,0.50,0.34].forEach(k=>add('circle',{cx:0,cy:0,r:R*k,fill:'none',stroke:LINE,'stroke-width':1.1}));
+  for(let a=0;a<360;a+=45){
+    const p1=P(a,R*0.177), p2=P(a,R*0.78), q1=P(a+22.5,R*0.50), q2=P(a+22.5,R*0.78);
+    add('line',{x1:p1.x,y1:p1.y,x2:p2.x,y2:p2.y,stroke:LINE,'stroke-width':1.2});
+    add('line',{x1:q1.x,y1:q1.y,x2:q2.x,y2:q2.y,stroke:LINE,'stroke-width':1.1});
   }
+  add('circle',{cx:0,cy:0,r:R*0.177,fill:'#dedad0',stroke:RIM,'stroke-width':1.2});
+  for(let a=0;a<360;a+=45){ const s=R*0.036;
+    add('path',{d:`M0,${-s*1.15} L${s*0.85},${-s*0.3} L${s*0.6},${s*0.85} L${-s*0.6},${s*0.85} L${-s*0.85},${-s*0.3} Z`,fill:'#ebe8e0',stroke:'#6d695f','stroke-width':0.5,
+      transform:`rotate(${a}) translate(0,${-R*0.137})`}); }
+  add('circle',{cx:0,cy:0,r:R*0.10,fill:'#d0ccc2',stroke:RIM,'stroke-width':0.9});
+  add('circle',{cx:0,cy:0,r:R*0.046,fill:'#46423b'});
+  add('circle',{cx:0,cy:0,r:R,fill:'none',stroke:RIM,'stroke-width':2.2});
+  for(let a=0;a<360;a+=7.5){ const p=P(a,R); add('circle',{cx:p.x,cy:p.y,r:1.25,fill:RIM}); }
+}
+function baseField(svg, cx, cy, R, withGuerrique){
+  stoneFloor(svg, cx, cy, R);
   // 8方向マーカー位置ドット(45°間隔=数える単位)
   for(let a=0; a<360; a+=45){
     const p = pol(cx,cy,a,R+14);
-    E(svg,'circle',{cx:p.x,cy:p.y,r:4,fill:'#3a4a70'});
+    E(svg,'circle',{cx:p.x,cy:p.y,r:4,fill:'#5a6c96'});
   }
-  E(svg,'circle',{cx,cy,r:4.5,fill:'#4a5a80'});
   if(withGuerrique){
     // ゲリック北アイコン(常に真上・斧)。p5_shikoku_cheatsheet.htmlと同意匠
     const dp = pol(cx,cy,0,R+34);
@@ -174,7 +199,7 @@ function playerToken(svg,x,y){
   E(svg,'text',{x,y:y+4,fill:'#08111f','font-size':10,'font-weight':'bold','text-anchor':'middle'},'自');
 }
 function labelText(svg,x,y,txt,col,size){
-  E(svg,'text',{x,y,fill:col||'#e8edf7','font-size':size||11,'font-weight':'bold','text-anchor':'middle'},txt);
+  E(svg,'text',{x,y,fill:col||'#e8edf7','font-size':size||11,'font-weight':'bold','text-anchor':'middle',stroke:'#0a1020','stroke-width':3.2,'paint-order':'stroke','stroke-linejoin':'round'},txt);
 }
 function arrow(svg,x1,y1,x2,y2,col,w){
   w=w||2.5;
@@ -242,7 +267,7 @@ const CX=200, CY=215, R=145;
   labelText(svg,CX,CY+R+42,'例:目が真横と真横 → 北から90°離れていて安全','#e9eefc',11.5);
 })();
 
-// ===================== 図3: 北3箇所に目がいる → 反対斜め1.5個 =====================
+// ===================== 図3: 北3箇所に目がいる → 目から1.5個 =====================
 (function(){
   const svg = document.getElementById('d3');
   baseField(svg, CX, CY, R, true);
@@ -251,13 +276,13 @@ const CX=200, CY=215, R=145;
   const e1 = pol(CX,CY,315,R+16), e2 = pol(CX,CY,135,R+16);
   eyeIcon(svg,e1.x,e1.y,'眼','#ff9dc7');
   eyeIcon(svg,e2.x,e2.y,'王','#ffcc4d');
-  // 反対側の斜め45〜90°ゾーン
-  fanArea(svg, CX, CY, R, 45, 90, '#4ade80', 0.16);
-  faceArrow(svg, CX, CY, 67.5, 66, true);
+  // 目(北西)から45〜90°のゾーン=北〜北東
+  fanArea(svg, CX, CY, R, 0, 45, '#4ade80', 0.16);
+  faceArrow(svg, CX, CY, 22.5, 66, true);
   faceArrow(svg, CX, CY, 315, 56, false);
   playerToken(svg,CX,CY);
-  labelText(svg, pol(CX,CY,67.5,R*0.78).x, pol(CX,CY,67.5,R*0.78).y+14, '45〜90°の間', '#4ade80', 10.5);
-  labelText(svg,CX,CY+R+42,'※斜めの目+真横の目(135°)が来たら例外:広い隙間の真ん中へ','#ffc857',11);
+  labelText(svg, pol(CX,CY,22.5,R*0.78).x+6, pol(CX,CY,22.5,R*0.78).y+14, '目から45〜90°', '#4ade80', 10.5);
+  labelText(svg,CX,CY+R+42,'例:北西に目 → 北と北東の間。もう片方の目がどこでも安全','#e9eefc',11.5);
 })();
 </script>
 

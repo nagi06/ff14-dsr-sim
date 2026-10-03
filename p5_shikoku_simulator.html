@@ -30,8 +30,9 @@
     無職▽/□: 宣告側の同じ図形の対角(北西⇔南東,北東⇔南西)へ。
     宣告1/4(○): 中央へ寄る。宣告2/3(▽□): その場固定(動かない)。
   ・出題4: 視線2本(邪竜の邪眼+トールダン、互いに135°または180°離れて外周出現)。
-    判定モデルはp2_gaze_simulator.htmlと同じ「正面±90°未満に入るとアウト、真横90°ちょうどはセーフ」。
-    タップは8方向(45度刻み)の中から安全な向きを選ぶ簡略モデル(実戦は自由方位だが選択肢学習用に離散化)。
+    2026-10-04改: 判定と型を p5_shikoku_gaze_simulator.html(視線ドリル)に統一。
+    判定=体の正面±45°(計90°)に目があるとアウト(45°ちょうどもアウト扱い)。タップは16方向(22.5度刻み)。
+    型(Mel Pon式・ゲリック北基準)=北3箇所に目なし→真北／居る→その目から1.5マーカー(67.5°)。
   ・出題5(宣告のみ): ノックバック後に踏むサルヴェーションウィング(無職の百雷跡=西外/北西/北東/東外の4か所)。
     宣告1→西外／宣告2→北西／宣告3→北東／宣告4→東外(最寄り固定・ユーザー確定)。無職は判断なし(自動スキップ)。
   ・ホーリーメテオ(聖紋破壊)はシミュに含めない(カンペにのみ一言記載)。
@@ -41,7 +42,7 @@
   ②出題1の散開半径は 無1/無4=最外周・無2/3と宣告2/3=マーカー環・宣告1/4=内周ドーナツ、の3段階で数値化。
   ③出題3のタップ対象は「最終octagon8方向＋『中央へ』」に統一し、○持ちの正解を「中央へ」、
     ▽□持ち(宣告2/3)の正解を「その場(現在地)」として同一UIで出題できるようにした。
-  ④視線は45度刻み8方向からの離散選択式(実戦は連続角度)。安全判定ロジックはp2と同一の正面±90°モデル。
+  ④視線は22.5度刻み16方向からの離散選択式(実戦は連続角度)。安全判定は正面±45°モデル(視線ドリルと同一)。
   ⑤無職×2名の南北割当は「無職内の西→東番号(1..4)のうち×を持つ2名を比較し、番号が小さい(西寄り)方=北」とした。
 -->
 <style>
@@ -285,8 +286,8 @@
           行き先: 無職×は<b>西側の人=北・東側の人=南</b>。無職▽/□は<b>宣告の同じ図形の対角</b>へ。
           宣告1/4(○)は<b>中央へ寄る</b>。宣告2/3(▽□)は<b>その場固定</b>(動かない)。<br>
           <b>視線(出題4)</b>: 邪竜の邪眼＋トールダンの2本(互いに135°か180°離れて外周出現)。
-          <b>正面±90°未満に入るとアウト</b>(真横90°ちょうどはセーフ)。<br>
-          <b>裏技</b>: 視線判定は正面90°なので「視線からマーカー1個半ずれた向き」で回避できる。
+          <b>体の正面±45°(計90°)に目があるとアウト</b>。カメラは無関係、最後に歩いた方向=体の正面。<br>
+          <b>型(Mel Pon式)</b>: 北3箇所(北西・北・北東)だけ見る。目が居ない→<b>真北</b>。居る→<b>その目からマーカー1個半</b>ずらす(北西に目→北と北東の間／北東に目→北と北西の間／真北に目→左右どちらか)。
           宣告組は飛び先が固定なので、配置後に外周90°を確認するだけでよい(無職より判断が軽い)。<br>
           <b>ノックバック後(出題5・宣告のみ)</b>: 無職の百雷跡=サルヴェーションウィング(白円)を踏んでデバフ解除。
           宣告1→西外／宣告2→北西／宣告3→北東／宣告4→東外(自分の飛び先の最寄り)。無職は踏まない(判断なし)。<br>
@@ -309,7 +310,7 @@
     <div id="phaseLabel"></div>
     <div id="timerWrap"><div id="timerBar"></div></div>
     <div id="arenaWrap">
-      <svg id="arena" viewBox="-220 -220 440 440"></svg>
+      <svg id="arena" viewBox="-256 -256 512 512"></svg>
     </div>
     <div id="msg"></div>
     <button id="viewResultBtn" class="secondary" hidden>最終配置を確認した → 結果を見る</button>
@@ -349,7 +350,7 @@ const RAW_MARKERS = [
   {id:'A', angle:0}, {id:'1', angle:45}, {id:'B', angle:90}, {id:'2', angle:135},
   {id:'C', angle:180}, {id:'3', angle:225}, {id:'D', angle:270}, {id:'4', angle:315},
 ];
-const MARKER_COLORS = {A:'#ff5c5c','1':'#ff5c5c', B:'#ffd24d','2':'#ffd24d', C:'#4da6ff','3':'#4da6ff', D:'#c07aff','4':'#c07aff'};
+const MARKER_COLORS = {A:'#e8404d','1':'#e8404d', B:'#f2c230','2':'#f2c230', C:'#3a8ef0','3':'#3a8ef0', D:'#a558e6','4':'#a558e6'};
 const MOVE_MS = 900;
 const BEAT_MS = 1300;
 const ROTATE_MS = 1400; // 北基準確定の盤面回転演出の所要時間(p5_fuusou_simulator.htmlと統一)
@@ -408,20 +409,44 @@ function uiDefs(){
   return defs;
 }
 
-// 床: 放射グラデ + 同心リング + 8スポーク + 発光リム。R=外周半径
+// 床: 石畳(field_markers.pngの模写。p5_shikoku_gaze_simulator.htmlのdrawStoneFloorと同じ構成)。R=外周半径
 function drawFloor(parent, R){
   parent.appendChild(uiDefs());
-  parent.appendChild(svgEl('circle',{cx:0,cy:0,r:R,fill:'url(#floorG)'}));
-  [0.32,0.58,0.82].forEach(f=>parent.appendChild(svgEl('circle',{cx:0,cy:0,r:R*f,fill:'none',
-    stroke:'rgba(124,160,224,.10)','stroke-width':1})));
+  const add=(t,a)=>parent.appendChild(svgEl(t,a)), P=polar;
+  const LIGHT='#ebe8e0', DARK='#e1ddd3', JOINT='#bdb8ab', LINE='#8f8b7f', RIM='#4a473f';
+  const ring=(r1,r2)=>`M${r2},0 A${r2},${r2} 0 1 1 ${-r2},0 A${r2},${r2} 0 1 1 ${r2},0 Z M${r1},0 A${r1},${r1} 0 1 0 ${-r1},0 A${r1},${r1} 0 1 0 ${r1},0 Z`;
+  add('circle',{cx:0,cy:0,r:R,fill:LIGHT});
+  [[0.90,1.00,LIGHT,48,3.75],[0.78,0.90,DARK,40,0],[0.66,0.78,LIGHT,32,5.6],
+   [0.50,0.66,DARK,32,0],[0.34,0.50,LIGHT,24,7.5],[0.177,0.34,DARK,16,11.25]].forEach(([a,b,col,n,off])=>{
+    add('path',{d:ring(R*a,R*b),fill:col,'fill-rule':'evenodd'});
+    for(let i=0;i<n;i++){ const p1=P(off+i*360/n,R*a), p2=P(off+i*360/n,R*b);
+      add('line',{x1:p1.x,y1:p1.y,x2:p2.x,y2:p2.y,stroke:JOINT,'stroke-width':0.6}); }
+  });
+  [0.90,0.66].forEach(k=>add('circle',{cx:0,cy:0,r:R*k,fill:'none',stroke:JOINT,'stroke-width':0.7}));
+  [0.78,0.50,0.34].forEach(k=>add('circle',{cx:0,cy:0,r:R*k,fill:'none',stroke:LINE,'stroke-width':1.1}));
   for(let a=0;a<360;a+=45){
-    const p=polar(a,R);
-    parent.appendChild(svgEl('line',{x1:0,y1:0,x2:p.x,y2:p.y,
-      stroke:(a%90===0)?'rgba(124,160,224,.15)':'rgba(124,160,224,.07)','stroke-width':1}));
+    const p1=P(a,R*0.177), p2=P(a,R*0.78), q1=P(a+22.5,R*0.50), q2=P(a+22.5,R*0.78);
+    add('line',{x1:p1.x,y1:p1.y,x2:p2.x,y2:p2.y,stroke:LINE,'stroke-width':1.2});
+    add('line',{x1:q1.x,y1:q1.y,x2:q2.x,y2:q2.y,stroke:LINE,'stroke-width':1.1});
   }
-  parent.appendChild(svgEl('circle',{cx:0,cy:0,r:R-7,fill:'none',stroke:'rgba(124,196,255,.10)','stroke-width':1}));
-  parent.appendChild(svgEl('circle',{cx:0,cy:0,r:R,fill:'none',stroke:'url(#rimG)','stroke-width':2.6,
-    opacity:0.8,filter:'url(#softGlow)'}));
+  add('circle',{cx:0,cy:0,r:R*0.177,fill:'#dedad0',stroke:RIM,'stroke-width':1.2});
+  for(let a=0;a<360;a+=45){ const s=R*0.036;
+    add('path',{d:`M0,${-s*1.15} L${s*0.85},${-s*0.3} L${s*0.6},${s*0.85} L${-s*0.6},${s*0.85} L${-s*0.85},${-s*0.3} Z`,fill:'#ebe8e0',stroke:'#6d695f','stroke-width':0.5,
+      transform:`rotate(${a}) translate(0,${-R*0.137})`}); }
+  add('circle',{cx:0,cy:0,r:R*0.10,fill:'#d0ccc2',stroke:RIM,'stroke-width':0.9});
+  add('circle',{cx:0,cy:0,r:R*0.046,fill:'#46423b'});
+  add('circle',{cx:0,cy:0,r:R,fill:'none',stroke:RIM,'stroke-width':2.2});
+  for(let a=0;a<360;a+=7.5){ const p=P(a,R); add('circle',{cx:p.x,cy:p.y,r:1.25,fill:RIM}); }
+}
+// 石畳用フィールドマーカー(英字=丸/数字=角丸四角)。文字は呼び出し側で載せる
+const MARKER_TEXT = {x:0,y:8,fill:'#fff',stroke:'#1c1c1c','stroke-width':2.4,'paint-order':'stroke','stroke-linejoin':'round',
+  'font-size':23,'font-weight':'900','text-anchor':'middle','font-family':'Arial,"Helvetica Neue",sans-serif'};
+function markerRadius(id){ return 210*('ABCD'.includes(id)?0.945:0.87); }
+function stoneMarker(x,y,id){
+  const col=MARKER_COLORS[id], s=20.5;
+  return 'ABCD'.includes(id)
+    ? svgEl('circle',{cx:x,cy:y,r:s,fill:col,stroke:'#1c1c1c','stroke-width':1.6})
+    : svgEl('rect',{x:x-s,y:y-s,width:s*2,height:s*2,rx:3,fill:col,stroke:'#1c1c1c','stroke-width':1.6});
 }
 
 // フィールドマーカーの丸(色は従来どおりゲーム準拠: A/1=赤 B/2=黄 C/3=青 D/4=紫)
@@ -520,6 +545,15 @@ function markerGlyph(x,y,col,isLetter){
 }
 // ===================== /UI v2 キット =====================
 function angDiff(a,b){ let d=Math.abs(a-b)%360; return d>180?360-d:d; }
+// 視線(出題4): 16方向と型の答え。p5_shikoku_gaze_simulator.htmlのmodelAnswerと同じ内容
+const GAZE_DIRS16 = Array.from({length:16},(_,i)=>i*22.5);
+function gazeModelAnswer(angles){
+  const has = d => angles.includes(d);
+  if(!has(315) && !has(0) && !has(45)) return {dirs:[0], text:'北3箇所に目なし → 真北(ゲリック)を向く'};
+  if(has(0)) return {dirs:[67.5, 292.5], text:'真北に目 → 左右どちらでも、目からマーカー1.5個分'};
+  if(has(315)) return {dirs:[22.5], text:'北西に目 → 目から東へマーカー1.5個分(北と北東の間)'};
+  return {dirs:[337.5], text:'北東に目 → 目から西へマーカー1.5個分(北と北西の間)'};
+}
 
 // =====================================================================
 // 抽選ロジック(selfTestからもUIからも呼べるよう純粋関数として実装)
@@ -621,16 +655,15 @@ function drawScenario(){
   const gazeDiff = pick([135,180]);
   const gazeSign = pick([1,-1]);
   const gazeB = ((gazeA + gazeSign*gazeDiff) % 360 + 360) % 360;
-  // 安全な向き(45度刻み8方向のうち、両方の視線と角度差>=90のもの)
-  const safeDirs = [0,45,90,135,180,225,270,315].filter(d=>
-    angDiff(d,gazeA) >= 90 - 1e-9 && angDiff(d,gazeB) >= 90 - 1e-9
-  );
+  // 安全な向き(22.5度刻み16方向のうち、両方の視線が正面±45°の外。45°ちょうどはアウト扱い)
+  const safeDirs = GAZE_DIRS16.filter(d=> angDiff(d,gazeA) > 45 + 1e-6 && angDiff(d,gazeB) > 45 + 1e-6);
+  const gazeModel = gazeModelAnswer([gazeA, gazeB]);
 
   return {
     gerrickMarker, group, number, roleOfSengokuNum, roleOfMushokuNum,
     SCATTER, timing, presteShape, batsuRoles, sankakuRole, shikakuRole,
     batsuDest, mushokuDiagDest, finalDest, wingDest,
-    gazeA, gazeB, gazeDiff, safeDirs,
+    gazeA, gazeB, gazeDiff, safeDirs, gazeModel,
   };
 }
 
@@ -699,11 +732,16 @@ function selfTest(n){
     if(R.gazeDiff!==135 && R.gazeDiff!==180) fail('視線の角度差が135/180以外: '+R.gazeDiff);
     const actualDiff = angDiff(R.gazeA, R.gazeB);
     if(Math.abs(actualDiff-R.gazeDiff) > 1e-6 && Math.abs(actualDiff-(360-R.gazeDiff))>1e-6) fail('視線の実角度差が設定と不整合');
-    // 安全な向きが必ず1つ以上存在する(135/180離れなら常に安全方向が残る)
+    // 安全な向きが必ず1つ以上存在する
     if(R.safeDirs.length===0) fail('安全な向きが0件: gazeA='+R.gazeA+' gazeB='+R.gazeB);
-    // safeDirsの各向きが両視線から90度以上離れていることの再確認
+    // safeDirsの各向きで両視線が正面±45°の外であることの再確認
     R.safeDirs.forEach(d=>{
-      if(angDiff(d,R.gazeA)<90-1e-9 || angDiff(d,R.gazeB)<90-1e-9) fail('safeDirsに不正な向きが混入: '+d);
+      if(angDiff(d,R.gazeA)<=45+1e-6 || angDiff(d,R.gazeB)<=45+1e-6) fail('safeDirsに不正な向きが混入: '+d);
+    });
+    // 型の答えは必ず安全で、両視線から67.5°以上離れている
+    R.gazeModel.dirs.forEach(d=>{
+      if(!R.safeDirs.includes(d)) fail('型の答えが安全でない: '+d+' 視線='+R.gazeA+','+R.gazeB);
+      if(Math.min(angDiff(d,R.gazeA),angDiff(d,R.gazeB)) < 67.5-1e-6) fail('型の答えの余裕が22.5°未満: '+d);
     });
     // ウィング対応
     if(R.wingDest[R.roleOfSengokuNum[1]]!=='W') fail('宣告1のウィングがWでない');
@@ -818,27 +856,23 @@ function buildBoardRaw(gerrickMarker){
   svg.appendChild(boardG);
   drawFloor(boardG, 210);
   RAW_MARKERS.forEach(m=>{
-    const p = polar(m.angle, 185);
-    const col = MARKER_COLORS[m.id];
-    boardG.appendChild(markerCircle(p.x, p.y, col));
-    boardG.appendChild(markerGlyph(p.x, p.y, col, 'ABCD'.includes(m.id)));
+    const p = polar(m.angle, markerRadius(m.id));
+    boardG.appendChild(stoneMarker(p.x, p.y, m.id));
     const labelG = svgEl('g',{class:'counterRot', transform:`translate(${p.x},${p.y}) rotate(0)`});
-    const t=svgEl('text',{x:0,y:4,fill:col,'font-size':11,'font-weight':'800','text-anchor':'middle'});
+    const t=svgEl('text',MARKER_TEXT);
     t.textContent = m.id;
     labelG.appendChild(t);
     boardG.appendChild(labelG);
   });
   // ゲリックアイコン(実際に出現した方位=生の角度に表示)
   const gerrickAngle = RAW_MARKERS.find(m=>m.id===gerrickMarker).angle;
-  const gp = polar(gerrickAngle, 205);
+  const gp = polar(gerrickAngle, 240);
   boardG.appendChild(npcMark(gp.x, gp.y, '#ffcc4d', ''));
   const gerrickLabelG = svgEl('g',{class:'counterRot', transform:`translate(${gp.x},${gp.y}) rotate(0)`});
   const gt=svgEl('text',{x:0,y:4,fill:'#ffcc4d','font-size':9,'font-weight':'700','text-anchor':'middle'});
   gt.textContent='斧';
   gerrickLabelG.appendChild(gt);
   boardG.appendChild(gerrickLabelG);
-  // 中心
-  boardG.appendChild(svgEl('circle',{cx:0,cy:0,r:7,fill:'rgba(124,160,224,.35)'}));
   return boardG;
 }
 
@@ -875,23 +909,19 @@ function initSVGNormalized(gerrickMarker){
   const gerrickAngle = RAW_MARKERS.find(m=>m.id===gerrickMarker).angle;
   RAW_MARKERS.forEach(m=>{
     const dispAngle = ((m.angle - gerrickAngle) % 360 + 360) % 360;
-    const p = polar(dispAngle, 185);
-    const col = MARKER_COLORS[m.id];
-    svg.appendChild(markerCircle(p.x, p.y, col));
-    svg.appendChild(markerGlyph(p.x, p.y, col, 'ABCD'.includes(m.id)));
-    const t=svgEl('text',{x:p.x,y:p.y+4,fill:col,'font-size':11,'font-weight':'800','text-anchor':'middle'});
+    const p = polar(dispAngle, markerRadius(m.id));
+    svg.appendChild(stoneMarker(p.x, p.y, m.id));
+    const t=svgEl('text',Object.assign({},MARKER_TEXT,{x:p.x,y:p.y+8}));
     t.textContent = m.id;
     svg.appendChild(t);
     if(m.id===gerrickMarker){
-      const nt=svgEl('text',{x:p.x,y:p.y+24,fill:col,'font-size':8.5,'font-weight':'700','text-anchor':'middle',opacity:0.9});
+      const nt=svgEl('text',{x:p.x,y:p.y+36,fill:'#3a362f','font-size':11,'font-weight':'800','text-anchor':'middle'});
       nt.textContent='北';
       svg.appendChild(nt);
     }
   });
   // ゲリックアイコン(常に画面上=北)
-  svg.appendChild(npcMark(0,-185,'#ffcc4d','斧'));
-  // 中心
-  svg.appendChild(svgEl('circle',{cx:0,cy:0,r:7,fill:'rgba(124,160,224,.35)'}));
+  svg.appendChild(npcMark(0,-240,'#ffcc4d','斧'));
 }
 
 function drawToken(role, angle, r){
@@ -1191,7 +1221,7 @@ async function startRun(){
   document.getElementById('phaseLabel').textContent='待機中に視線が2本出現(邪竜の邪眼＋トールダン)';
   // 視線の見た目(外周に印)
   [R.gazeA, R.gazeB].forEach((a,idx)=>{
-    const p=polar(a,205);
+    const p=polar(a,236);
     const g=svgEl('g',{class:'gazeMark'});
     g.appendChild(svgEl('circle',{cx:p.x,cy:p.y,r:14,fill: idx===0?'#3a2233':'#233a2a', stroke: idx===0?'#ff9dc7':'#ffcc4d','stroke-width':2}));
     const t=svgEl('text',{x:p.x,y:p.y+4,fill: idx===0?'#ff9dc7':'#ffcc4d','font-size':9,'text-anchor':'middle'});
@@ -1200,10 +1230,11 @@ async function startRun(){
     svg.appendChild(g);
   });
   await wait(reviewMode ? 800 : 400);
-  const dirChoices = [0,45,90,135,180,225,270,315].map(d=>({id:'d'+d, angle:d, r:150, label:''}));
-  const correctGazeIds = R.safeDirs.map(d=>'d'+d);
-  await ask('出題4: 視線を避ける向きは？(正面±90°未満に視線が入るとアウト)', dirChoices, correctGazeIds,
-    `視線: 邪眼=${R.gazeA}° / 王=${R.gazeB}° (差${R.gazeDiff}°) → 安全な向き: ${R.safeDirs.join('°,')}°`);
+  const dirChoices = GAZE_DIRS16.map(d=>({id:'d'+d, angle:d, r:150, label:''}));
+  // 練習モードは安全な向きなら正解。確認モードは型の答えだけを緑で示す
+  const correctGazeIds = (reviewMode ? R.gazeModel.dirs : R.safeDirs).map(d=>'d'+d);
+  await ask('出題4: 視線を避ける体の向きは？(正面±45°に目が入るとアウト)', dirChoices, correctGazeIds, R.gazeModel.text);
+  log('視線の型: '+R.gazeModel.text);
   svg.querySelectorAll('.gazeMark').forEach(el=>el.remove());
 
   // ノックバック(自動)
@@ -1250,6 +1281,103 @@ window.drawScenario = drawScenario;
 
 })();
 }
+</script>
+<!-- ===== 一時停止ボタン(全シム共通・2026-09-27) =====
+  タイマー(setTimeout/setInterval)・時刻(Date.now)・CSSアニメーションをまとめて止める。
+  各シムの wait()/runTimer() は setTimeout で動いているので、ここで包めば個別の改修は不要。
+  停止中は盤面の上に透明な膜を張り、選択肢を押して進んでしまわないようにする。
+  ボタン / Pキー / スペースキー で切り替え。プレイ画面の間だけ表示。 -->
+<style>
+  #pauseBtn{position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:10001;
+    min-width:118px;height:52px;padding:0 18px;border-radius:999px;border:1px solid rgba(124,196,255,.55);
+    background:linear-gradient(180deg,rgba(34,47,80,.96),rgba(17,25,45,.96));color:#e9eefc;
+    font:800 16px "Hiragino Sans","Yu Gothic UI","Yu Gothic",system-ui,sans-serif;letter-spacing:.02em;
+    box-shadow:0 12px 30px -14px #000, inset 0 1px 0 rgba(255,255,255,.08);cursor:pointer;
+    display:none;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;}
+  #pauseBtn.show{display:flex;}
+  #pauseBtn.on{background:linear-gradient(100deg,#ffc857,#ff9d4d);color:#1a1206;border-color:#ffc857;}
+  #pauseVeil{position:fixed;inset:0;z-index:10000;display:none;cursor:not-allowed;}
+  #pauseTag{position:fixed;left:50%;top:10px;transform:translateX(-50%);z-index:10001;display:none;white-space:nowrap;
+    padding:7px 16px;border-radius:999px;background:rgba(255,200,87,.96);color:#1a1206;
+    font:800 13.5px "Hiragino Sans","Yu Gothic UI",system-ui,sans-serif;pointer-events:none;
+    box-shadow:0 10px 26px -12px #000;}
+  #pauseVeil.on,#pauseTag.on{display:block;}
+</style>
+<div id="pauseVeil"></div>
+<div id="pauseTag">⏸ 一時停止中 ― 盤面はそのまま確認できます</div>
+<button id="pauseBtn" type="button" aria-pressed="false" title="一時停止(P / スペース)">⏸ 一時停止</button>
+<script>
+(function(){
+  var nST=window.setTimeout.bind(window), nCT=window.clearTimeout.bind(window),
+      nSI=window.setInterval.bind(window), nCI=window.clearInterval.bind(window), nNow=Date.now;
+  var paused=false, pausedAt=0, pausedTotal=0, seq=1000000, jobs={};
+  // 停止中の時間を差し引いた時刻(Date.now で残り時間を計算しているシム用)
+  Date.now=function(){ return (paused?pausedAt:nNow()) - pausedTotal; };
+  function arm(j){
+    j.start=nNow();
+    if(j.iv){ j.nid=nSI(j.fn, j.ms); }
+    else { j.nid=nST(function(){ delete jobs[j.id]; j.fn.apply(null, j.args); }, Math.max(0, j.left)); }
+  }
+  window.setTimeout=function(fn, ms){
+    if(typeof fn!=='function') return nST.apply(null, arguments);
+    var j={id:seq++, fn:fn, args:[].slice.call(arguments, 2), left:+ms||0};
+    jobs[j.id]=j; if(!paused) arm(j); return j.id;
+  };
+  window.setInterval=function(fn, ms){
+    if(typeof fn!=='function') return nSI.apply(null, arguments);
+    var j={id:seq++, fn:fn, ms:+ms||0, iv:true};
+    jobs[j.id]=j; if(!paused) arm(j); return j.id;
+  };
+  window.clearTimeout=window.clearInterval=function(id){
+    var j=jobs[id];
+    if(!j){ nCT(id); nCI(id); return; }
+    if(j.nid!=null){ if(j.iv) nCI(j.nid); else nCT(j.nid); }
+    delete jobs[id];
+  };
+
+  var btn=document.getElementById('pauseBtn'), veil=document.getElementById('pauseVeil'), tag=document.getElementById('pauseTag');
+  function setPaused(p){
+    if(p===paused) return;
+    if(p){
+      pausedAt=nNow();
+      Object.keys(jobs).forEach(function(k){
+        var j=jobs[k]; if(j.nid==null) return;
+        if(j.iv) nCI(j.nid); else { nCT(j.nid); j.left-=(pausedAt-j.start); }
+        j.nid=null;
+      });
+      try{ document.getAnimations().forEach(function(a){ a.pause(); }); }catch(e){}
+      paused=true;
+    }else{
+      paused=false;
+      pausedTotal+=nNow()-pausedAt;
+      Object.keys(jobs).forEach(function(k){ arm(jobs[k]); });
+      try{ document.getAnimations().forEach(function(a){ if(a.playState==='paused') a.play(); }); }catch(e){}
+    }
+    btn.classList.toggle('on', p); btn.setAttribute('aria-pressed', String(p));
+    btn.textContent = p ? '▶ 再開' : '⏸ 一時停止';
+    veil.classList.toggle('on', p); tag.classList.toggle('on', p);
+  }
+  btn.addEventListener('click', function(){ setPaused(!paused); });
+  document.addEventListener('keydown', function(e){
+    var t=e.target, typing=t && (t.tagName==='INPUT' || t.tagName==='TEXTAREA' || t.isContentEditable);
+    if(typing || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+    if(e.key==='p' || e.key==='P' || e.code==='Space'){
+      if(!btn.classList.contains('show')) return;
+      e.preventDefault(); setPaused(!paused);
+    }
+  });
+  // プレイ画面(battleScreen / gameWrap)が出ている間だけボタンを表示
+  function playing(){
+    var b=document.getElementById('battleScreen'); if(b) return !b.hidden;
+    var g=document.getElementById('gameWrap'); if(g) return getComputedStyle(g).display!=='none';
+    return true;
+  }
+  nSI(function(){
+    var on=playing();
+    btn.classList.toggle('show', on);
+    if(!on && paused) setPaused(false);
+  }, 300);
+})();
 </script>
 </body>
 </html>

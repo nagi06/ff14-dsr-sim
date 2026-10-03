@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>絶竜詩戦争 P5 死刻「視線(魔眼)」反復ドリル</title>
+<!--
+  2026-10-04 新規作成。死刻の視線(魔眼)だけを連続で反復するドリル。
+  p5_shikoku_simulator.html の出題4(8方向・正面±90°モデル)とは別物で、こちらは
+  p5_shikoku_gaze_onepage.html(Mel Pon式・ゲリック北基準)の手順をそのまま練習する。
+
+  モデル:
+  ・ゲリック(斧)がA/B/C/Dのいずれかに出現→盤面を回転してゲリック=画面上(北)に確定。
+    以降の「北」はすべてゲリック北(実マーカーのA北とは限らない)。
+  ・目は2つ(邪竜の邪眼+トールダン)。ゲリック北相対の45°刻み8箇所のうち、互いに135°か180°離れた2箇所。
+  ・判定: 体の正面±45°(計90°)に目があるとアウト。45°ちょうどは際どいのでアウト扱い。
+    カメラは無関係、体の向き(最後に歩いた方向)だけで決まる。
+  ・回答は16方向(22.5°刻み)。型の答えが「マーカー1.5個分=67.5°」なのでマーカーの間も選べるようにした。
+  ・型(Mel Pon式): 北3箇所(北西/北/北東)に目が無い→真北。居る→その目から45〜90°の間(目からマーカー1.5個分=67.5°)。
+    北西に目→北北東(北と北東の間)／北東に目→北北西(北と北西の間)。数える起点は「北」ではなく「目」。
+    (2026-10-04 元記事の図で確認して訂正。当初「北から1.5個」と誤読していた)
+    真北に目→左右どちらでも可。
+    この型はもう片方の目がどこに居ても安全(全32配置で最小角度差67.5°)。例外パターンは無い。
+  ・自分は中央に居る前提(実戦の立ち位置による数度のズレは67.5°の余裕22.5°で吸収される)。
+
+  床は field_markers.png(石畳の再現図)をSVGで模写。マーカー色・形はゲーム準拠(A/1=赤 B/2=黄 C/3=青 D/4=紫、英字=丸・数字=四角)。
+-->
+<style>
+  /* ===== DSR SIM UI v2 (2026-07-25) p5_shikoku_simulator.html と同一パレット ===== */
+  :root{
+    --bg:#070a12;
+    --surface:rgba(28,38,66,.72);
+    --surface-2:rgba(40,54,90,.66);
+    --stroke:rgba(124,160,224,.20);
+    --stroke-hi:rgba(124,196,255,.55);
+    --accent:#7cc4ff; --accent-2:#a78bfa; --gold:#f5c86f;
+    --good:#4ade80; --bad:#ff6070; --warn:#ffc857;
+    --text:#e9eefc; --dim:#93a3c8;
+    --r-lg:16px; --r-md:12px; --r-sm:9px;
+    --ease:cubic-bezier(.22,.61,.36,1);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+    font-family:"Hiragino Sans","Yu Gothic UI","Yu Gothic",system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;}
+  body::before{content:'';position:fixed;inset:0;z-index:-2;pointer-events:none;
+    background:
+      radial-gradient(90vw 55vh at 12% -8%, rgba(66,108,232,.22), transparent 62%),
+      radial-gradient(75vw 50vh at 102% 4%, rgba(150,92,240,.17), transparent 60%),
+      radial-gradient(95vw 55vh at 50% 112%, rgba(28,176,214,.13), transparent 62%);}
+  #app{max-width:530px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;
+    padding:14px 12px calc(34px + env(safe-area-inset-bottom));}
+
+  h1{font-size:17px;line-height:1.45;text-align:center;margin:6px 0 6px;font-weight:800;letter-spacing:.01em;
+    background:linear-gradient(100deg,#ffffff 6%,var(--accent) 52%,var(--accent-2) 96%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;}
+  .sub{text-align:center;color:var(--dim);font-size:11px;line-height:1.7;margin-bottom:14px;}
+  body:has(#battleScreen:not([hidden])) h1{font-size:12px;margin:0 0 4px;opacity:.75;}
+  body:has(#battleScreen:not([hidden])) .sub{display:none;}
+
+  .panel{position:relative;background:linear-gradient(180deg,rgba(34,47,80,.80),rgba(17,25,45,.72));
+    border:1px solid var(--stroke);border-radius:var(--r-lg);padding:14px;margin-bottom:12px;
+    box-shadow:0 18px 40px -28px #000, inset 0 1px 0 rgba(255,255,255,.06);}
+  .panel h2{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;
+    letter-spacing:.10em;color:var(--dim);margin:0 0 10px;}
+  .panel h2::before{content:'';width:3px;height:13px;border-radius:2px;
+    background:linear-gradient(180deg,var(--accent),var(--accent-2));}
+
+  .speed-grid{display:flex;gap:6px;padding:5px;border-radius:14px;
+    background:rgba(0,0,0,.28);border:1px solid var(--stroke);}
+  .speed-btn{flex:1;padding:10px 6px;border-radius:10px;border:1px solid transparent;background:transparent;
+    color:var(--dim);font-size:12px;line-height:1.5;text-align:center;cursor:pointer;
+    transition:background .2s,color .2s,border-color .2s,transform .16s var(--ease);}
+  .speed-btn:active{transform:scale(.97);}
+  .speed-btn.selected{color:#fff;border-color:var(--stroke-hi);
+    background:linear-gradient(180deg,rgba(124,196,255,.24),rgba(124,196,255,.07));
+    box-shadow:0 10px 22px -16px var(--accent);}
+  .speed-btn span{font-size:10px;color:var(--dim);}
+
+  .seconds-row{display:flex;align-items:center;gap:10px;}
+  .seconds-row input[type=range]{flex:1;accent-color:var(--accent);height:4px;}
+  .seconds-row input[type=number]{width:66px;padding:9px;border-radius:10px;border:1px solid var(--stroke);
+    background:rgba(0,0,0,.3);color:var(--text);font-size:15px;font-weight:700;text-align:center;
+    font-variant-numeric:tabular-nums;}
+  .seconds-hint{font-size:11px;color:var(--dim);margin-top:8px;line-height:1.6;}
+
+  #startBtn{position:relative;width:100%;padding:15px;font-size:15px;font-weight:800;letter-spacing:.06em;
+    border:none;border-radius:14px;color:#06101f;cursor:pointer;margin-top:4px;
+    background:linear-gradient(100deg,var(--accent),#9ad4ff 45%,var(--accent-2));
+    box-shadow:0 16px 34px -18px var(--accent),inset 0 1px 0 rgba(255,255,255,.45);
+    transition:transform .16s var(--ease),filter .2s;}
+  #startBtn:active{transform:translateY(1px) scale(.99);filter:brightness(1.08);}
+
+  details{margin-top:2px;}
+  summary{cursor:pointer;color:var(--dim);font-size:12px;list-style:none;}
+  summary::-webkit-details-marker{display:none;}
+  summary::before{content:'▸ ';color:var(--accent);}
+  details[open] summary::before{content:'▾ ';}
+  .rules{font-size:12px;line-height:1.85;color:var(--text);margin-top:10px;}
+  .rules b{color:var(--accent);font-weight:700;}
+  .src{font-size:10px;color:var(--dim);margin-top:8px;line-height:1.6;}
+  .src a{color:var(--dim);}
+
+  #hud{display:flex;justify-content:space-between;align-items:center;gap:8px;
+    margin:0 0 9px;font-size:11px;color:var(--dim);}
+  #hud>span{padding:5px 11px;border-radius:999px;background:rgba(255,255,255,.045);
+    border:1px solid var(--stroke);white-space:nowrap;}
+  #qTag{color:var(--accent);font-weight:800;letter-spacing:.07em;}
+  #scoreTag{font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;}
+
+  #phaseLabel{font-size:14.5px;font-weight:800;line-height:1.55;text-align:center;
+    margin:2px 0 9px;min-height:22px;}
+  #phaseLabel.flash{animation:phaseIn .5s var(--ease);}
+
+  #timerWrap{position:relative;height:6px;border-radius:99px;overflow:hidden;margin-bottom:10px;
+    background:rgba(0,0,0,.45);border:1px solid var(--stroke);}
+  #timerBar{height:100%;width:100%;border-radius:99px;
+    background:linear-gradient(90deg,var(--accent),var(--accent-2));
+    box-shadow:0 0 12px rgba(124,196,255,.65);}
+  #timerBar.warn{background:linear-gradient(90deg,var(--warn),#ff9d4d);}
+  #timerBar.danger{background:linear-gradient(90deg,#ff6070,#ff3b5c);}
+
+  #arenaWrap{position:relative;width:100%;aspect-ratio:1/1;max-width:470px;margin:0 auto;
+    filter:drop-shadow(0 22px 46px rgba(0,0,0,.6));}
+  svg#arena{width:100%;height:100%;display:block;touch-action:manipulation;overflow:visible;}
+
+  #msg{display:flex;align-items:center;justify-content:center;min-height:38px;margin-top:10px;
+    padding:9px 12px;border-radius:var(--r-md);text-align:center;font-size:13px;font-weight:700;
+    line-height:1.6;background:rgba(255,255,255,.04);border:1px solid var(--stroke);
+    transition:background .25s,border-color .25s,color .25s;}
+  #msg.good{color:var(--good);background:rgba(74,222,128,.10);border-color:rgba(74,222,128,.45);}
+  #msg.bad{color:var(--bad);background:rgba(255,96,112,.10);border-color:rgba(255,96,112,.45);}
+  #msg.warn{color:var(--warn);background:rgba(255,200,87,.10);border-color:rgba(255,200,87,.45);}
+  #msg.pop{animation:msgPop .38s var(--ease);}
+
+  #log{font-size:10.5px;line-height:1.75;color:var(--dim);max-height:92px;overflow-y:auto;
+    margin-top:9px;padding:8px 11px;border-radius:var(--r-sm);background:rgba(0,0,0,.34);
+    border:1px solid var(--stroke);
+    font-family:ui-monospace,SFMono-Regular,Menlo,"Yu Gothic UI",monospace;}
+  #log:empty{display:none;}
+  button.secondary{width:100%;padding:13px;border-radius:14px;border:1px solid var(--stroke);
+    background:rgba(255,255,255,.045);color:var(--text);font-size:14px;font-weight:700;cursor:pointer;
+    margin-top:8px;transition:transform .16s var(--ease),background .2s,border-color .2s;}
+  button.secondary:active{transform:scale(.985);}
+  button.secondary:hover{background:rgba(124,196,255,.10);border-color:var(--stroke-hi);}
+  #nextBtn{border-color:var(--stroke-hi);background:linear-gradient(180deg,rgba(124,196,255,.22),rgba(124,196,255,.06));}
+
+  #resultScreen .score{font-size:46px;line-height:1.15;text-align:center;font-weight:900;
+    margin:10px 0 4px;font-variant-numeric:tabular-nums;
+    background:linear-gradient(180deg,#ffffff,var(--accent));
+    -webkit-background-clip:text;background-clip:text;color:transparent;}
+  #resultScreen .verdict{text-align:center;font-size:14px;font-weight:700;color:var(--dim);margin-bottom:14px;line-height:1.7;}
+  #setupScreen,#battleScreen,#resultScreen{animation:screenIn .45s var(--ease);}
+  [hidden]{display:none!important;}
+
+  /* ---- 盤面(SVG)のモーション ---- */
+  .slotInner,.meRing,.burst,.eyeInner,.spotRing{transform-box:fill-box;transform-origin:center;}
+  .meRing{animation:mePulse 2.4s ease-in-out infinite;}
+  .slot{cursor:pointer;}
+  .slotInner{animation:slotIn .3s var(--ease) backwards;}
+  .slot:active .slotInner{animation:none;transform:scale(.88);}
+  .eyeInner{animation:eyeIn .35s var(--ease) backwards;}
+  .eyeHit .eyeInner{animation:eyeHit .5s ease-in-out 3;}
+  .spotRing{animation:mePulse 1.8s ease-in-out infinite;}
+  .burst{animation:burst .62s var(--ease) forwards;pointer-events:none;}
+  .shake{animation:shake .42s var(--ease);}
+
+  @keyframes screenIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+  @keyframes phaseIn{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:none;}}
+  @keyframes msgPop{0%{transform:scale(.96);}55%{transform:scale(1.025);}100%{transform:scale(1);}}
+  @keyframes slotIn{from{opacity:0;transform:scale(.55);}to{opacity:1;transform:scale(1);}}
+  @keyframes eyeIn{from{opacity:0;transform:scale(1.8);}to{opacity:1;transform:scale(1);}}
+  @keyframes eyeHit{0%,100%{transform:scale(1);}50%{transform:scale(1.35);}}
+  @keyframes mePulse{0%,100%{transform:scale(1);opacity:.75;}50%{transform:scale(1.15);opacity:.3;}}
+  @keyframes burst{from{transform:scale(.6);opacity:.85;}to{transform:scale(2.5);opacity:0;}}
+  @keyframes shake{0%,100%{transform:translateX(0);}20%{transform:translateX(-5px);}
+    40%{transform:translateX(5px);}60%{transform:translateX(-3px);}80%{transform:translateX(3px);}}
+  @media (prefers-reduced-motion:reduce){
+    *{animation-duration:.01ms!important;animation-iteration-count:1!important;}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <h1>絶竜詩戦争 P5 死刻「視線(魔眼)」反復ドリル</h1>
+  <div class="sub">Mel Pon式(ゲリック北基準)。北3箇所を見る → 居なければ真北／居ればその目から1.5個ずらす。これだけを連続で練習</div>
+
+  <!-- SETUP -->
+  <div id="setupScreen">
+    <div class="panel">
+      <h2>モード</h2>
+      <div class="speed-grid" id="modeGrid">
+        <div class="speed-btn selected" data-mode="review">確認モード<br><span>型の答えを見ながら覚える</span></div>
+        <div class="speed-btn" data-mode="practice">練習モード<br><span>制限時間内に自分で判断</span></div>
+      </div>
+    </div>
+    <div class="panel">
+      <h2 id="speedPanelTitle">確認モードの待ち時間(秒)</h2>
+      <div class="seconds-row">
+        <input type="range" id="secondsSlider" min="2" max="30" step="1" value="30">
+        <input type="number" id="secondsInput" min="2" max="120" step="1" value="30">
+        <span>秒</span>
+      </div>
+      <div class="seconds-hint" id="secondsHint">向きをタップすれば即座に判定します。この秒数は放置した場合に自動で答えを表示するまでの時間です。</div>
+    </div>
+    <div class="panel">
+      <h2>問題数</h2>
+      <div class="speed-grid" id="countGrid">
+        <div class="speed-btn selected" data-n="10">10問</div>
+        <div class="speed-btn" data-n="20">20問</div>
+        <div class="speed-btn" data-n="40">40問</div>
+      </div>
+    </div>
+    <div class="panel">
+      <h2>ゲリック北の回転演出</h2>
+      <div class="speed-grid" id="rotGrid">
+        <div class="speed-btn selected" data-rot="1">あり<br><span>毎問、実方位→ゲリック北へ回転</span></div>
+        <div class="speed-btn" data-rot="0">なし<br><span>最初からゲリック北(テンポ重視)</span></div>
+      </div>
+    </div>
+<button id="startBtn">確認スタート</button>
+
+    <div class="panel" style="margin-top:10px;">
+      <details>
+        <summary>カンペ(ルール概要)を見る</summary>
+        <div class="rules">
+          <b>北</b>＝死刻開始時にゲリック(斧)が現れた方向。実マーカーのA北とは限らない。カメラは整列からゲリック北のまま動かさない。<br>
+          <b>目</b>は外周に2つ(邪竜の邪眼＋トールダン)。間隔は180°か135°。<br>
+          <b>判定</b>: 体の<b>正面±45°(計90°)</b>に目があるとアウト(混乱)。カメラは無関係、<b>最後に歩いた方向=体の正面</b>。<br>
+          <b>手順</b>: 中央集合で<b>北3箇所(北西・北・北東)</b>だけ見る。<br>
+          ・目が居ない → <b>真北(ゲリック)</b>を向く。<br>
+          ・目が居る → <b>その目から45〜90°の間(目からマーカー1.5個分)</b>を向く。北西に目→北と北東の間／北東に目→北と北西の間。真北に目なら左右どちらでもOK。<br>
+          ・もう片方の目がどこに居てもこれで回避できる(例外なし)。<br>
+          配置後にその方向へ一歩歩いて止まる。以後ノックバックまで移動キーを押さない。
+          <div class="src">処理法: Mel Pon さん「絶竜詩戦争 死刻の視線回避方法」を参考。1枚カンペは <a href="p5_shikoku_gaze_onepage.html">こちら</a>。<br>
+          このドリルは16方向(22.5°刻み)から向きを選びます。45°ちょうどは際どいのでアウト扱いです。</div>
+        </div>
+      </details>
+    </div>
+  </div>
+
+  <!-- BATTLE -->
+  <div id="battleScreen" hidden>
+    <div id="hud"><span id="qTag">1/10</span><span id="northTag">北=-</span><span id="scoreTag">0/0</span></div>
+    <div id="phaseLabel"></div>
+    <div id="timerWrap"><div id="timerBar"></div></div>
+    <div id="arenaWrap">
+      <svg id="arena" viewBox="-288 -288 576 576"></svg>
+    </div>
+    <div id="msg"></div>
+    <button id="nextBtn" class="secondary" hidden>次の問題 ▶</button>
+    <div id="log"></div>
+  </div>
+
+  <!-- RESULT -->
+  <div id="resultScreen" hidden>
+    <div class="panel">
+      <h2 style="text-align:center;">練習結果</h2>
+      <div class="score" id="finalScore">0/0</div>
+      <div class="verdict" id="finalVerdict"></div>
+      <button class="secondary" id="retryBtn">もう一度</button>
+      <button class="secondary" id="backBtn">設定に戻る</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// 元マーカー(実際の盤面): 時計回りに A(北)/1(北東)/B(東)/2(南東)/C(南)/3(南西)/D(西)/4(北西)
+const RAW_MARKERS = [
+  {id:'A', angle:0}, {id:'1', angle:45}, {id:'B', angle:90}, {id:'2', angle:135},
+  {id:'C', angle:180}, {id:'3', angle:225}, {id:'D', angle:270}, {id:'4', angle:315},
+];
+// ゲーム準拠の色(field_markers.pngと同値)
+const MARKER_COLORS = {A:'#e8404d','1':'#e8404d', B:'#f2c230','2':'#f2c230', C:'#3a8ef0','3':'#3a8ef0', D:'#a558e6','4':'#a558e6'};
+const DIRS8 = [0,45,90,135,180,225,270,315];
+const DIRS16 = Array.from({length:16},(_,i)=>i*22.5);
+const DIR_NAMES16 = ['北','北北東','北東','東北東','東','東南東','南東','南南東','南','南南西','南西','西南西','西','西北西','北西','北北西'];
+const DIR_NAMES8 = {0:'北',45:'北東',90:'東',135:'南東',180:'南',225:'南西',270:'西',315:'北西'};
+const CONE_HALF = 45;      // 正面±45°(計90°)に目があるとアウト
+const ROTATE_MS = 1100;
+
+function polar(angleDeg, r){
+  const rad = angleDeg*Math.PI/180;
+  return {x: r*Math.sin(rad), y: -r*Math.cos(rad)};
+}
+function norm360(a){ return ((a % 360) + 360) % 360; }
+function normalizeAngle180(a){ a = norm360(a); if(a > 180) a -= 360; return a; }
+function angDiff(a,b){ let d=Math.abs(a-b)%360; return d>180?360-d:d; }
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function dirName(d){ return DIR_NAMES16[Math.round(norm360(d)/22.5)%16]; }
+
+// =====================================================================
+// 出題・判定ロジック(純粋関数。selfTestからもUIからも使う)
+// =====================================================================
+// 型(Mel Pon式)の答え。angles=目2つのゲリック北相対角度
+function modelAnswer(angles){
+  const has = d => angles.includes(d);
+  if(!has(315) && !has(0) && !has(45)){
+    return {rule:'north', dirs:[0], text:'北3箇所に目なし → 真北(ゲリック)を向く'};
+  }
+  if(has(0)){
+    return {rule:'either', dirs:[67.5, 292.5], text:'真北に目 → 左右どちらでも、目からマーカー1.5個分'};
+  }
+  if(has(315)){
+    return {rule:'side', dirs:[22.5], text:'北西に目 → 目から東へマーカー1.5個分(北と北東の間)'};
+  }
+  return {rule:'side', dirs:[337.5], text:'北東に目 → 目から西へマーカー1.5個分(北と北西の間)'};
+}
+// 向きfacingで各目との角度差を返す。45°ちょうどもアウト扱い。
+function judge(facing, angles){
+  const diffs = angles.map(a=>angDiff(facing,a));
+  const hit = diffs.map(d=> d <= CONE_HALF + 1e-6);
+  return {safe: !hit.some(Boolean), diffs, hit};
+}
+function drawQuestion(){
+  for(;;){
+    const a = pick(DIRS8);
+    const b = norm360(a + pick([1,-1])*pick([135,180]));
+    const kinds = Math.random()<0.5 ? ['邪眼','王'] : ['王','邪眼'];
+    return {
+      gerrickMarker: pick(['A','B','C','D']),
+      eyes: [{angle:a, kind:kinds[0]}, {angle:b, kind:kinds[1]}],
+    };
+  }
+}
+
+function selfTest(){
+  const problems = [];
+  let cases = 0;
+  DIRS8.forEach(a=>[135,180].forEach(diff=>[1,-1].forEach(sign=>{
+    const b = norm360(a+sign*diff);
+    const angles=[a,b];
+    cases++;
+    const m = modelAnswer(angles);
+    m.dirs.forEach(d=>{
+      const j = judge(d, angles);
+      if(!j.safe) problems.push(`型の答えがアウト: 目=${a},${b} 向き=${d}`);
+      if(Math.min(...j.diffs) < 67.5-1e-6) problems.push(`型の答えの余裕が22.5°未満: 目=${a},${b} 向き=${d}`);
+    });
+    // 目が居る時の型は、北3箇所に居る目からちょうど67.5°であること
+    if(m.rule!=='north'){ const e=[315,0,45].find(x=>angles.includes(x)); m.dirs.forEach(d=>{ if(Math.abs(angDiff(d,e)-67.5)>1e-6) problems.push(`型が目から1.5個でない: 目=${a},${b} 向き=${d}`); }); }
+    if(!DIRS16.some(d=>judge(d,angles).safe)) problems.push(`安全な向きが無い: 目=${a},${b}`);
+  })));
+  for(let i=0;i<2000;i++){
+    const q = drawQuestion();
+    const [x,y] = q.eyes.map(e=>e.angle);
+    const d = angDiff(x,y);
+    if(d!==135 && d!==180) problems.push('目の間隔が135/180以外: '+d);
+  }
+  return {cases, bad:problems.length, problems};
+}
+
+if(typeof module !== 'undefined' && module.exports){
+  module.exports = { modelAnswer, judge, drawQuestion, selfTest };
+}
+
+// =====================================================================
+// UI (ブラウザ実行時のみ)
+// =====================================================================
+if(typeof document !== 'undefined'){
+(function(){
+const NS='http://www.w3.org/2000/svg';
+function svgEl(tag, attrs, parent){
+  const el = document.createElementNS(NS, tag);
+  for(const k in attrs) el.setAttribute(k, attrs[k]);
+  if(parent) parent.appendChild(el);
+  return el;
+}
+const FR = 185;          // 床の半径
+const EYE_R = FR + 34;   // 目を置く半径(外周の外)
+const SLOT_R = 120;      // 向き選択肢を置く半径
+
+// ---------- 設定 ----------
+let reviewMode=true, timeLimitMs=30000, totalQ=10, useRotation=true;
+const DEFAULT_SECONDS = {review:30, practice:5};
+const secondsSlider=document.getElementById('secondsSlider');
+const secondsInput=document.getElementById('secondsInput');
+function setSeconds(sec){
+  sec = Math.max(2, Math.min(120, Math.round(sec)));
+  timeLimitMs = sec*1000;
+  secondsSlider.value = Math.min(30, sec);
+  secondsInput.value = sec;
+}
+secondsSlider.oninput=()=> setSeconds(parseInt(secondsSlider.value,10));
+secondsInput.oninput=()=>{ if(secondsInput.value!=='') setSeconds(parseInt(secondsInput.value,10)||DEFAULT_SECONDS.practice); };
+function bindGrid(id, onPick){
+  document.querySelectorAll('#'+id+' .speed-btn').forEach(btn=>{
+    btn.onclick=()=>{
+      document.querySelectorAll('#'+id+' .speed-btn').forEach(b=>b.classList.remove('selected'));
+      btn.classList.add('selected');
+      onPick(btn.dataset);
+    };
+  });
+}
+bindGrid('modeGrid', d=>{
+  reviewMode = d.mode==='review';
+  document.getElementById('startBtn').textContent = reviewMode? '確認スタート' : '練習スタート';
+  document.getElementById('speedPanelTitle').textContent = reviewMode? '確認モードの待ち時間(秒)' : '練習モードの制限時間(秒)';
+  document.getElementById('secondsHint').textContent = reviewMode
+    ? '向きをタップすれば即座に判定します。この秒数は放置した場合に自動で答えを表示するまでの時間です。'
+    : 'この秒数以内に向きをタップできないと不正解になります。実戦は北3箇所を見るだけなので3〜5秒が目安です。';
+  setSeconds(DEFAULT_SECONDS[reviewMode?'review':'practice']);
+});
+bindGrid('countGrid', d=>{ totalQ = parseInt(d.n,10); });
+bindGrid('rotGrid', d=>{ useRotation = d.rot==='1'; });
+
+function show(screen){
+  ['setupScreen','battleScreen','resultScreen'].forEach(id=>{ document.getElementById(id).hidden = (id!==screen); });
+}
+document.getElementById('startBtn').onclick=()=>{ show('battleScreen'); startRun(); };
+document.getElementById('retryBtn').onclick=()=>{ show('battleScreen'); startRun(); };
+document.getElementById('backBtn').onclick=()=> show('setupScreen');
+
+// ---------- 共通UI ----------
+let svg, runId=0, score=0, answeredCount=0, modelCount=0, qIndex=0;
+let timerTimeout, timerWarnT1, timerWarnT2;
+const logEl=document.getElementById('log');
+function log(text, ok){
+  const div=document.createElement('div');
+  div.style.color = ok===true? '#4ade80' : ok===false? '#ff6070' : '#93a3c8';
+  div.textContent=text;
+  logEl.prepend(div);
+}
+function setMsg(text, kind){
+  const el=document.getElementById('msg');
+  el.textContent=text;
+  el.classList.remove('good','bad','warn','pop');
+  if(kind) el.classList.add(kind);
+  void el.offsetWidth;
+  el.classList.add('pop');
+}
+function setPhase(text){
+  const el=document.getElementById('phaseLabel');
+  el.textContent=text;
+  el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
+}
+function setHud(){
+  document.getElementById('qTag').textContent = Math.min(qIndex+1,totalQ)+'/'+totalQ;
+  document.getElementById('scoreTag').textContent = reviewMode? '確認モード' : '正解 '+score+'/'+answeredCount;
+}
+function clearTimer(){
+  clearTimeout(timerTimeout); clearTimeout(timerWarnT1); clearTimeout(timerWarnT2);
+  const bar=document.getElementById('timerBar');
+  bar.classList.remove('warn','danger');
+  // 残り幅で止める
+  const w=getComputedStyle(bar).width; bar.style.transition='none'; bar.style.width=w;
+}
+function runTimer(ms, onExpire){
+  const bar=document.getElementById('timerBar');
+  clearTimeout(timerTimeout); clearTimeout(timerWarnT1); clearTimeout(timerWarnT2);
+  bar.classList.remove('warn','danger');
+  bar.style.transition='none';
+  bar.style.width='100%';
+  // rAFは非表示タブで止まるためスタイル反映を強制してからタイマーで走らせる(HANDOVER記録の既知ハマり)
+  bar.getBoundingClientRect();
+  setTimeout(()=>{ bar.style.transition=`width ${ms}ms linear`; bar.style.width='0%'; }, 20);
+  timerWarnT1=setTimeout(()=>bar.classList.add('warn'), ms*0.55);
+  timerWarnT2=setTimeout(()=>{ bar.classList.remove('warn'); bar.classList.add('danger'); }, ms*0.82);
+  timerTimeout=setTimeout(onExpire, ms);
+}
+function wait(ms){ return new Promise(res=>setTimeout(res, ms)); }
+function waitNext(label){
+  const btn=document.getElementById('nextBtn');
+  btn.textContent=label;
+  btn.hidden=false;
+  return new Promise(resolve=>{ btn.onclick=()=>{ btn.hidden=true; resolve(); }; });
+}
+
+// ---------- 盤面 ----------
+// 石畳の床。field_markers.png(石畳の再現図)の模写: 明暗が交互の同心リング+放射状の目地+中央の紋章。
+function ringPath(r1, r2){
+  return `M${r2},0 A${r2},${r2} 0 1 1 ${-r2},0 A${r2},${r2} 0 1 1 ${r2},0 Z `+
+         `M${r1},0 A${r1},${r1} 0 1 0 ${-r1},0 A${r1},${r1} 0 1 0 ${r1},0 Z`;
+}
+function drawStoneFloor(g, R){
+  const LIGHT='#ebe8e0', DARK='#e1ddd3', JOINT='#bdb8ab', LINE='#8f8b7f', RIM='#4a473f';
+  svgEl('circle',{cx:0,cy:0,r:R,fill:LIGHT},g);
+  // [内半径, 外半径, 色, 石の枚数, 目地の角度オフセット]
+  const rings = [
+    [0.90,1.00,LIGHT,48,3.75],
+    [0.78,0.90,DARK ,40,0],
+    [0.66,0.78,LIGHT,32,5.6],
+    [0.50,0.66,DARK ,32,0],
+    [0.34,0.50,LIGHT,24,7.5],
+    [0.177,0.34,DARK,16,11.25],
+  ];
+  rings.forEach(([a,b,col,n,off])=>{
+    svgEl('path',{d:ringPath(R*a,R*b),fill:col,'fill-rule':'evenodd'},g);
+    for(let i=0;i<n;i++){
+      const ang=off+i*360/n, p1=polar(ang,R*a), p2=polar(ang,R*b);
+      svgEl('line',{x1:p1.x,y1:p1.y,x2:p2.x,y2:p2.y,stroke:JOINT,'stroke-width':0.6},g);
+    }
+  });
+  // リング境界(細)と、床模様として目立つ太い環
+  [0.90,0.66].forEach(k=>svgEl('circle',{cx:0,cy:0,r:R*k,fill:'none',stroke:JOINT,'stroke-width':0.7},g));
+  [0.78,0.50,0.34].forEach(k=>svgEl('circle',{cx:0,cy:0,r:R*k,fill:'none',stroke:LINE,'stroke-width':1.1},g));
+  // 太い放射線: 8方向(中央紋章〜0.78)と、その間の22.5°ずれ(0.50〜0.78)
+  for(let a=0;a<360;a+=45){
+    const p1=polar(a,R*0.177), p2=polar(a,R*0.78);
+    svgEl('line',{x1:p1.x,y1:p1.y,x2:p2.x,y2:p2.y,stroke:LINE,'stroke-width':1.2},g);
+    const q1=polar(a+22.5,R*0.50), q2=polar(a+22.5,R*0.78);
+    svgEl('line',{x1:q1.x,y1:q1.y,x2:q2.x,y2:q2.y,stroke:LINE,'stroke-width':1.1},g);
+  }
+  // 中央の紋章: 外環+五角形タイル8枚+内円+芯
+  svgEl('circle',{cx:0,cy:0,r:R*0.177,fill:'#dedad0',stroke:RIM,'stroke-width':1.2},g);
+  for(let a=0;a<360;a+=45){
+    const s=R*0.036;
+    svgEl('path',{d:`M0,${-s*1.15} L${s*0.85},${-s*0.3} L${s*0.6},${s*0.85} L${-s*0.6},${s*0.85} L${-s*0.85},${-s*0.3} Z`,
+      fill:'#ebe8e0',stroke:'#6d695f','stroke-width':0.5,
+      transform:`rotate(${a}) translate(0,${-R*0.137})`},g);
+  }
+  svgEl('circle',{cx:0,cy:0,r:R*0.10,fill:'#d0ccc2',stroke:RIM,'stroke-width':0.9},g);
+  svgEl('circle',{cx:0,cy:0,r:R*0.046,fill:'#46423b'},g);
+  // 外周の縁と鋲
+  svgEl('circle',{cx:0,cy:0,r:R,fill:'none',stroke:RIM,'stroke-width':2.2},g);
+  for(let a=0;a<360;a+=7.5){ const p=polar(a,R); svgEl('circle',{cx:p.x,cy:p.y,r:1.3,fill:RIM},g); }
+}
+// フィールドマーカー(英字=丸/数字=角丸四角、白文字+黒フチ)。文字は逆回転用のg.counterRotに入れる
+function drawMarkers(g, R){
+  RAW_MARKERS.forEach(m=>{
+    const isLetter='ABCD'.includes(m.id);
+    const p=polar(m.angle, R*(isLetter?0.945:0.87));
+    const col=MARKER_COLORS[m.id], s=R*0.098;
+    if(isLetter) svgEl('circle',{cx:p.x,cy:p.y,r:s,fill:col,stroke:'#1c1c1c','stroke-width':1.6},g);
+    else svgEl('rect',{x:p.x-s,y:p.y-s,width:s*2,height:s*2,rx:3,fill:col,stroke:'#1c1c1c','stroke-width':1.6},g);
+    const lg=svgEl('g',{class:'counterRot',transform:`translate(${p.x},${p.y}) rotate(0)`},g);
+    const t=svgEl('text',{x:0,y:8,fill:'#fff',stroke:'#1c1c1c','stroke-width':2.4,'paint-order':'stroke',
+      'stroke-linejoin':'round','font-size':23,'font-weight':'900','text-anchor':'middle',
+      'font-family':'Arial,"Helvetica Neue",sans-serif'},lg);
+    t.textContent=m.id;
+  });
+}
+let layers={};
+function buildBoard(gerrickMarker){
+  svg=document.getElementById('arena');
+  svg.innerHTML='';
+  const defs=svgEl('defs',{},svg);
+  defs.innerHTML=`<filter id="softGlow" x="-70%" y="-70%" width="240%" height="240%">
+      <feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="tokShadow" x="-60%" y="-60%" width="220%" height="220%">
+      <feDropShadow dx="0" dy="2.5" stdDeviation="2.6" flood-color="#000" flood-opacity="0.55"/></filter>`;
+  const boardG=svgEl('g',{id:'boardG',transform:'rotate(0)'},svg);
+  drawStoneFloor(boardG, FR);
+  drawMarkers(boardG, FR);
+  // ゲリック(斧): 実際に出現した方位の外側
+  const ga=RAW_MARKERS.find(m=>m.id===gerrickMarker).angle;
+  const gp=polar(ga, FR+88);
+  svgEl('circle',{cx:gp.x,cy:gp.y,r:12,fill:'#3a2a12',stroke:'#ffcc4d','stroke-width':2.2,filter:'url(#softGlow)'},boardG);
+  const gl=svgEl('g',{class:'counterRot',transform:`translate(${gp.x},${gp.y}) rotate(0)`},boardG);
+  svgEl('text',{x:0,y:4,fill:'#ffcc4d','font-size':11,'font-weight':'800','text-anchor':'middle'},gl).textContent='斧';
+  // 画面座標(=ゲリック北相対)で描く重ね描きレイヤー。盤面の回転には巻き込まない
+  layers={boardG, fx:svgEl('g',{},svg), eye:svgEl('g',{},svg), slot:svgEl('g',{},svg), tok:svgEl('g',{},svg)};
+  // 自分(中央)
+  svgEl('circle',{class:'meRing',r:19,fill:'none',stroke:'#1c1c1c','stroke-width':1.6,opacity:0.6},layers.tok);
+  svgEl('circle',{r:13.5,fill:'#5fb3ff',stroke:'#ffffff','stroke-width':2.6,filter:'url(#tokShadow)'},layers.tok);
+  svgEl('text',{x:0,y:4,fill:'#08111f','font-size':11,'font-weight':'800','text-anchor':'middle','pointer-events':'none'},layers.tok).textContent='自';
+  return boardG;
+}
+function setBoardRotation(boardG, deg){
+  boardG.setAttribute('transform', `rotate(${deg})`);
+  boardG.querySelectorAll('.counterRot').forEach(lg=>{
+    lg.setAttribute('transform', lg.getAttribute('transform').replace(/rotate\([^)]*\)/, `rotate(${-deg})`));
+  });
+}
+// 盤面をdeg回してゲリックを画面上(北)に合わせる。文字は逆回転で正立を保つ(p5_fuusou/shikokuシムと同方式)
+function rotateBoardToNorth(boardG, deg, ms){
+  return new Promise(resolve=>{
+    const labelGs=boardG.querySelectorAll('.counterRot');
+    boardG.style.transition=`transform ${ms}ms ease-in-out`;
+    labelGs.forEach(lg=>{ lg.style.transition=`transform ${ms}ms ease-in-out`; });
+    boardG.getBoundingClientRect();
+    setTimeout(()=>setBoardRotation(boardG, deg), 30);
+    setTimeout(resolve, ms+80);
+  });
+}
+
+function drawEye(eye){
+  const p=polar(eye.angle, EYE_R);
+  const isEye = eye.kind==='邪眼';
+  const col = isEye ? '#ff9dc7' : '#ffcc4d';
+  const g=svgEl('g',{class:'eyeMark',transform:`translate(${p.x},${p.y})`},layers.eye);
+  const inner=svgEl('g',{class:'eyeInner'},g);
+  svgEl('circle',{r:16,fill:isEye?'#3a1230':'#3a2a12',stroke:col,'stroke-width':2.6,filter:'url(#softGlow)'},inner);
+  // 目の形
+  svgEl('path',{d:'M-10,0 Q0,-9 10,0 Q0,9 -10,0 Z',fill:'none',stroke:col,'stroke-width':1.6},inner);
+  svgEl('circle',{r:3.2,fill:col},inner);
+  const lp=polar(eye.angle, 27);
+  svgEl('text',{x:lp.x,y:lp.y+4,fill:col,'font-size':11,'font-weight':'800','text-anchor':'middle',
+    stroke:'#070a12','stroke-width':3,'paint-order':'stroke'},g).textContent=eye.kind;
+  return g;
+}
+function arrow(parent, deg, len, col, w, dashed){
+  const p=polar(deg,len), a=Math.atan2(p.y,p.x);
+  const l=svgEl('line',{x1:0,y1:0,x2:p.x,y2:p.y,stroke:col,'stroke-width':w,'stroke-linecap':'round'},parent);
+  if(dashed) l.setAttribute('stroke-dasharray','7 5');
+  svgEl('path',{d:`M${p.x+6*Math.cos(a)},${p.y+6*Math.sin(a)} L${p.x-11*Math.cos(a-0.45)},${p.y-11*Math.sin(a-0.45)} L${p.x-11*Math.cos(a+0.45)},${p.y-11*Math.sin(a+0.45)} Z`,fill:col},parent);
+}
+function fan(parent, from, to, r, col, op){
+  const p1=polar(from,r), p2=polar(to,r);
+  svgEl('path',{d:`M0,0 L${p1.x},${p1.y} A${r},${r} 0 0 1 ${p2.x},${p2.y} Z`,fill:col,opacity:op},parent);
+}
+// 北3箇所のチェック枠(点線の輪)
+function drawNorthSpots(){
+  [315,0,45].forEach(a=>{
+    const p=polar(a,EYE_R);
+    svgEl('circle',{class:'spotRing',cx:p.x,cy:p.y,r:22,fill:'none',stroke:'#7cc4ff','stroke-width':2,
+      'stroke-dasharray':'5 4'},layers.fx);
+  });
+}
+// 型の答えを緑で描く
+function drawModel(model){
+  model.dirs.forEach(d=>{
+    if(model.rule==='side' || model.rule==='either') fan(layers.fx, d-22.5, d+22.5, FR*0.78, '#22a45a', 0.22);
+    arrow(layers.fx, d, 92, '#15803d', 3.2, true);
+  });
+}
+
+// ---------- 1問 ----------
+function askFacing(q, model){
+  return new Promise(resolve=>{
+    const angles=q.eyes.map(e=>e.angle);
+    let answered=false;
+    const slots=[];
+    DIRS16.forEach((d,i)=>{
+      const p=polar(d,SLOT_R);
+      const g=svgEl('g',{class:'slot',transform:`translate(${p.x},${p.y})`},layers.slot);
+      const inner=svgEl('g',{class:'slotInner'},g);
+      inner.style.animationDelay=(i*14)+'ms';
+      svgEl('circle',{r:23,fill:'transparent'},inner);   // 当たり判定を広めに
+      const isModel = model.dirs.includes(d);
+      const hi = reviewMode && isModel;
+      const c=svgEl('circle',{r:d%45===0?15:12.5,fill:hi?'#12452c':'rgba(24,36,66,.90)',
+        stroke:hi?'#4ade80':'#7cc4ff','stroke-width':hi?3.2:1.8},inner);
+      // 向きを示す小さな矢じり
+      svgEl('path',{d:'M0,-6 L5,4 L0,1.5 L-5,4 Z',fill:hi?'#cdffe2':'#c6d5f2',transform:`rotate(${d})`,'pointer-events':'none'},inner);
+      g.addEventListener('click',()=>{ if(!answered){ answered=true; clearTimer(); finish(d); } });
+      slots.push({d,g,c,inner});
+    });
+    if(reviewMode){ drawNorthSpots(); drawModel(model); setMsg('【確認】'+model.text+' … 緑をタップ'); }
+    else setMsg('向く方向をタップ(北3箇所を見る)');
+    runTimer(timeLimitMs, ()=>{ if(!answered){ answered=true; finish(null); } });
+
+    function finish(chosen){
+      const res = chosen==null ? null : judge(chosen, angles);
+      const ok = !!(res && res.safe);
+      const isModel = chosen!=null && model.dirs.includes(chosen);
+      // 選択肢の塗り分け: 型=濃い緑 / 型以外で安全=薄い緑 / 選んだアウト=赤
+      slots.forEach(s=>{
+        const safe=judge(s.d, angles).safe;
+        if(model.dirs.includes(s.d)){ s.c.setAttribute('fill','#12452c'); s.c.setAttribute('stroke','#4ade80'); s.c.setAttribute('stroke-width',3.2); }
+        else if(s.d===chosen && !safe){ s.c.setAttribute('fill','#4a1826'); s.c.setAttribute('stroke','#ff6070'); s.c.setAttribute('stroke-width',3);
+          s.inner.classList.remove('shake'); void s.inner.getBoundingClientRect(); s.inner.classList.add('shake'); }
+        else if(safe){ s.c.setAttribute('stroke','#4ade80'); s.c.setAttribute('stroke-dasharray','3 3'); }
+        else { s.g.setAttribute('opacity',0.45); }
+        s.g.style.cursor='default';
+      });
+      layers.fx.innerHTML='';
+      drawNorthSpots();
+      drawModel(model);
+      if(chosen!=null){
+        // 自分の正面90°コーンと向き
+        fan(layers.fx, chosen-CONE_HALF, chosen+CONE_HALF, FR, ok?'#3b82f6':'#ff3b5c', ok?0.20:0.30);
+        arrow(layers.fx, chosen, 100, ok?'#1d4ed8':'#e11d48', 4, false);
+        if(ok){
+          const hitSlot=slots.find(s=>s.d===chosen);
+          const b=svgEl('circle',{class:'burst',r:16,fill:'none',stroke:'#4ade80','stroke-width':3},hitSlot.g);
+          setTimeout(()=>b.remove(),720);
+        }
+        res.hit.forEach((h,i)=>{ if(h) layers.eye.children[i].classList.add('eyeHit'); });
+      }
+      const eyeTxt = q.eyes.map(e=>e.kind+'='+DIR_NAMES8[e.angle]).join(' / ');
+      let kind, text;
+      if(chosen==null){ kind='bad'; text='時間切れ… '+model.text; }
+      else if(ok && isModel){ kind='good'; text='正解！型どおり。'+model.text; }
+      else if(ok){ kind='warn'; text='セーフ。ただし型は「'+model.dirs.map(dirName).join(' or ')+'」。'+model.text; }
+      else{
+        const hitNames=q.eyes.filter((e,i)=>res.hit[i]).map((e,i)=>e.kind).join('と');
+        const edge=res.diffs.some(d=>Math.abs(d-CONE_HALF)<1e-6);
+        kind='bad'; text='アウト… '+hitNames+'が正面90°に入った'+(edge?'(45°ちょうどは際どいのでアウト扱い)':'')+'。'+model.text;
+      }
+      setMsg(text, kind);
+      setPhase(chosen==null ? '時間切れ' : (ok ? (isModel?'○ 回避成功(型どおり)':'△ 回避成功(型と違う)') : '× 混乱'));
+      if(!reviewMode){
+        answeredCount++; if(ok) score++; if(isModel) modelCount++;
+        log(`Q${qIndex+1} ${ok?(isModel?'○':'△'):'×'} 目:${eyeTxt} → `+(chosen==null?'時間切れ':dirName(chosen))+` (型:${model.dirs.map(dirName).join('/')})`, ok);
+      }
+      setHud();
+      resolve();
+    }
+  });
+}
+
+async function startRun(){
+  const my=++runId;
+  score=0; answeredCount=0; modelCount=0; qIndex=0;
+  logEl.innerHTML='';
+  document.getElementById('nextBtn').hidden=true;
+  for(qIndex=0; qIndex<totalQ; qIndex++){
+    if(my!==runId) return;
+    const q=drawQuestion();
+    const angles=q.eyes.map(e=>e.angle);
+    const model=modelAnswer(angles);
+    setHud();
+    document.getElementById('northTag').innerHTML='北(ゲリック)=実マーカー<b style="color:'+MARKER_COLORS[q.gerrickMarker]+'">'+q.gerrickMarker+'</b>';
+    const bar=document.getElementById('timerBar'); bar.style.transition='none'; bar.style.width='100%';
+
+    // 北確定: 実方位で出現→回転してゲリック=画面上
+    const boardG=buildBoard(q.gerrickMarker);
+    const delta=normalizeAngle180(-RAW_MARKERS.find(m=>m.id===q.gerrickMarker).angle);
+    if(useRotation && delta!==0){
+      setPhase('ゲリック出現(実マーカー'+q.gerrickMarker+') → カメラを回して北に');
+      setMsg('盤面が回転してゲリック=北(画面上)になります');
+      await wait(450);
+      await rotateBoardToNorth(boardG, delta, ROTATE_MS);
+    } else {
+      setBoardRotation(boardG, delta);
+      setPhase('ゲリック=北(画面上)');
+      await wait(250);
+    }
+    if(my!==runId) return;
+
+    // 目の出現→回答
+    q.eyes.forEach(drawEye);
+    setPhase('目が2つ出現！どっちを向く？');
+    await askFacing(q, model);
+    if(my!==runId) return;
+    await waitNext(qIndex+1<totalQ ? '次の問題 ▶' : '結果を見る ▶');
+  }
+  if(my!==runId) return;
+  showResult();
+}
+
+function showResult(){
+  show('resultScreen');
+  document.getElementById('finalScore').textContent = reviewMode? '確認完了' : score+'/'+answeredCount;
+  let v;
+  if(reviewMode) v='次は練習モードで、北3箇所を見て即答できるか試しましょう。';
+  else{
+    const all = score===answeredCount;
+    v = (all && modelCount===answeredCount) ? '全問、型どおりに回避！視線はもう怖くない。'
+      : all ? `全問回避！ただし型どおりは${modelCount}/${answeredCount}。本番は型で揃えると迷いません。`
+      : score/Math.max(answeredCount,1)>=0.7 ? `あと少し。型どおり ${modelCount}/${answeredCount}。間違えた配置をログで確認しましょう。`
+      : 'まず確認モードで「北3箇所→真北 or 目から1.5個」を体に入れましょう。';
+  }
+  document.getElementById('finalVerdict').textContent = v;
+}
+
+window.selfTest = selfTest;
+})();
+}
+</script>
+<!-- ===== 一時停止ボタン(全シム共通・2026-09-27) =====
+  タイマー(setTimeout/setInterval)・時刻(Date.now)・CSSアニメーションをまとめて止める。
+  各シムの wait()/runTimer() は setTimeout で動いているので、ここで包めば個別の改修は不要。
+  停止中は盤面の上に透明な膜を張り、選択肢を押して進んでしまわないようにする。
+  ボタン / Pキー / スペースキー で切り替え。プレイ画面の間だけ表示。 -->
+<style>
+  #pauseBtn{position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:10001;
+    min-width:118px;height:52px;padding:0 18px;border-radius:999px;border:1px solid rgba(124,196,255,.55);
+    background:linear-gradient(180deg,rgba(34,47,80,.96),rgba(17,25,45,.96));color:#e9eefc;
+    font:800 16px "Hiragino Sans","Yu Gothic UI","Yu Gothic",system-ui,sans-serif;letter-spacing:.02em;
+    box-shadow:0 12px 30px -14px #000, inset 0 1px 0 rgba(255,255,255,.08);cursor:pointer;
+    display:none;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;}
+  #pauseBtn.show{display:flex;}
+  #pauseBtn.on{background:linear-gradient(100deg,#ffc857,#ff9d4d);color:#1a1206;border-color:#ffc857;}
+  #pauseVeil{position:fixed;inset:0;z-index:10000;display:none;cursor:not-allowed;}
+  #pauseTag{position:fixed;left:50%;top:10px;transform:translateX(-50%);z-index:10001;display:none;white-space:nowrap;
+    padding:7px 16px;border-radius:999px;background:rgba(255,200,87,.96);color:#1a1206;
+    font:800 13.5px "Hiragino Sans","Yu Gothic UI",system-ui,sans-serif;pointer-events:none;
+    box-shadow:0 10px 26px -12px #000;}
+  #pauseVeil.on,#pauseTag.on{display:block;}
+</style>
+<div id="pauseVeil"></div>
+<div id="pauseTag">⏸ 一時停止中 ― 盤面はそのまま確認できます</div>
+<button id="pauseBtn" type="button" aria-pressed="false" title="一時停止(P / スペース)">⏸ 一時停止</button>
+<script>
+(function(){
+  var nST=window.setTimeout.bind(window), nCT=window.clearTimeout.bind(window),
+      nSI=window.setInterval.bind(window), nCI=window.clearInterval.bind(window), nNow=Date.now;
+  var paused=false, pausedAt=0, pausedTotal=0, seq=1000000, jobs={};
+  // 停止中の時間を差し引いた時刻(Date.now で残り時間を計算しているシム用)
+  Date.now=function(){ return (paused?pausedAt:nNow()) - pausedTotal; };
+  function arm(j){
+    j.start=nNow();
+    if(j.iv){ j.nid=nSI(j.fn, j.ms); }
+    else { j.nid=nST(function(){ delete jobs[j.id]; j.fn.apply(null, j.args); }, Math.max(0, j.left)); }
+  }
+  window.setTimeout=function(fn, ms){
+    if(typeof fn!=='function') return nST.apply(null, arguments);
+    var j={id:seq++, fn:fn, args:[].slice.call(arguments, 2), left:+ms||0};
+    jobs[j.id]=j; if(!paused) arm(j); return j.id;
+  };
+  window.setInterval=function(fn, ms){
+    if(typeof fn!=='function') return nSI.apply(null, arguments);
+    var j={id:seq++, fn:fn, ms:+ms||0, iv:true};
+    jobs[j.id]=j; if(!paused) arm(j); return j.id;
+  };
+  window.clearTimeout=window.clearInterval=function(id){
+    var j=jobs[id];
+    if(!j){ nCT(id); nCI(id); return; }
+    if(j.nid!=null){ if(j.iv) nCI(j.nid); else nCT(j.nid); }
+    delete jobs[id];
+  };
+
+  var btn=document.getElementById('pauseBtn'), veil=document.getElementById('pauseVeil'), tag=document.getElementById('pauseTag');
+  function setPaused(p){
+    if(p===paused) return;
+    if(p){
+      pausedAt=nNow();
+      Object.keys(jobs).forEach(function(k){
+        var j=jobs[k]; if(j.nid==null) return;
+        if(j.iv) nCI(j.nid); else { nCT(j.nid); j.left-=(pausedAt-j.start); }
+        j.nid=null;
+      });
+      try{ document.getAnimations().forEach(function(a){ a.pause(); }); }catch(e){}
+      paused=true;
+    }else{
+      paused=false;
+      pausedTotal+=nNow()-pausedAt;
+      Object.keys(jobs).forEach(function(k){ arm(jobs[k]); });
+      try{ document.getAnimations().forEach(function(a){ if(a.playState==='paused') a.play(); }); }catch(e){}
+    }
+    btn.classList.toggle('on', p); btn.setAttribute('aria-pressed', String(p));
+    btn.textContent = p ? '▶ 再開' : '⏸ 一時停止';
+    veil.classList.toggle('on', p); tag.classList.toggle('on', p);
+  }
+  btn.addEventListener('click', function(){ setPaused(!paused); });
+  document.addEventListener('keydown', function(e){
+    var t=e.target, typing=t && (t.tagName==='INPUT' || t.tagName==='TEXTAREA' || t.isContentEditable);
+    if(typing || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+    if(e.key==='p' || e.key==='P' || e.code==='Space'){
+      if(!btn.classList.contains('show')) return;
+      e.preventDefault(); setPaused(!paused);
+    }
+  });
+  // プレイ画面(battleScreen / gameWrap)が出ている間だけボタンを表示
+  function playing(){
+    var b=document.getElementById('battleScreen'); if(b) return !b.hidden;
+    var g=document.getElementById('gameWrap'); if(g) return getComputedStyle(g).display!=='none';
+    return true;
+  }
+  nSI(function(){
+    var on=playing();
+    btn.classList.toggle('show', on);
+    if(!on && paused) setPaused(false);
+  }, 300);
+})();
+</script>
+</body>
+</html>

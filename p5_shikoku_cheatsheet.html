@@ -110,28 +110,55 @@ function pol(cx,cy,angleDeg,r){const rad=angleDeg*Math.PI/180;return{x:cx+r*Math
 // clock -> degree (12時=0=北)
 const CLK = h => (h%12)*30;
 
-// 共通: フィールド円+8方向ドット(時計表記)+ゲリック北アイコン(斧)
+// 石畳の床(field_markers.pngの模写。p5_shikoku_gaze_simulator.htmlのdrawStoneFloorと同じ構成)
+function stoneFloor(svg, cx, cy, R){
+  const g=E(svg,'g',{transform:`translate(${cx},${cy})`});
+  const add=(t,a)=>E(g,t,a), P=(a,r)=>pol(0,0,a,r);
+  const LIGHT='#ebe8e0', DARK='#e1ddd3', JOINT='#bdb8ab', LINE='#8f8b7f', RIM='#4a473f';
+  const ring=(r1,r2)=>`M${r2},0 A${r2},${r2} 0 1 1 ${-r2},0 A${r2},${r2} 0 1 1 ${r2},0 Z M${r1},0 A${r1},${r1} 0 1 0 ${-r1},0 A${r1},${r1} 0 1 0 ${r1},0 Z`;
+  add('circle',{cx:0,cy:0,r:R,fill:LIGHT});
+  [[0.90,1.00,LIGHT,48,3.75],[0.78,0.90,DARK,40,0],[0.66,0.78,LIGHT,32,5.6],
+   [0.50,0.66,DARK,32,0],[0.34,0.50,LIGHT,24,7.5],[0.177,0.34,DARK,16,11.25]].forEach(([a,b,col,n,off])=>{
+    add('path',{d:ring(R*a,R*b),fill:col,'fill-rule':'evenodd'});
+    for(let i=0;i<n;i++){ const p1=P(off+i*360/n,R*a), p2=P(off+i*360/n,R*b);
+      add('line',{x1:p1.x,y1:p1.y,x2:p2.x,y2:p2.y,stroke:JOINT,'stroke-width':0.6}); }
+  });
+  [0.90,0.66].forEach(k=>add('circle',{cx:0,cy:0,r:R*k,fill:'none',stroke:JOINT,'stroke-width':0.7}));
+  [0.78,0.50,0.34].forEach(k=>add('circle',{cx:0,cy:0,r:R*k,fill:'none',stroke:LINE,'stroke-width':1.1}));
+  for(let a=0;a<360;a+=45){
+    const p1=P(a,R*0.177), p2=P(a,R*0.78), q1=P(a+22.5,R*0.50), q2=P(a+22.5,R*0.78);
+    add('line',{x1:p1.x,y1:p1.y,x2:p2.x,y2:p2.y,stroke:LINE,'stroke-width':1.2});
+    add('line',{x1:q1.x,y1:q1.y,x2:q2.x,y2:q2.y,stroke:LINE,'stroke-width':1.1});
+  }
+  add('circle',{cx:0,cy:0,r:R*0.177,fill:'#dedad0',stroke:RIM,'stroke-width':1.2});
+  for(let a=0;a<360;a+=45){ const s=R*0.036;
+    add('path',{d:`M0,${-s*1.15} L${s*0.85},${-s*0.3} L${s*0.6},${s*0.85} L${-s*0.6},${s*0.85} L${-s*0.85},${-s*0.3} Z`,fill:'#ebe8e0',stroke:'#6d695f','stroke-width':0.5,
+      transform:`rotate(${a}) translate(0,${-R*0.137})`}); }
+  add('circle',{cx:0,cy:0,r:R*0.10,fill:'#d0ccc2',stroke:RIM,'stroke-width':0.9});
+  add('circle',{cx:0,cy:0,r:R*0.046,fill:'#46423b'});
+  add('circle',{cx:0,cy:0,r:R,fill:'none',stroke:RIM,'stroke-width':2.2});
+  for(let a=0;a<360;a+=7.5){ const p=P(a,R); add('circle',{cx:p.x,cy:p.y,r:1.25,fill:RIM}); }
+}
+// 共通: 石畳フィールド+時計ドット+ゲリック北アイコン(斧)。床が明るいので盤面上の文字は濃紺フチ付き
 function baseField(svg, cx, cy, R, opts){
   opts = opts||{};
-  E(svg,'circle',{cx,cy,r:R,fill:'#101625',stroke:'#3a4a70','stroke-width':2});
-  for(let h=0; h<12; h+=1.5){
-    const p = pol(cx,cy,CLK(h),R);
-    E(svg,'line',{x1:cx,y1:cy,x2:p.x,y2:p.y,stroke:'#202c48','stroke-width':1});
-  }
+  stoneFloor(svg, cx, cy, R);
   for(let h=0; h<12; h++){
     const p = pol(cx,cy,CLK(h),R+16);
-    E(svg,'circle',{cx:p.x,cy:p.y,r:4,fill:'#3a4a70'});
+    E(svg,'circle',{cx:p.x,cy:p.y,r:4,fill:'#5a6c96'});
   }
   if(opts.markers){
-    const MC=[['A','#ff5c5c',0],['1','#ff5c5c',45],['B','#ffd24d',90],['2','#ffd24d',135],
-              ['C','#4da6ff',180],['3','#4da6ff',225],['D','#c07aff',270],['4','#c07aff',315]];
+    // フィールドマーカー(ゲーム準拠: 英字=丸/数字=四角、A/1=赤 B/2=黄 C/3=青 D/4=紫)
+    const MC=[['A','#e8404d',0],['1','#e8404d',45],['B','#f2c230',90],['2','#f2c230',135],
+              ['C','#3a8ef0',180],['3','#3a8ef0',225],['D','#a558e6',270],['4','#a558e6',315]];
     MC.forEach(([id,col,a])=>{
-      const p=pol(cx,cy,a,R-14);
-      E(svg,'circle',{cx:p.x,cy:p.y,r:8,fill:'#141b2c',stroke:col,'stroke-width':1.6,opacity:0.5});
-      E(svg,'text',{x:p.x,y:p.y+3.5,fill:col,'font-size':9,'text-anchor':'middle',opacity:0.6},id);
+      const letter='ABCD'.includes(id), s=R*0.085;
+      const p=pol(cx,cy,a,R*(letter?0.945:0.87));
+      if(letter) E(svg,'circle',{cx:p.x,cy:p.y,r:s,fill:col,stroke:'#1c1c1c','stroke-width':1.4});
+      else E(svg,'rect',{x:p.x-s,y:p.y-s,width:s*2,height:s*2,rx:2.5,fill:col,stroke:'#1c1c1c','stroke-width':1.4});
+      E(svg,'text',{x:p.x,y:p.y+5.5,fill:'#fff',stroke:'#1c1c1c','stroke-width':2,'paint-order':'stroke','font-size':15,'font-weight':'900','text-anchor':'middle','font-family':'Arial,sans-serif'},id);
     });
   }
-  E(svg,'circle',{cx,cy,r:5,fill:'#4a5a80'});
   // ゲリック北アイコン(常に真上・斧)
   const dp = pol(cx,cy,0,R+34);
   E(svg,'circle',{cx:dp.x,cy:dp.y,r:16,fill:'#3a2233',stroke:'#ffcc4d','stroke-width':2.5});
@@ -144,7 +171,7 @@ function token(svg,x,y,label,col,hi){
   E(svg,'text',{x,y:y+4,fill:'#08111f','font-size':11,'font-weight':'bold','text-anchor':'middle'},label);
 }
 function labelText(svg,x,y,txt,col,size){
-  E(svg,'text',{x,y,fill:col||'#e8edf7','font-size':size||13,'font-weight':'bold','text-anchor':'middle'},txt);
+  E(svg,'text',{x,y,fill:col||'#e8edf7','font-size':size||13,'font-weight':'bold','text-anchor':'middle',stroke:'#0a1020','stroke-width':3.2,'paint-order':'stroke','stroke-linejoin':'round'},txt);
 }
 function arrow(svg,x1,y1,x2,y2,col,w){
   w=w||3;
@@ -154,7 +181,7 @@ function arrow(svg,x1,y1,x2,y2,col,w){
 }
 function dashCircle(svg,cx,cy,r,col,label){
   E(svg,'circle',{cx,cy,r,fill:'none',stroke:col,'stroke-width':2.5,'stroke-dasharray':'6,4'});
-  if(label) E(svg,'text',{x:cx,y:cy-r-8,fill:col,'font-size':12,'font-weight':'bold','text-anchor':'middle'},label);
+  if(label) E(svg,'text',{x:cx,y:cy-r-8,fill:col,'font-size':12,'font-weight':'bold','text-anchor':'middle',stroke:'#0a1020','stroke-width':3.2,'paint-order':'stroke','stroke-linejoin':'round'},label);
 }
 function fanArea(svg,cx,cy,R,fromDeg,toDeg,col,label,labelR){
   const p1=pol(cx,cy,fromDeg,R), p2=pol(cx,cy,toDeg,R);
@@ -164,7 +191,7 @@ function fanArea(svg,cx,cy,R,fromDeg,toDeg,col,label,labelR){
   if(label){
     const mid=(fromDeg+toDeg)/2;
     const lp=pol(cx,cy,mid,labelR||R*0.62);
-    E(svg,'text',{x:lp.x,y:lp.y,fill:col,'font-size':14,'font-weight':'bold','text-anchor':'middle'},label);
+    E(svg,'text',{x:lp.x,y:lp.y,fill:col,'font-size':14,'font-weight':'bold','text-anchor':'middle',stroke:'#0a1020','stroke-width':3.2,'paint-order':'stroke','stroke-linejoin':'round'},label);
   }
 }
 
