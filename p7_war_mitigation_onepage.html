@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>P7 最終 戦士 軽減表(1枚)</title>
+<!--
+  2026-10-17 新規作成。固定の軽減表(Googleスプレッドシート P7_騎竜神トールダン タブ)の戦士列を1枚化。
+  シートの数値の読み方:
+    ・「シート通り」= シートで戦士にチェックが入っている時刻(使用開始)をそのまま採用。
+    ・被ダメ = 素ダメ × 0.8(シートの計算に入っている共通補正) × PT軽減(シートのタンク列の係数。戦士のリプライザル込み)
+              × 自己軽減(ランパート0.8/ヴェンジェンス0.7/原初の血気0.9。シートの値)。バリアは含めない。
+    ・効果時間はシートの Time 列(Lv90同期)。シートはヴェンジェンスを1行目にしかチェックしていないため
+      シート自身の計算では2発目以降が軽減なし扱いになっている。この表は効果時間で判定しているので、シートの数字より軽い。
+    ・原初の血気は実際には最初の4秒さらに10%+バリアがあるが、シートに合わせて10%で計算。
+  「改善案」はPT側の割り当て(リプライザル・シェイクオフ・ホルム時刻)はシートのまま、自己軽減だけ足したもの。
+  トリニティ(タンク)は毎回戦士にも当たる前提(シートの行の通り)。
+-->
+<style>
+  :root{
+    --bg:#0a1020; --line:rgba(124,160,224,.20);
+    --accent:#7cc4ff; --accent-2:#a78bfa; --good:#4ade80; --bad:#ff6070; --warn:#ffc857; --purple:#c96bff;
+    --text:#e9eefc; --dim:#93a3c8;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{width:100%;height:100%;background:#000;color:var(--text);
+    font-family:"Hiragino Sans","Yu Gothic",system-ui,sans-serif;overflow:hidden;}
+  #stage{position:fixed;inset:0;}
+  #sheet{
+    position:absolute;left:50%;top:50%;transform-origin:center center;
+    width:1280px;height:720px;
+    background:
+      radial-gradient(700px 420px at 12% -6%, rgba(66,108,232,.22), transparent 62%),
+      radial-gradient(600px 380px at 102% 4%, rgba(150,92,240,.16), transparent 60%),
+      var(--bg);
+    display:flex;flex-direction:column;padding:12px 20px 10px;border-radius:6px;
+  }
+  header{display:flex;align-items:center;gap:14px;margin-bottom:6px;}
+  header h1{font-size:22px;font-weight:800;white-space:nowrap;
+    background:linear-gradient(100deg,#fff 6%,var(--accent) 52%,var(--accent-2) 96%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;}
+  header .sub{font-size:11.5px;color:var(--dim);line-height:1.35;flex:1;}
+  .seg{display:flex;border:2px solid var(--warn);border-radius:10px;overflow:hidden;}
+  .seg button{background:rgba(42,32,10,.6);color:var(--warn);border:none;padding:6px 14px;
+    font-size:14px;font-weight:bold;cursor:pointer;font-family:inherit;}
+  .seg button.on{background:var(--warn);color:#1a1405;}
+  #main{flex:1;display:grid;grid-template-columns:1fr 360px;gap:12px;min-height:0;}
+  #tbl{
+    background:linear-gradient(180deg,rgba(34,47,80,.80),rgba(17,25,45,.72));
+    border:1px solid var(--line);border-radius:12px;padding:4px 8px;min-height:0;display:flex;flex-direction:column;
+  }
+  table{width:100%;border-collapse:collapse;font-size:11.5px;table-layout:fixed;}
+  th{color:var(--dim);font-weight:bold;font-size:10.5px;padding:2px 0;border-bottom:1px solid var(--line);}
+  th.sk{line-height:1.1;}
+  td{padding:0 3px;height:17px;border-bottom:1px solid rgba(124,160,224,.07);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  td.t{color:var(--dim);font-variant-numeric:tabular-nums;text-align:center;}
+  td.g{font-weight:800;font-size:11px;}
+  tr.exa td.g{color:#ffd24d;} tr.akh td.g{color:#5ee6ff;} tr.giga td.g{color:#ff6070;} tr.open td.g{color:#fff;} tr.morn td.g{color:#ff9dc7;}
+  tr.first td{border-top:1px solid rgba(124,160,224,.30);}
+  td.c{text-align:center;padding:0;}
+  .m{display:inline-block;width:14px;height:13px;border-radius:3px;vertical-align:middle;}
+  .m.s{background:var(--good);}          /* 使用 */
+  .m.a{background:rgba(74,222,128,.32);} /* 効果中 */
+  .m.p{background:linear-gradient(90deg,rgba(74,222,128,.32) 50%,transparent 50%);border:1px solid rgba(74,222,128,.4);} /* 一部 */
+  .m.new{outline:2px solid var(--warn);outline-offset:0;}
+  .m.s.holm{background:#ff9dc7;} .m.a.holm{background:rgba(255,157,199,.35);}
+  td.d{text-align:right;font-variant-numeric:tabular-nums;font-weight:bold;}
+  td.d.big{color:var(--bad);} td.d.mid{color:var(--warn);} td.d.low{color:var(--good);}
+  td.d.inv{color:#ff9dc7;}
+  td.diff{text-align:right;font-size:10.5px;color:var(--good);font-variant-numeric:tabular-nums;}
+  #foot{display:flex;gap:16px;align-items:center;font-size:12px;padding:4px 2px 0;color:var(--dim);}
+  #foot b{font-size:14px;}
+  #err{color:var(--bad);font-weight:bold;}
+  #side{display:flex;flex-direction:column;gap:7px;min-height:0;}
+  .box{background:linear-gradient(180deg,rgba(34,47,80,.80),rgba(17,25,45,.72));
+    border:1px solid var(--line);border-radius:12px;padding:7px 10px;}
+  .box h2{font-size:13px;color:var(--accent);font-weight:800;margin-bottom:3px;}
+  .box li{font-size:11.5px;line-height:1.42;margin-bottom:2px;}
+  .box ol,.box ul{padding-left:17px;}
+  .box p{font-size:11px;line-height:1.4;color:var(--dim);}
+  .box.talk{border-color:rgba(255,157,199,.45);}
+  .box.talk h2{color:#ff9dc7;}
+  b{color:var(--warn);}
+  .lg{display:flex;gap:10px;font-size:10.5px;color:var(--dim);align-items:center;}
+  #credit{position:absolute;right:22px;bottom:2px;font-size:10px;color:var(--dim);opacity:.7;}
+</style>
+</head>
+<body>
+<div id="stage"><div id="sheet">
+  <header>
+    <h1>P7 最終「戦士」軽減表</h1>
+    <div class="seg"><button id="bSheet">シート通り</button><button id="bProp" class="on">改善案</button></div>
+    <div class="sub">固定の軽減表(スプレッドシート)の戦士列を1枚に。時間はP7開始からの経過。<br>
+      被ダメは<b>シートの計算式準拠</b>(PT軽減込み・バリア抜き)。黄枠=改善案で足した箇所。</div>
+  </header>
+
+  <div id="main">
+    <div id="tbl">
+      <table>
+        <colgroup>
+          <col style="width:84px"><col style="width:40px"><col style="width:150px">
+          <col span="8" style="width:44px">
+          <col style="width:64px"><col style="width:56px">
+        </colgroup>
+        <thead><tr id="thead"></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+      <div id="foot">
+        <div class="lg"><span class="m s"></span>使用 <span class="m a"></span>効果中 <span class="m p"></span>一部だけ <span class="m s holm"></span>ホルム</div>
+        <div style="flex:1"></div>
+        <div>戦士の被ダメ合計(ホルム中・モーンアファー除く): <b id="total"></b></div>
+        <div id="err"></div>
+      </div>
+    </div>
+
+    <div id="side">
+      <div class="box">
+        <h2>ここはこうした方がいい(改善案の中身)</h2>
+        <ol>
+          <li><b>原初の血気がP7で1回だけ</b>(アクモーン①)。リキャ25秒なので<b>6回</b>入る。トリニティ(タンク)の65,000魔法2発を1回でまとめて受けられる。</li>
+          <li><b>アクモーン①は「バフ全部」なのにランパートとスリルが空いている</b>。足してもランパは03:03に、スリルは04:18に間に合う。</li>
+          <li><b>ヴェンジェンスのチェックが1行目だけ</b>(01:31・03:36)。15秒あるのに、シートの計算では2発目から軽減なしになっている。シートの被ダメは実際より重く出ている。</li>
+          <li><b>ホルム明けがノーケア</b>。04:17の最後の1発でHP1になる → 04:24のトリニティ(約3.8万)。<b>04:18 エクリブリウム＋スリル、04:21 血気</b>で受ける。</li>
+          <li>エクリブリウムがP7で未使用。アクモーン①の後(01:37)にも1回入る。</li>
+        </ol>
+      </div>
+      <div class="box talk">
+        <h2>ヒーラーと相談したいこと(表には入れていない)</h2>
+        <ul>
+          <li>シェイクオフが<b>トリニティ(DPS)</b>の01:18/03:57。全体が重い<b>00:50 オルタナ(12万)</b>や<b>ギガフレア②</b>に回す方が効くかも。</li>
+          <li>シェイクオフは<b>ヴェンジェンス・スリル・血気を消して</b>バリアを厚くする。自己バフ中には押さない。</li>
+          <li>原初の猛りは血気とリキャ共有。この案は全部血気に回している(STに猛りは投げない)。</li>
+        </ul>
+      </div>
+      <div class="box">
+        <h2>前提</h2>
+        <p>ホルムの時刻(04:12、アクモーン③の2発目から)とリプライザルは固定ルールのまま。トリニティ(タンク)は毎回戦士にも当たる前提(シートの行の通り)。血気は実際は最初の4秒さらに10%＋バリアがあるが、シートに合わせて10%で計算。</p>
+      </div>
+    </div>
+  </div>
+  <div id="credit">数値出典: 固定の軽減表(Googleスプレッドシート P7_騎竜神トールダン)</div>
+</div></div>
+
+<script>
+// ---- スキル(シートの Time / Recast 列) ----
+const SK=[
+  {k:'rep',  n:'リプ<br>ライザル', dur:10, cd:60},
+  {k:'shake',n:'シェイク<br>オフ',   dur:30, cd:90},
+  {k:'ramp', n:'ランパート',         dur:20, cd:90,  mul:0.8},
+  {k:'thrill',n:'スリル',            dur:10, cd:90},
+  {k:'veng', n:'ヴェン<br>ジェンス', dur:15, cd:120, mul:0.7},
+  {k:'blood',n:'原初の<br>血気',     dur:8,  cd:25,  mul:0.9},
+  {k:'equi', n:'エクリ<br>ブリウム', dur:0,  cd:60},
+  {k:'holm', n:'ホルム<br>ギャング', dur:10, cd:240},
+];
+const s=(m)=>{const [a,b]=m.split(':').map(Number);return a*60+b;};
+const PLANS={
+  sheet:{rep:['01:31','03:03','04:10'],shake:['01:18','03:57'],ramp:['03:03'],thrill:[],veng:['01:31','03:36'],
+         blood:['01:31'],equi:[],holm:['04:12']},
+  prop: {rep:['01:31','03:03','04:10'],shake:['01:18','03:57'],ramp:['01:31','03:03'],thrill:['01:31','04:18'],veng:['01:31','03:36'],
+         blood:['01:31','01:58','02:37','03:03','03:36','04:21'],equi:['01:37','04:18'],holm:['04:12']},
+};
+// ---- 被弾(シートの行。pf=シートのタンク列のPT軽減係数) ----
+// 表示行: g=ギミック名, hits=[[時刻, 素ダメ, pf], ...]
+const ROWS=[
+  {c:'open',g:'開幕',   name:'苦悶の咆哮',          hits:[['00:17',40000,1.00]]},
+  {c:'open',g:'',       name:'衝撃波',              hits:[['00:34',38000,1.00]]},
+  {c:'open',g:'',       name:'アルティメットエンド・オルタナ', hits:[['00:50',120000,0.59]]},
+  {c:'exa', g:'エクサ①',name:'トリニティ(タンク)',  hits:[['01:18',38000,1.00]]},
+  {c:'exa', g:'',       name:'トリニティ(タンク)',  hits:[['01:23',45000,0.90]]},
+  {c:'akh', g:'アクモーン①',name:'1発目(タンク)',   hits:[['01:31',87000,0.59]]},
+  {c:'akh', g:'',       name:'2〜5発目 ×4',         hits:[['01:33',87000,0.56],['01:34',87000,0.56],['01:35',87000,0.56],['01:36',87000,0.56]]},
+  {c:'akh', g:'',       name:'(アクモーン後 回復)',  hits:[], at:'01:37'},
+  {c:'akh', g:'',       name:'トリニティ(タンク)',  hits:[['01:43',65000,0.81]]},
+  {c:'akh', g:'',       name:'トリニティ(タンク)',  hits:[['01:47',65000,0.90]]},
+  {c:'giga',g:'ギガフレア①',name:'ギガフレア 1・2発', hits:[['01:58',60000,0.59],['02:02',60000,0.59]]},
+  {c:'giga',g:'',       name:'ギガフレア 3発',      hits:[['02:06',60000,0.59]]},
+  {c:'giga',g:'',       name:'トリニティ(タンク)',  hits:[['02:16',65000,0.90]]},
+  {c:'giga',g:'',       name:'トリニティ(タンク)',  hits:[['02:20',65000,1.00]]},
+  {c:'exa', g:'エクサ②',name:'トリニティ(タンク)',  hits:[['02:37',65000,1.00]]},
+  {c:'exa', g:'',       name:'トリニティ(タンク)',  hits:[['02:41',65000,0.90]]},
+  {c:'akh', g:'アクモーン②',name:'タンクLB3 ×6',    hits:[['02:50',87000,0.18],['02:52',87000,0.18],['02:53',87000,0.18],['02:54',87000,0.18],['02:55',87000,0.18],['02:56',87000,0.20]]},
+  {c:'akh', g:'',       name:'トリニティ(タンク)',  hits:[['03:03',65000,0.90]]},
+  {c:'akh', g:'',       name:'トリニティ(タンク)',  hits:[['03:07',65000,0.86]]},
+  {c:'giga',g:'ギガフレア②',name:'ギガフレア 1・2発', hits:[['03:18',60000,0.48],['03:22',60000,0.53]]},
+  {c:'giga',g:'',       name:'ギガフレア 3発',      hits:[['03:26',60000,0.53]]},
+  {c:'giga',g:'',       name:'トリニティ(タンク)',  hits:[['03:36',65000,0.90]]},
+  {c:'giga',g:'',       name:'トリニティ(タンク)',  hits:[['03:40',65000,1.00]]},
+  {c:'exa', g:'エクサ③',name:'トリニティ(タンク)',  hits:[['03:57',65000,1.00]]},
+  {c:'exa', g:'',       name:'トリニティ(タンク)',  hits:[['04:01',65000,0.90]]},
+  {c:'akh', g:'アクモーン③',name:'1発目(タンク)',   hits:[['04:10',87000,0.59]]},
+  {c:'akh', g:'',       name:'2〜7発目 ×6',         hits:[['04:12',87000,0.45],['04:13',87000,0.45],['04:14',87000,0.45],['04:15',87000,0.45],['04:16',87000,0.50],['04:17',87000,0.50]]},
+  {c:'akh', g:'',       name:'(ホルム明け回復)',    hits:[], at:'04:18'},
+  {c:'akh', g:'',       name:'トリニティ(タンク)',  hits:[['04:24',65000,0.73]]},
+  {c:'akh', g:'',       name:'トリニティ(タンク)',  hits:[['04:28',65000,0.81]]},
+  {c:'morn',g:'時間切れ',name:'騎竜剣モーン・アファー', hits:[], at:'04:41'},
+];
+const BASE=0.8; // シート計算の共通補正
+
+let mode='prop';
+const thead=document.getElementById('thead');
+thead.innerHTML='<th>ギミック</th><th>時間</th><th>被弾</th>'+SK.map(k=>`<th class="sk">${k.n}</th>`).join('')+'<th>被ダメ</th><th>改善</th>';
+
+function active(plan,k,t){ // tで効果中のスキル使用時刻 or null
+  const sk=SK.find(x=>x.k===k);
+  return plan[k].map(s).find(st=>st<=t && t<st+Math.max(sk.dur,1));
+}
+function hitDmg(plan,[tm,raw,pf]){
+  const t=s(tm);
+  if(active(plan,'holm',t)!=null) return {d:0,inv:true};
+  let f=BASE*pf;
+  SK.forEach(k=>{ if(k.mul && active(plan,k.k,t)!=null) f*=k.mul; });
+  return {d:Math.round(raw*f),inv:false};
+}
+function rowDmg(plan,r){
+  let sum=0,inv=0;r.hits.forEach(h=>{const x=hitDmg(plan,h);sum+=x.d;if(x.inv)inv++;});
+  return {sum,inv,per:r.hits.length?Math.round(sum/Math.max(1,r.hits.length-inv)):0};
+}
+function render(){
+  document.getElementById('bSheet').classList.toggle('on',mode==='sheet');
+  document.getElementById('bProp').classList.toggle('on',mode==='prop');
+  const plan=PLANS[mode], other=PLANS.sheet;
+  const tb=document.getElementById('tbody');tb.innerHTML='';
+  let total=0; let prevT=-1;
+  ROWS.forEach(r=>{
+    const tr=document.createElement('tr');tr.className=r.c+(r.g?' first':'');
+    const t0=r.hits.length?s(r.hits[0][0]):s(r.at), t1=r.hits.length?s(r.hits[r.hits.length-1][0]):t0;
+    const times=r.hits.length?r.hits.map(h=>s(h[0])):[t0];
+    let h=`<td class="g">${r.g}</td><td class="t">${r.hits.length?r.hits[0][0]:r.at}</td><td>${r.name}</td>`;
+    SK.forEach(k=>{
+      // このrowの時間帯で押す → 使用
+      const press=plan[k.k].map(s).some(st=>st>prevT && st<=t0);
+      const cover=times.filter(t=>active(plan,k.k,t)!=null).length;
+      let cls='';
+      if(press) cls='s';
+      else if(k.dur>0 && cover===times.length && r.hits.length) cls='a';
+      else if(k.dur>0 && cover>0 && r.hits.length) cls='p';
+      const isNew = mode==='prop' && cls==='s' && !other[k.k].includes(plan[k.k].find(st=>s(st)>prevT&&s(st)<=t0));
+      h+=`<td class="c">${cls?`<span class="m ${cls}${k.k==='holm'?' holm':''}${isNew?' new':''}"></span>`:''}</td>`;
+    });
+    if(r.hits.length){
+      const x=rowDmg(plan,r), y=rowDmg(other,r);
+      if(r.c!=='morn') total+=x.sum;
+      let txt,cls;
+      if(x.inv===r.hits.length){txt='無敵';cls='inv';}
+      else{
+        txt=(r.hits.length>1?'各':'')+x.per.toLocaleString();
+        cls=x.per>=40000?'big':x.per>=25000?'mid':'low';
+      }
+      const diff=y.sum-x.sum;
+      h+=`<td class="d ${cls}">${txt}</td><td class="diff">${mode==='prop'&&diff>0?'-'+diff.toLocaleString():''}</td>`;
+    }else{
+      h+=`<td class="d" style="color:var(--dim);font-weight:normal">${r.c==='morn'?'全滅技':'HP1から'}</td><td></td>`;
+    }
+    tr.innerHTML=h;tb.appendChild(tr);
+    prevT=t0;
+  });
+  const st=ROWS.reduce((a,r)=>a+rowDmg(PLANS.sheet,r).sum,0);
+  document.getElementById('total').textContent=total.toLocaleString()+(mode==='prop'?`(シート通り ${st.toLocaleString()} → -${Math.round((1-total/st)*100)}%)`:'');
+  // リキャスト検証
+  const errs=[];
+  SK.forEach(k=>{const ts=plan[k.k].map(s).sort((a,b)=>a-b);
+    for(let i=1;i<ts.length;i++) if(ts[i]-ts[i-1]<k.cd) errs.push(k.n.replace('<br>','')+' リキャ不足');});
+  document.getElementById('err').textContent=errs.length?'⚠ '+errs.join(' / '):'';
+}
+document.getElementById('bSheet').onclick=()=>{mode='sheet';render();};
+document.getElementById('bProp').onclick=()=>{mode='prop';render();};
+render();
+
+const sheet=document.getElementById('sheet');const W=1280,H=720;
+function fitStage(){const sc=Math.min(window.innerWidth/W,window.innerHeight/H);sheet.style.transform=`translate(-50%,-50%) scale(${sc})`;}
+window.addEventListener('resize',fitStage);fitStage();
+</script>
+</body>
+</html>
